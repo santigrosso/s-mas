@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.2)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.3 • sin guardado local)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -28,7 +28,7 @@
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  /* Pestañas (más bajas; activa azul, resto gris; bordes sup redondeados, activa sin borde inferior) */
+  /* Pestañas */
   .tabsWrap{width:100%;}
   .tabs{display:flex;gap:0;width:100%;}
   .tab{
@@ -47,7 +47,7 @@
   }
   .tab .tick{display:none; font-weight:900}
   .tab.captured .tick{display:inline}
-  /* Descripción del momento (mismo ancho del video/pestañas) */
+  /* Descripción del momento */
   .momentDesc{
     width:100%; background:var(--tab-active); border:1px solid var(--tab-active); border-top:none;
     margin-top:-1px; padding:6px 10px; color:#d8e4f1;
@@ -164,7 +164,7 @@
 <footer>Desarrollado por Santiago Grosso · 2025</footer>
 
 <script>
-/* ========= Estado ========= */
+/* ========= Estado (memoria de sesión: sin localStorage) ========= */
 const MOMENTS = [
   {key:'toeoff', label:'Toe-off'},
   {key:'mvp', label:'Max Vertical Projection'},
@@ -196,7 +196,7 @@ const GRADE = (score)=>{
   return "—";
 };
 
-let state = JSON.parse(localStorage.getItem('smas_state_v32')||'null') || {
+let state = {
   fps:240, invert:false, curMoment:'toeoff',
   moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
     anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
@@ -212,7 +212,7 @@ const tabs=$('#tabs'), momentDesc=$('#momentDesc'), questions=$('#questions'), m
 const notesEl=$('#notes');
 const printBtn=$('#printReport'), reportHint=$('#reportHint');
 
-function save(){ localStorage.setItem('smas_state_v32', JSON.stringify(state)); }
+function save(){ /* no-op: sin almacenamiento persistente */ }
 function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
 function updateReportAvailability(){
   const ok = allCaptured();
@@ -236,7 +236,6 @@ function renderTabs(){
     if (state.moments[m.key].captured) b.classList.add('captured');
     b.dataset.key=m.key;
     b.onclick=()=>setMoment(m.key);
-    // contenido con tick opcional
     b.innerHTML = `<span class="text">${m.label}</span><span class="tick">✓</span>`;
     tabs.appendChild(b);
   });
@@ -323,13 +322,12 @@ function startDrag(ev){
       else if (!m.angle3.p1){ m.angle3.p1={x,y}; dragging='p1'; }
       else if (!m.angle3.p2){ m.angle3.p2={x,y}; dragging='p2'; }
       else { m.anchor={x,y}; dragging='anchor'; }
-      save();
     }
   } else {
     if (hit(m.anchor,x,y)) dragging='anchor';
-    else { m.anchor={x,y}; dragging='anchor'; save(); }
+    else { m.anchor={x,y}; dragging='anchor'; }
   }
-  ev.preventDefault();
+  draw(); ev.preventDefault();
 }
 function moveDrag(ev){
   if (!dragging) return;
@@ -340,8 +338,7 @@ function moveDrag(ev){
   if (dragging==='p0')     m.angle3.p0={x,y};
   if (dragging==='p1')     m.angle3.p1={x,y};
   if (dragging==='p2')     m.angle3.p2={x,y};
-  save(); draw();
-  ev.preventDefault();
+  draw(); ev.preventDefault();
 }
 function endDrag(){ dragging=null; }
 cvs.addEventListener('mousedown', startDrag);
@@ -395,7 +392,7 @@ function drawOverlays(){
     if (p0) dot(p0.x,p0.y); if (p1) dot(p1.x,p1.y); if (p2) dot(p2.x,p2.y);
     if (p0 && p1 && p2){
       line(p1.x,p1.y,p0.x,p0.y,[], '#fff',2); line(p1.x,p1.y,p2.x,p2.y,[], '#fff',2);
-      const ang = angleBetween(p0,p1,p2); m.angle3.val = ang; m.angle3.over20 = ang>20; save();
+      const ang = angleBetween(p0,p1,p2); m.angle3.val = ang; m.angle3.over20 = ang>20;
       ctx.save(); ctx.fillStyle = m.angle3.over20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
       ctx.font = 'bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, p1.x+8, p1.y-8); ctx.restore();
       if (m.angle3.over20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p1.x,p1.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
@@ -418,17 +415,17 @@ $('#back1').onclick = ()=>stepFrames(-1);
 $('#fwd1').onclick  = ()=>stepFrames(1);
 $('#back10').onclick= ()=>stepFrames(-10);
 $('#fwd10').onclick = ()=>stepFrames(10);
-$('#invert').onclick= ()=>{ state.invert=!state.invert; save(); draw(); }
+$('#invert').onclick= ()=>{ state.invert=!state.invert; draw(); }
 $('#snap').onclick  = ()=>{
   const dataURL = cvs.toDataURL('image/png');
   const mKey = state.curMoment;
   const m = state.moments[mKey];
   m.snapshots.push({dataURL, when: new Date().toISOString(), frame:m.frame, t:m.t});
-  m.captured = true; save(); renderTabs();
+  m.captured = true; renderTabs();
 };
 
-notesEl.oninput = ()=>{ state.moments[state.curMoment].notes = notesEl.value; save(); };
-fpsInput.onchange = ()=>{ state.fps = Number(fpsInput.value)||240; save(); updateTimeUI(); };
+notesEl.oninput = ()=>{ state.moments[state.curMoment].notes = notesEl.value; };
+fpsInput.onchange = ()=>{ state.fps = Number(fpsInput.value)||240; updateTimeUI(); };
 
 $('#printReport').onclick = ()=>{
   const container = document.getElementById('reportContent');
@@ -461,7 +458,15 @@ $('#printReport').onclick = ()=>{
 };
 
 $('#clearState').onclick = ()=>{
-  if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v32'); location.reload(); }
+  if (confirm('¿Borrar progreso de esta sesión?')) {
+    state = {
+      fps:240, invert:false, curMoment:'toeoff',
+      moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
+        anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
+        snapshots:[], captured:false }]))
+    };
+    renderTabs(); setMoment('toeoff'); fpsInput.value = state.fps;
+  }
 };
 
 /* ========= Carga de video ========= */
