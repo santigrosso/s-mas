@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>S‑MAS | Sprint Mechanics Assessment (offline)</title>
+  <style>
+    :root { --bg:#0b1220; --card:#121a2a; --muted:#97a3b6; --accent:#ff7a00; --ok:#3ddc84; --danger:#ff5b5b; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; background: var(--bg); color: #f2f5f9; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    header { display:flex; gap:12px; align-items:center; padding:14px 16px; border-bottom:1px solid #1f2c44; position:sticky; top:0; background:linear-gradient(180deg, rgba(11,18,32,.98), rgba(11,18,32,.92)); backdrop-filter: blur(6px); z-index:3; }
+    header h1 { font-size: 18px; margin: 0; letter-spacing:.2px; }
+    header .dot { width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 18px var(--accent); }
+    main { display:grid; grid-template-columns: 1.5fr .9fr; gap:16px; padding:16px; }
+    @media (max-width: 1000px){ main{ grid-template-columns:1fr; } }
+    .card { background: var(--card); border: 1px solid #1f2c44; border-radius: 16px; overflow: clip; }
+    .card h2 { font-size:14px; color: #c9d4e5; margin: 0; padding: 12px 14px; border-bottom:1px solid #1f2c44; background:#0e1726; letter-spacing:.3px; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; padding:12px; border-bottom:1px dashed #23324f; align-items:center; }
+    .toolbar .group { display:flex; gap:8px; flex-wrap:wrap; }
+    button, label.btn, .btn {
+      background:#1a2540; color:#e6edf7; border:1px solid #2a3b61; padding:9px 12px; border-radius:12px; cursor:pointer; font-size:13px;
+    }
+    button:hover, label.btn:hover, .btn:hover { border-color:#3b5286; }
+    button.primary { background: var(--accent); color:#0b1220; border-color: #ff8f2a; font-weight:600; }
+    button.good { background: var(--ok); color:#0b1220; border-color:#4bf19b; font-weight:600; }
+    button.ghost { background:transparent; }
+    input[type="file"]{ display:none; }
+    #stage { display:grid; grid-template-rows:auto 1fr auto; height: 66vh; }
+    #canvasWrap { position:relative; background:#0e1726; display:grid; place-items:center; }
+    #frameCanvas { max-width:100%; max-height: 66vh; border-radius: 12px; }
+    #overlay { position:absolute; inset:12px; pointer-events:none; }
+    .statusbar { display:flex; gap:10px; align-items:center; padding:10px 12px; border-top:1px dashed #23324f; font-size:12px; color:#b6c2d6; }
+    .pill { background:#111a2c; border:1px solid #243251; padding:4px 8px; border-radius:999px; }
+    .list { padding:8px; overflow:auto; max-height: 60vh; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid #223052; border-radius:12px; margin:8px; background:#0e1726; }
+    .row .tag { font-size:12px; color:#aab7cc; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:12px; padding:2px 6px; border-radius:6px; border:1px solid #2b3a60; background:#0f182b; color:#e2e9f7}
+    .hint { color:#8ea0bb; font-size:12px; padding: 6px 12px 12px; }
+    .muted { color: var(--muted); }
+    .spacer { flex:1; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .danger { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="dot"></div>
+    <h1>S‑MAS • Sprint Mechanics Assessment (local / GitHub Pages)</h1>
+    <div class="spacer"></div>
+    <span class="hint">Atajos: <span class="kbd">J</span> -1f | <span class="kbd">K</span> +1f | <span class="kbd">M</span> marcar</span>
+  </header>
+
+  <main>
+    <section class="card" id="left">
+      <h2>Video y Controles</h2>
+      <div class="toolbar">
+        <div class="group">
+          <label class="btn">
+            📂 Cargar video
+            <input id="fileInput" type="file" accept="video/*" />
+          </label>
+          <button id="playPause">▶️ Reproducir</button>
+          <button id="prevFrame">⏮️ -1 frame</button>
+          <button id="nextFrame">⏭️ +1 frame</button>
+          <button id="mark" class="primary">🏷️ Marcar fotograma</button>
+          <select id="markType">
+            <option value="TD">TD (foot strike)</option>
+            <option value="TO">TO (toe-off)</option>
+            <option value="MS">Mid‑stance</option>
+            <option value="FS">Full‑support</option>
+          </select>
+        </div>
+        <div class="group">
+          <button id="zoomIn">🔍 +</button>
+          <button id="zoomOut">🔎 −</button>
+          <button id="resetZoom" class="ghost">Reset</button>
+        </div>
+        <div class="group">
+          <button id="exportJson" class="good">⬇️ Exportar JSON</button>
+          <button id="importJson">⬆️ Importar JSON</button>
+          <input id="jsonInput" type="file" accept="application/json" />
+        </div>
+      </div>
+
+      <div id="stage">
+        <div id="canvasWrap">
+          <canvas id="frameCanvas"></canvas>
+          <canvas id="overlay"></canvas>
+          <video id="video" style="display:none;"></video>
+        </div>
+        <div class="statusbar">
+          <span class="pill">Tiempo: <span id="time">0.000s</span></span>
+          <span class="pill">Frame: <span id="frame">0</span></span>
+          <span class="pill">FPS aprox: <span id="fps">30</span></span>
+          <span class="pill">Zoom: <span id="zoom">1.0×</span></span>
+          <div class="spacer"></div>
+          <span class="muted">Todo se guarda localmente (<span class="kbd">localStorage</span>)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="right">
+      <h2>Marcas (keyframes)</h2>
+      <div class="hint">Consejo: Navegá con <span class="kbd">J</span>/<span class="kbd">K</span> para ir frame a frame. Usá <span class="kbd">M</span> para marcar rápido.</div>
+      <div id="marks" class="list"></div>
+      <div class="toolbar">
+        <div class="grid2" style="width:100%">
+          <button id="clear" class="danger">🗑️ Limpiar marcas</button>
+          <button id="save" class="good">💾 Guardar sesión</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (function(){
+    const els = (id)=>document.getElementById(id);
+    const v = els('video');
+    const c = els('frameCanvas');
+    const o = els('overlay');
+    const ctx = c.getContext('2d');
+    const octx = o.getContext('2d');
+
+    const state = {
+      fps: 30,
+      zoom: 1,
+      marks: [], // {t, frame, type}
+      currentKey: null,
+      videoName: null,
+    };
+
+    // Resize canvas to video
+    function fitCanvas(){
+      if(!v.videoWidth) return;
+      const maxW = c.parentElement.clientWidth - 24;
+      const maxH = c.parentElement.clientHeight - 24;
+      let w = v.videoWidth, h = v.videoHeight;
+      const scale = Math.min(maxW / w, maxH / h) * state.zoom;
+      c.width = Math.max(1, Math.floor(w * scale));
+      c.height = Math.max(1, Math.floor(h * scale));
+      o.width = c.width; o.height = c.height;
+      draw();
+    }
+
+    function draw(){
+      if(!v.videoWidth) return;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(v, 0, 0, c.width, c.height);
+      // Overlay: crosshair + current time
+      octx.clearRect(0,0,o.width,o.height);
+      octx.globalAlpha = .9;
+      octx.strokeStyle = 'rgba(151,163,182,.5)';
+      octx.lineWidth = 1;
+      // center crosshair
+      octx.beginPath();
+      octx.moveTo(o.width/2, 0); octx.lineTo(o.width/2, o.height); 
+      octx.moveTo(0, o.height/2); octx.lineTo(o.width, o.height/2);
+      octx.stroke();
+      // time badge
+      const badge = `${v.currentTime.toFixed(3)}s`;
+      octx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      const w = octx.measureText(badge).width + 12;
+      octx.fillStyle = 'rgba(17,26,44,.8)';
+      octx.strokeStyle = 'rgba(36,50,81,.9)';
+      octx.lineWidth = 1;
+      octx.beginPath();
+      const x=8, y=8, h=22, r=8;
+      octx.moveTo(x+r,y);
+      octx.arcTo(x+w,y,x+w,y+h,r);
+      octx.arcTo(x+w,y+h,x,y+h,r);
+      octx.arcTo(x,y+h,x,y,r);
+      octx.arcTo(x,y,x+w,y,r);
+      octx.closePath();
+      octx.fill(); octx.stroke();
+      octx.fillStyle = '#e6edf7';
+      octx.fillText(badge, x+6, y+15);
+    }
+
+    function updateStatus(){
+      els('time').textContent = v.currentTime.toFixed(3)+'s';
+      const frameIndex = Math.round(v.currentTime * state.fps);
+      els('frame').textContent = frameIndex;
+      els('fps').textContent = Math.round(state.fps);
+      els('zoom').textContent = state.zoom.toFixed(1)+'×';
+    }
+
+    function step(dFrames){
+      const dt = dFrames / state.fps;
+      v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + dt));
+      draw(); updateStatus();
+    }
+
+    function addMark(type){
+      const frameIndex = Math.round(v.currentTime * state.fps);
+      const mark = { t: Number(v.currentTime.toFixed(3)), frame: frameIndex, type };
+      state.marks.push(mark);
+      renderMarks();
+      persist();
+    }
+
+    function removeMark(idx){
+      state.marks.splice(idx,1);
+      renderMarks();
+      persist();
+    }
+
+    function renderMarks(){
+      const box = els('marks');
+      if(!state.marks.length){
+        box.innerHTML = '<div class="hint">No hay marcas aún. Usá <span class="kbd">M</span> o el botón “Marcar fotograma”.</div>';
+        return;
+      }
+      box.innerHTML = '';
+      state.marks
+        .sort((a,b)=>a.t-b.t)
+        .forEach((m, i)=>{
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div>
+              <div><strong>${m.type}</strong> <span class="tag">t=${m.t.toFixed(3)}s</span> <span class="tag">#${m.frame}</span></div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button data-jump="${m.t}" title="Ir">Ir</button>
+              <button data-del="${i}" title="Borrar">✕</button>
+            </div>
+          `;
+          row.querySelector('[data-jump]').onclick = (e)=>{ v.currentTime = m.t; draw(); updateStatus(); };
+          row.querySelector('[data-del]').onclick = ()=> removeMark(i);
+          box.appendChild(row);
+        });
+    }
+
+    // Persistence
+    const KEY = 'smas_session_v1';
+    function persist(){
+      try {
+        const payload = { marks: state.marks, fps: state.fps, videoName: state.videoName };
+        localStorage.setItem(KEY, JSON.stringify(payload));
+      } catch(e){ console.warn('persist failed', e); }
+    }
+    function restore(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return;
+        const data = JSON.parse(raw);
+        state.marks = Array.isArray(data.marks) ? data.marks : [];
+        state.fps = Number(data.fps) || 30;
+        state.videoName = data.videoName || null;
+        renderMarks();
+      }catch(e){ console.warn('restore failed', e); }
+    }
+    restore();
+
+    // Estimate FPS via readyState changes (fallback 30)
+    function estimateFPS(){
+      // Try using frame metadata if supported
+      if ('requestVideoFrameCallback' in HTMLVideoElement.prototype){
+        let lastTs=null, samples=[];
+        const f = (now, meta)=>{
+          if(lastTs!=null){
+            const dt = (meta.mediaTime - lastTs);
+            if(dt>0 && dt<0.1) samples.push(1/dt);
+            if(samples.length > 12){
+              state.fps = samples.reduce((a,b)=>a+b,0)/samples.length;
+              updateStatus();
+              return; // stop after enough samples
+            }
+          }
+          lastTs = meta.mediaTime;
+          v.requestVideoFrameCallback(f);
+        };
+        v.requestVideoFrameCallback(f);
+      } else {
+        // Fallback: assume 30
+        state.fps = 30;
+      }
+    }
+
+    // UI wiring
+    els('fileInput').addEventListener('change', (e)=>{
+      const file = e.target.files?.[0];
+      if(!file) return;
+      const url = URL.createObjectURL(file);
+      v.src = url;
+      state.videoName = file.name;
+      v.onloadedmetadata = ()=>{
+        estimateFPS();
+        fitCanvas();
+        draw(); updateStatus(); persist();
+      };
+    });
+
+    window.addEventListener('resize', fitCanvas);
+
+    els('playPause').onclick = ()=>{
+      if(v.paused){ v.play(); els('playPause').textContent = '⏸️ Pausar'; }
+      else { v.pause(); els('playPause').textContent = '▶️ Reproducir'; }
+    };
+    v.addEventListener('play', ()=>{
+      const tick = ()=>{ if(!v.paused && !v.ended){ draw(); updateStatus(); requestAnimationFrame(tick);} };
+      requestAnimationFrame(tick);
+    });
+
+    els('prevFrame').onclick = ()=> step(-1);
+    els('nextFrame').onclick = ()=> step(+1);
+    els('mark').onclick = ()=> addMark(els('markType').value);
+
+    // Hotkeys
+    document.addEventListener('keydown', (e)=>{
+      if(e.target.tagName === 'INPUT') return;
+      if(e.key.toLowerCase() === 'j'){ step(-1); }
+      if(e.key.toLowerCase() === 'k'){ step(+1); }
+      if(e.key.toLowerCase() === 'm'){ addMark(els('markType').value); }
+      if(e.key === ' '){ e.preventDefault(); els('playPause').click(); }
+    });
+
+    // Zoom
+    els('zoomIn').onclick = ()=>{ state.zoom = Math.min(3, state.zoom + .1); fitCanvas(); updateStatus(); };
+    els('zoomOut').onclick = ()=>{ state.zoom = Math.max(.5, state.zoom - .1); fitCanvas(); updateStatus(); };
+    els('resetZoom').onclick = ()=>{ state.zoom = 1; fitCanvas(); updateStatus(); };
+
+    // Export / Import
+    els('exportJson').onclick = ()=>{
+      const blob = new Blob([JSON.stringify({marks: state.marks, fps: state.fps, video: state.videoName}, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (state.videoName ? state.videoName.replace(/\.[^.]+$/, '') : 'smas') + '_marks.json';
+      a.click();
+    };
+    const jsonInput = els('jsonInput');
+    els('importJson').onclick = ()=> jsonInput.click();
+    jsonInput.addEventListener('change', (e)=>{
+      const f = e.target.files?.[0];
+      if(!f) return;
+      f.text().then(txt=>{
+        try{
+          const data = JSON.parse(txt);
+          state.marks = Array.isArray(data.marks)? data.marks : [];
+          if(data.fps) state.fps = Number(data.fps);
+          renderMarks(); persist();
+        }catch(err){ alert('JSON inválido'); }
+      });
+    });
+
+    // Save / Clear
+    els('save').onclick = ()=>{ persist(); const a = document.createElement('a'); a.textContent=''; alert('Sesión guardada localmente.'); };
+    els('clear').onclick = ()=>{
+      if(confirm('¿Borrar todas las marcas?')){
+        state.marks = []; renderMarks(); persist();
+      }
+    };
+
+  })();
+  </script>
+</body>
+</html>
