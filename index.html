@@ -9,78 +9,97 @@
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c;
   }
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
   header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
-  .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
+  header .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
+
   main{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
   .row{display:flex;gap:10px;flex-wrap:wrap}
   .card{background:var(--panel);border:1px solid #163551;border-radius:12px;padding:10px}
-  #videoWrap{position:relative;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
+
+  #videoPanel{flex:2 1 520px}
+  #sidePanel{flex:1 1 320px}
+
+  /* Tabs estilo navegador */
+  .tabsWrap{display:flex;gap:6px;align-items:flex-end;margin-bottom:8px}
+  .tab{
+    position:relative; cursor:pointer;
+    padding:10px 14px; font-size:13px; font-weight:600;
+    background:#0f2a44; color:#cfe0f5;
+    border:1px solid #204667; border-bottom:none;
+    border-top-left-radius:12px; border-top-right-radius:12px;
+    transition:transform .15s ease, background .2s ease;
+  }
+  .tab:hover{ transform:translateY(-1px); }
+  .tab.active{ background:var(--acc); color:#000; border-color:var(--acc); }
+  .tab.done{ outline:2px solid var(--ok); box-shadow:0 0 0 2px rgba(25,179,106,.25) inset; }
+  .tab small{ display:block; font-weight:700; opacity:.9 }
+
+  /* Descripción del momento */
+  .momentDesc{
+    margin:-2px 0 8px 0; padding:8px 10px; border:1px solid #204667; border-radius:10px;
+    background:#0f2a44; color:#d7e7ff; font-size:13px;
+  }
+
+  /* Video area */
+  #videoWrap{position:relative;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;
+    border:2px solid #173a5d; transition:border-color .25s ease, box-shadow .25s ease}
+  #videoWrap.flash{ border-color:var(--ok); box-shadow:0 0 0 4px rgba(25,179,106,.25); }
   video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
   canvas{position:absolute;left:0;top:0}
   .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
   button.small{padding:6px 8px;border-radius:8px;font-weight:600}
-  .tabs{display:flex;gap:6px;flex-wrap:wrap}
-  .tab{padding:8px 10px;border-radius:10px;background:#0f2a44;border:1px solid #204667;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
-  .tab.active{background:var(--acc);color:#000;border-color:var(--acc)}
-  .tab.done{background:var(--ok);color:#000;border-color:var(--ok)}
-  .grid{display:grid;grid-template-columns:1fr;gap:8px}
-  .q{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#0f2a44;border-radius:8px;border:1px solid #204667}
-  .score{font-weight:800}
+  .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
+
+  /* Switch iOS */
+  .switch{position:relative; width:48px; height:28px; flex:0 0 auto}
+  .switch input{display:none}
+  .slider{
+    position:absolute; inset:0; background:#3c5572; border-radius:999px; transition:background .2s ease;
+  }
+  .slider:before{
+    content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:transform .2s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+  .switch input:checked + .slider{ background:var(--ok); }
+  .switch input:checked + .slider:before{ transform:translateX(20px); }
+  .q{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid #204667}
+  .q label{flex:1;}
+
+  .score{font-weight:800}
   #report{display:none;background:#fff;color:#000;padding:12px}
   #report h2{margin:.2em 0 .4em;font-size:16px}
   #report .page{break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}
   #report img{max-width:100%}
   @media print { header, #app, footer { display:none } #report{display:block} body{background:#fff} }
-  /* Toggle estilo iOS */
-  .switch{position:relative;width:48px;height:28px;background:#6a7a8a;border-radius:999px;border:1px solid #3a516a;flex:0 0 auto;cursor:pointer;transition:background .15s ease}
-  .switch::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s ease}
-  .switch.on{background:#28cf7a;border-color:#28cf7a}
-  .switch.on::after{left:22px}
-  /* Barra de progreso */
-  .seekbar{appearance:none;width:100%;height:8px;border-radius:999px;background:#0f2a44;outline:none;border:1px solid #204667}
-  .seekbar::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc);border:2px solid #000;margin-top:-5px}
-  .seekwrap{display:flex;align-items:center;gap:8px;margin-top:8px}
-  .time{font-variant-numeric:tabular-nums}
-  footer{padding:12px 16px;color:#9fb2c8;font-size:12px;border-top:1px solid #163551;text-align:center}
-  .desc{font-size:13px;color:#cfe0f4;background:#0f2a44;border:1px solid #204667;border-radius:10px;padding:8px}
+
+  footer{padding:14px; text-align:center; color:#94a7bd}
 </style>
 </head>
 <body>
 <header>
-  <div style="display:flex;align-items:center;gap:12px">
-    <h1>S-MAS • Sprint Mechanics Assessment</h1>
-    <span class="pill">Local • Offline</span>
-    <span class="pill">HEVC / 240 fps</span>
-  </div>
-  <div class="controls">
-    <input id="file" type="file" accept="video/*" />
-    <button class="ghost small" id="clearState">Limpiar</button>
-  </div>
+  <h1>S-MAS • Sprint Mechanics Assessment</h1>
+  <span class="pill">Local • Offline</span>
+  <span class="pill">HEVC / 240 fps</span>
 </header>
 
 <div id="app">
   <main>
     <div class="row">
-      <div class="card" style="flex:2 1 560px">
-        <!-- Pestañas arriba del video -->
-        <div class="tabs" id="tabs"></div>
-        <div class="desc" id="momentDesc" style="margin:8px 0 6px">—</div>
+      <div id="videoPanel" class="card">
+
+        <!-- Tabs arriba del video -->
+        <div class="tabsWrap" id="tabs"></div>
+        <div class="momentDesc" id="momentDesc"></div>
 
         <div id="videoWrap">
           <video id="vid" playsinline muted controls preload="metadata"></video>
           <canvas id="overlay"></canvas>
-        </div>
-
-        <!-- Barra de progreso estilo YouTube -->
-        <div class="seekwrap">
-          <span class="time" id="tcur">0:00</span>
-          <input id="seek" class="seekbar" type="range" min="0" max="1000" value="0" />
-          <span class="time" id="tmax">0:00</span>
         </div>
 
         <div class="controls" style="margin-top:8px;flex-wrap:wrap">
@@ -91,18 +110,29 @@
           <button id="fwd10" class="small">+10</button>
           <button id="snap" class="small">Capturar imagen</button>
           <button id="invert" class="small">Invertir plantilla (izq/der)</button>
-          <span class="pill">fps <input id="fps" type="number" value="240" min="1" max="480" style="width:70px;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:6px"/></span>
           <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
           <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
         </div>
       </div>
 
-      <div class="card" style="flex:1 1 320px">
+      <div id="sidePanel" class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <strong>Checklist del momento</strong>
-          <span class="label">deslizar ON/OFF</span>
+          <div class="controls">
+            <input id="file" type="file" accept="video/*" />
+            <button class="ghost small" id="clearState">Limpiar</button>
+          </div>
+          <div class="controls">
+            <span class="label">fps objetivo</span>
+            <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:6px"/>
+          </div>
         </div>
-        <div id="questions" class="grid"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Preguntas del momento</strong>
+          <span class="label">desliza para Sí/No</span>
+        </div>
+        <div id="questions"></div>
+
         <div class="hr"></div>
         <div class="grid">
           <div><span class="label">Puntaje del momento</span><div class="score" id="momentScore">0</div></div>
@@ -130,25 +160,18 @@
 </div>
 
 <footer>
-  Desarrollado por Santiago Grosso – S-MAS Project
+  Desarrollado por Santiago Grosso · Versión S-MAS v3
 </footer>
 
 <script>
 /* ========= Estado ========= */
 const MOMENTS = [
-  {key:'toeoff', label:'Toe-off'},
-  {key:'mvp', label:'Max Vertical Projection'},
-  {key:'lateswing', label:'Late Swing'},
-  {key:'touchdown', label:'Touchdown'},
-  {key:'midstance', label:'Mid-stance'},
+  {key:'toeoff', label:'Toe-off', desc:'Punto inmediatamente anterior a que el pie contralateral deje el suelo.'},
+  {key:'mvp', label:'Max Vertical Projection', desc:'Punto intermedio entre el Toe-off y el Touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.'},
+  {key:'lateswing', label:'Late Swing', desc:'Punto de máxima extensión de rodilla durante la fase de swing.'},
+  {key:'touchdown', label:'Touch-down', desc:'Punto de primer contacto con el suelo.'},
+  {key:'midstance', label:'Mid-stance', desc:'Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo.'},
 ];
-const DESC = {
-  toeoff: "Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
-  mvp: "Punto intermedio entre Toe-off y Touchdown; la pelvis está en su punto más alto de la fase de swing.",
-  lateswing: "Punto de máxima extensión de rodilla durante la fase de swing.",
-  touchdown: "Punto de primer contacto con el suelo.",
-  midstance: "Punto donde la pelvis está directamente sobre la articulación del tobillo."
-};
 const QUESTIONS = {
   toeoff: [ "¿Demasiada extensión de cadera?" ],
   mvp: [ "¿Rotación excesiva de tronco?", "¿Está el talón de la pierna trasera por encima de la pantorrilla?" ],
@@ -169,8 +192,7 @@ const GRADE = (score)=>{
 let state = JSON.parse(localStorage.getItem('smas_state_v3')||'null') || {
   fps:240, invert:false, curMoment:'toeoff',
   moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
-    anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
-    snapshots:[], captured:false }]))
+    anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false}, snapshots:[], done:false }]))
 };
 
 /* ========= DOM ========= */
@@ -178,36 +200,49 @@ const $ = sel=>document.querySelector(sel);
 const file=$('#file'), vid=$('#vid'), wrap=$('#videoWrap');
 const cvs=$('#overlay'), ctx=cvs.getContext('2d');
 const fpsInput=$('#fps'), ctime=$('#ctime'), fnum=$('#fnum');
-const tabs=$('#tabs'), questions=$('#questions'), momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade'), curMomentLabel=$('#curMomentLabel');
-const notesEl=$('#notes'), momentDesc=$('#momentDesc');
-const tcur=$('#tcur'), tmax=$('#tmax'), seek=$('#seek');
+const tabs=$('#tabs'), momentDesc=$('#momentDesc');
+const questions=$('#questions'), momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade'), curMomentLabel=$('#curMomentLabel');
+const notesEl=$('#notes');
 
 function save(){ localStorage.setItem('smas_state_v3', JSON.stringify(state)); }
+
+/* ========= Tabs / momentos ========= */
 function setMoment(key){
   state.curMoment = key; save();
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.key===key));
-  curMomentLabel.textContent = MOMENTS.find(m=>m.key===key).label;
-  momentDesc.textContent = DESC[key] || "—";
-  renderQuestions(); notesEl.value = state.moments[key].notes||''; draw();
+  const mConf = MOMENTS.find(m=>m.key===key);
+  curMomentLabel.textContent = mConf.label;
+  momentDesc.textContent = mConf.desc;
+  notesEl.value = state.moments[key].notes||'';
+  renderQuestions();
+  draw();
 }
 function renderTabs(){
   tabs.innerHTML='';
-  MOMENTS.forEach((m,idx)=>{
-    const b=document.createElement('button');
-    b.className='tab'+(state.curMoment===m.key?' active':'')+(state.moments[m.key].captured?' done':'');
-    b.textContent=m.label; b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
+  MOMENTS.forEach(m=>{
+    const b=document.createElement('div');
+    b.className='tab'+(state.curMoment===m.key?' active':'')+(state.moments[m.key].done?' done':'');
+    b.textContent=m.label;
+    b.dataset.key=m.key;
+    b.onclick=()=>setMoment(m.key);
     tabs.appendChild(b);
   });
 }
+
+/* ========= Preguntas (switch iOS) ========= */
 function renderQuestions(){
   const m = state.moments[state.curMoment];
   questions.innerHTML='';
   QUESTIONS[state.curMoment].forEach((q,i)=>{
     const row=document.createElement('div'); row.className='q';
-    const lab=document.createElement('div'); lab.textContent=q;
-    const sw=document.createElement('div'); sw.className='switch'+(m.checks[i]?' on':'');
-    sw.onclick=()=>{ m.checks[i]=!m.checks[i]; sw.classList.toggle('on'); save(); refreshScores(); draw(); };
-    row.appendChild(lab); row.appendChild(sw); questions.appendChild(row);
+    const lab=document.createElement('label'); lab.textContent=q;
+    const sw=document.createElement('label'); sw.className='switch';
+    const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i];
+    input.onchange=()=>{ m.checks[i]=input.checked; save(); refreshScores(); draw(); };
+    const slider=document.createElement('span'); slider.className='slider';
+    sw.appendChild(input); sw.appendChild(slider);
+    row.appendChild(lab); row.appendChild(sw);
+    questions.appendChild(row);
   });
   refreshScores();
 }
@@ -244,25 +279,11 @@ function updateTimeUI(){
   fnum.textContent = frame;
   const m = state.moments[state.curMoment];
   m.t = vid.currentTime||0; m.frame=frame; save();
-  // seekbar
-  if (vid.duration) {
-    seek.value = Math.round((vid.currentTime/vid.duration)*1000);
-    tcur.textContent = fmt(vid.currentTime);
-    tmax.textContent = fmt(vid.duration);
-  }
 }
-function fmt(t){ if (!isFinite(t)) return "0:00"; const m=Math.floor(t/60); const s=Math.floor(t%60); return m+":"+(s<10?"0":"")+s; }
-
 vid.addEventListener('timeupdate', ()=>{ updateTimeUI(); draw(); });
 vid.addEventListener('seeked', ()=>{ updateTimeUI(); draw(); });
 vid.addEventListener('loadeddata', ()=>{ updateTimeUI(); draw(); });
 window.addEventListener('resize', draw);
-
-seek.addEventListener('input', ()=>{
-  if (!vid.duration) return;
-  const target = (seek.value/1000)*vid.duration;
-  vid.currentTime = target;
-});
 
 /* ========= Interacción overlay ========= */
 let dragging=null;
@@ -325,9 +346,11 @@ function line(x1,y1,x2,y2, dash=[], color='white', width=2){
 function dot(x,y,color='white'){
   ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); ctx.restore();
 }
-function drawCrossAt(x,y, invert=false, angleDeg=45){
+function drawCrossAt(x,y, invert=false, angleDegFromHorizontal=45){
+  // Vertical
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
-  const a = (invert? -1: 1) * (angleDeg*Math.PI/180);
+  // Diagonal con respecto al eje X (horizontal)
+  const a = (invert? -1: 1) * (angleDegFromHorizontal*Math.PI/180);
   const len = Math.max(cvs.width,cvs.height);
   const dx = Math.cos(a)*len, dy = -Math.sin(a)*len;
   line(x - dx, y + dy, x + dx, y - dy, [6,4], 'rgba(255,255,255,.85)');
@@ -347,12 +370,22 @@ function angleBetween(p0,p1,p2){
 }
 function drawOverlays(){
   const m = currentMoment(); const invert = state.invert;
-  if (state.curMoment==='toeoff'){ drawCrossAt(m.anchor.x, m.anchor.y, invert, 45); }
-  else if (state.curMoment==='mvp'){ drawVHAt(m.anchor.x, m.anchor.y); }
-  else if (state.curMoment==='lateswing'){ drawVHAt(m.anchor.x, m.anchor.y); }
+  if (state.curMoment==='toeoff'){ // 45° respecto a horizontal
+    drawCrossAt(m.anchor.x, m.anchor.y, invert, 45);
+  }
+  else if (state.curMoment==='mvp'){ // vertical + horizontal
+    drawVHAt(m.anchor.x, m.anchor.y);
+  }
+  else if (state.curMoment==='lateswing'){ // vertical + horizontal
+    drawVHAt(m.anchor.x, m.anchor.y);
+  }
   else if (state.curMoment==='touchdown'){
-    line(m.ankle.x, 0, m.ankle.x, cvs.height, [4,4], 'rgba(255,255,255,.7)'); dot(m.ankle.x, m.ankle.y||m.ankle.x);
-    drawCrossAt(m.anchor.x, m.anchor.y, invert, 15);
+    // Vertical en tobillo (guía)
+    line(m.ankle.x, 0, m.ankle.x, cvs.height, [4,4], 'rgba(255,255,255,.7)');
+    dot(m.ankle.x, m.ankle.y||m.ankle.x);
+    // Diagonal que forma 15° con la VERTICAL ⇒ 75° respecto de la horizontal
+    drawCrossAt(m.anchor.x, m.anchor.y, invert, 75);
+    // Ángulo 3 puntos + alerta >20°
     const {p0,p1,p2}=m.angle3;
     if (p0) dot(p0.x,p0.y); if (p1) dot(p1.x,p1.y); if (p2) dot(p2.x,p2.y);
     if (p0 && p1 && p2){
@@ -362,35 +395,42 @@ function drawOverlays(){
       ctx.font = 'bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, p1.x+8, p1.y-8); ctx.restore();
       if (m.angle3.over20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p1.x,p1.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
     }
-  } else if (state.curMoment==='midstance'){
-    const h = cvs.height*0.12; line(m.anchor.x, m.anchor.y-h/2, m.anchor.x, m.anchor.y+h/2, [], 'rgba(255,255,255,.85)', 3); dot(m.anchor.x, m.anchor.y);
   }
-  // Indicador: arrastrar
-  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui';
-  ctx.fillText('Arrastrá los puntos para posicionar las plantillas', 10, cvs.height-10); ctx.restore();
+  else if (state.curMoment==='midstance'){
+    // Línea corta vertical con puntos en EXTREMOS (no en el centro)
+    const h = cvs.height*0.12;
+    line(m.anchor.x, m.anchor.y-h/2, m.anchor.x, m.anchor.y+h/2, [], 'rgba(255,255,255,.85)', 3);
+    dot(m.anchor.x, m.anchor.y-h/2);
+    dot(m.anchor.x, m.anchor.y+h/2);
+  }
+  // Hint
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Arrastrá los puntos para posicionar las plantillas', 10, cvs.height-10); ctx.restore();
 }
 
 /* ========= Acciones ========= */
-$('#play').onclick = async ()=>{ try{ if (vid.paused) await vid.play(); else vid.pause(); }catch(e){} };
+$('#play').onclick = async ()=>{ try{ if (vid.paused) { await vid.play(); } else { vid.pause(); } }catch(e){ console.warn(e); } };
 $('#back1').onclick = ()=>stepFrames(-1);
 $('#fwd1').onclick  = ()=>stepFrames(1);
 $('#back10').onclick= ()=>stepFrames(-10);
 $('#fwd10').onclick = ()=>stepFrames(10);
-$('#invert').onclick= ()=>{ state.invert=!state.invert; save(); draw(); };
-
-// Capturar imagen: guarda + marca pestaña done + avanza al siguiente momento (sin descargar)
+$('#invert').onclick= ()=>{ state.invert=!state.invert; save(); draw(); }
 $('#snap').onclick  = ()=>{
+  // captura sin descargar, guarda para el reporte, marca DONE y avanza
   const dataURL = cvs.toDataURL('image/png');
-  const key = state.curMoment;
-  const m = state.moments[key];
+  const mKey = state.curMoment;
+  const m = state.moments[mKey];
   m.snapshots.push({dataURL, when: new Date().toISOString(), frame:m.frame, t:m.t});
-  m.captured = true; save(); renderTabs(); // pestaña en verde
-  // avanzar al siguiente momento
-  const idx = MOMENTS.findIndex(mm=>mm.key===key);
-  const next = MOMENTS[idx+1]?.key || key;
-  setMoment(next);
+  m.done = true; save();
+  // feedback visual en el recuadro
+  wrap.classList.add('flash'); setTimeout(()=>wrap.classList.remove('flash'), 600);
+  // refrescar tabs (marca verde)
+  renderTabs();
+  // avanzar automáticamente al siguiente momento
+  const idx = MOMENTS.findIndex(x=>x.key===mKey);
+  if (idx < MOMENTS.length-1){
+    setMoment(MOMENTS[idx+1].key);
+  }
 };
-
 notesEl.oninput = ()=>{ state.moments[state.curMoment].notes = notesEl.value; save(); };
 fpsInput.onchange = ()=>{ state.fps = Number(fpsInput.value)||240; save(); updateTimeUI(); };
 
@@ -424,21 +464,22 @@ $('#printReport').onclick = ()=>{
   window.print();
 };
 
-$('#clearState').onclick = ()=>{ if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v3'); location.reload(); } };
+$('#clearState').onclick = ()=>{
+  if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v3'); location.reload(); }
+};
 
 /* ========= Carga de video ========= */
 file.onchange = ()=>{
   const f=file.files[0]; if (!f) return;
   const url=URL.createObjectURL(f);
   vid.src=url; vid.load();
-  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime = 0.001; tmax.textContent = fmt(vid.duration||0); };
+  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime = 0.001; };
 };
 
-function init(){
-  renderTabs(); setMoment(state.curMoment);
-  fpsInput.value = state.fps;
-}
-init();
+// init
+(function init(){
+  renderTabs(); setMoment(state.curMoment); fpsInput.value = state.fps;
+})();
 </script>
 </body>
 </html>
