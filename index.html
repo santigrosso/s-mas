@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.1)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.2)</title>
 <style>
   :root{
-    --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c;
-    --bdr:#204667;
+    --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
+    --tab-active:#0f2a44;   /* azul igual al cuadro debajo del video */
+    --tab-inactive:#c9d1dc; /* gris claro para pestañas apagadas */
+    --tab-inactive-text:#0f1720; /* texto oscuro para contraste en gris */
   }
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
@@ -26,45 +28,49 @@
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  /* Pestañas (más bajas, solo esquinas superiores redondeadas, activa sin borde inferior) */
+  /* Pestañas (más bajas; activa azul, resto gris; bordes sup redondeados, activa sin borde inferior) */
   .tabsWrap{width:100%;}
-  .tabs{display:flex;gap:0; width:100%;}
+  .tabs{display:flex;gap:0;width:100%;}
   .tab{
-    flex:1 1 0; text-align:center; padding:7px 4px; /* más bajitas */
-    background:#0f2a44; border:1px solid var(--bdr); border-right:none; border-bottom:1px solid var(--bdr);
+    flex:1 1 0; text-align:center; padding:7px 4px;
+    background:var(--tab-inactive); color:var(--tab-inactive-text);
+    border:1px solid #b8c4d2; border-right:none; border-bottom:1px solid #b8c4d2;
     cursor:pointer; font-size:12.5px; user-select:none; line-height:1;
     border-top-left-radius:10px; border-top-right-radius:10px;
     border-bottom-left-radius:0; border-bottom-right-radius:0;
+    display:flex; align-items:center; justify-content:center; gap:6px;
   }
-  .tab:first-child{}
-  .tab:last-child{border-right:1px solid var(--bdr)}
+  .tab:last-child{border-right:1px solid #b8c4d2}
   .tab.active{
-    background:var(--acc); color:#000; border-color:var(--acc);
-    border-bottom-color:transparent; /* mostrar continuidad con el frame actual */
+    background:var(--tab-active); color:#fff; border-color:var(--tab-active);
+    border-bottom-color:transparent;
   }
-  .tab.captured{background:var(--ok);color:#000;border-color:#10a55f;border-bottom-color:transparent}
-  /* Descripción del momento pegada a las pestañas */
+  .tab .tick{display:none; font-weight:900}
+  .tab.captured .tick{display:inline}
+  /* Descripción del momento (mismo ancho del video/pestañas) */
   .momentDesc{
-    width:100%; background:#0f2a44; border:1px solid var(--bdr); border-top:none;
-    margin-top:-1px; /* se "pega" a la pestaña activa sin línea entre medio */
-    padding:6px 10px; color:#d8e4f1; border-bottom-left-radius:10px;border-bottom-right-radius:10px;
-    font-size:13px; min-height:34px; display:flex; align-items:center;
+    width:100%; background:var(--tab-active); border:1px solid var(--tab-active); border-top:none;
+    margin-top:-1px; padding:6px 10px; color:#d8e4f1;
+    border-bottom-left-radius:10px;border-bottom-right-radius:10px;
+    font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
   }
-  /* Switch iOS (compacto, tipo interruptor cortito) */
+  /* Switch iOS compacto */
   .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr)}
   .q label{flex:1}
-  .switch{position:relative;width:40px;height:24px;flex:0 0 40px}
+  .switch{position:relative;width:36px;height:22px;flex:0 0 36px}
   .switch input{opacity:0;width:0;height:0}
   .slider{
     position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
   }
   .slider:before{
-    content:""; position:absolute; height:20px; width:20px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease;
+    content:""; position:absolute; height:18px; width:18px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease;
     box-shadow:0 1px 2px rgba(0,0,0,.35);
   }
   .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
-  .switch input:checked + .slider:before{ transform: translateX(16px); }
+  .switch input:checked + .slider:before{ transform: translateX(14px); }
+  /* Botón deshabilitado */
+  button[disabled]{opacity:.5; cursor:not-allowed}
   /* Reporte imprimible */
   #report{display:none;background:#fff;color:#000;padding:12px}
   #report h2{margin:.2em 0 .4em;font-size:16px}
@@ -141,7 +147,8 @@
         </div>
         <div class="hr"></div>
         <div class="grid">
-          <button id="printReport">Generar reporte (Imprimir → PDF)</button>
+          <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
+          <span class="label" id="reportHint">Necesitás capturar los 5 momentos (ver tildes en las pestañas).</span>
         </div>
       </div>
     </div>
@@ -189,7 +196,7 @@ const GRADE = (score)=>{
   return "—";
 };
 
-let state = JSON.parse(localStorage.getItem('smas_state_v31')||'null') || {
+let state = JSON.parse(localStorage.getItem('smas_state_v32')||'null') || {
   fps:240, invert:false, curMoment:'toeoff',
   moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
     anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
@@ -203,8 +210,16 @@ const cvs=$('#overlay'), ctx=cvs.getContext('2d');
 const fpsInput=$('#fps'), ctime=$('#ctime'), fnum=$('#fnum');
 const tabs=$('#tabs'), momentDesc=$('#momentDesc'), questions=$('#questions'), momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade'), curMomentLabel=$('#curMomentLabel');
 const notesEl=$('#notes');
+const printBtn=$('#printReport'), reportHint=$('#reportHint');
 
-function save(){ localStorage.setItem('smas_state_v31', JSON.stringify(state)); }
+function save(){ localStorage.setItem('smas_state_v32', JSON.stringify(state)); }
+function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
+function updateReportAvailability(){
+  const ok = allCaptured();
+  printBtn.disabled = !ok;
+  reportHint.style.display = ok ? 'none' : 'inline';
+}
+
 function setMoment(key){
   state.curMoment = key; save();
   renderTabs();
@@ -212,16 +227,22 @@ function setMoment(key){
   curMomentLabel.textContent = MOMENTS.find(m=>m.key===key).label;
   renderQuestions(); notesEl.value = state.moments[key].notes||''; draw();
 }
+
 function renderTabs(){
   tabs.innerHTML='';
   MOMENTS.forEach(m=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curMoment===m.key?' active':'');
     if (state.moments[m.key].captured) b.classList.add('captured');
-    b.textContent=m.label; b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
+    b.dataset.key=m.key;
+    b.onclick=()=>setMoment(m.key);
+    // contenido con tick opcional
+    b.innerHTML = `<span class="text">${m.label}</span><span class="tick">✓</span>`;
     tabs.appendChild(b);
   });
+  updateReportAvailability();
 }
+
 function renderQuestions(){
   const m = state.moments[state.curMoment];
   questions.innerHTML='';
@@ -238,6 +259,7 @@ function renderQuestions(){
   });
   refreshScores();
 }
+
 function refreshScores(){
   const ms = Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
   const cur = state.moments[state.curMoment].checks.filter(Boolean).length;
@@ -439,7 +461,7 @@ $('#printReport').onclick = ()=>{
 };
 
 $('#clearState').onclick = ()=>{
-  if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v31'); location.reload(); }
+  if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v32'); location.reload(); }
 };
 
 /* ========= Carga de video ========= */
@@ -452,7 +474,7 @@ file.onchange = ()=>{
 
 // Init
 (function init(){
-  renderTabs(); setMoment(state.curMoment); fpsInput.value = state.fps;
+  renderTabs(); setMoment(state.curMoment); fpsInput.value = state.fps; updateReportAvailability();
 })();
 </script>
 </body>
