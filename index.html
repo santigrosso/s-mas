@@ -3,90 +3,84 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>S-MAS • v3.5.6r (resiliente)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3)</title>
 <style>
-  :root{ --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --disabled:#5f6e7d; }
+  :root{
+    --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c;
+  }
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
-  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
+  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center;justify-content:space-between}
   header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
-  header .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
+  .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
   main{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
   .row{display:flex;gap:10px;flex-wrap:wrap}
-  .card{background:var(--panel);border:1px solid #163551;border-radius:12px;padding:10px;position:relative}
+  .card{background:var(--panel);border:1px solid #163551;border-radius:12px;padding:10px}
   #videoWrap{position:relative;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
-  video{position:relative;z-index:1;width:100%;height:100%;display:block;object-fit:contain;background:#000}
-  canvas{position:absolute;left:0;top:0;z-index:2;touch-action:none;-webkit-user-select:none;user-select:none}
+  video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+  canvas{position:absolute;left:0;top:0}
   .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
   button.small{padding:6px 8px;border-radius:8px;font-weight:600}
-  button[disabled]{opacity:.55; cursor:not-allowed; background:var(--disabled)!important; color:#222!important; border-color:transparent!important}
-  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-  .tab{padding:8px 10px;border-radius:10px;background:#0f2a44;border:1px solid #204667;cursor:pointer;font-size:13px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{padding:8px 10px;border-radius:10px;background:#0f2a44;border:1px solid #204667;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
   .tab.active{background:var(--acc);color:#000;border-color:var(--acc)}
-  .tab.complete{background:var(--ok);color:#000;border-color:var(--ok)}
+  .tab.done{background:var(--ok);color:#000;border-color:var(--ok)}
   .grid{display:grid;grid-template-columns:1fr;gap:8px}
-  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;background:#0f2a44;border-radius:8px;border:1px solid #204667}
-  .switch{position:relative;width:48px;height:28px;flex:0 0 auto}
-  .switch input{opacity:0;position:absolute;inset:0;margin:0}
-  .slider{position:absolute;inset:0;background:#6b7b8a;border-radius:14px;transition:.2s}
-  .slider::before{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.2s}
-  .switch input:checked + .slider{background:#34c759}
-  .switch input:checked + .slider::before{transform:translateX(20px)}
-  .q-guide{display:flex;align-items:center;gap:8px;padding:8px;background:#0b2339;border-radius:8px;border:1px solid #1b3b5a}
-  .q-guide input[type="checkbox"]{width:18px;height:18px;accent-color:#ff7a00}
-  .q-guide label{flex:1;cursor:pointer}
+  .q{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#0f2a44;border-radius:8px;border:1px solid #204667}
   .score{font-weight:800}
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   #report{display:none;background:#fff;color:#000;padding:12px}
+  #report h2{margin:.2em 0 .4em;font-size:16px}
   #report .page{break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}
+  #report img{max-width:100%}
   @media print { header, #app, footer { display:none } #report{display:block} body{background:#fff} }
-  .scrub{display:flex;align-items:center;gap:8px;margin-top:6px}
-  input[type="range"]{width:100%}
-  .moment-desc{font-size:12px;color:#b8c3cf;margin:-4px 0 6px}
-  footer{padding:10px 14px;color:#9fb1c4;font-size:12px;text-align:center;border-top:1px solid #163551}
-  .diagnose{font-size:12px;color:#9fb1c4}
-  .mini{border:1px solid #335b87;border-radius:6px;background:#0b2339;padding:6px}
-  .err{color:#ffb4b4}
+  /* Toggle estilo iOS */
+  .switch{position:relative;width:48px;height:28px;background:#6a7a8a;border-radius:999px;border:1px solid #3a516a;flex:0 0 auto;cursor:pointer;transition:background .15s ease}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s ease}
+  .switch.on{background:#28cf7a;border-color:#28cf7a}
+  .switch.on::after{left:22px}
+  /* Barra de progreso */
+  .seekbar{appearance:none;width:100%;height:8px;border-radius:999px;background:#0f2a44;outline:none;border:1px solid #204667}
+  .seekbar::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc);border:2px solid #000;margin-top:-5px}
+  .seekwrap{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .time{font-variant-numeric:tabular-nums}
+  footer{padding:12px 16px;color:#9fb2c8;font-size:12px;border-top:1px solid #163551;text-align:center}
+  .desc{font-size:13px;color:#cfe0f4;background:#0f2a44;border:1px solid #204667;border-radius:10px;padding:8px}
 </style>
 </head>
 <body>
 <header>
-  <h1>S-MAS • Sprint Mechanics Assessment</h1>
-  <span class="pill">v3.5.6r</span>
-  <span class="pill">Local • Offline</span>
+  <div style="display:flex;align-items:center;gap:12px">
+    <h1>S-MAS • Sprint Mechanics Assessment</h1>
+    <span class="pill">Local • Offline</span>
+    <span class="pill">HEVC / 240 fps</span>
+  </div>
+  <div class="controls">
+    <input id="file" type="file" accept="video/*" />
+    <button class="ghost small" id="clearState">Limpiar</button>
+  </div>
 </header>
 
 <div id="app">
   <main>
     <div class="row">
-      <div class="card" style="flex:2 1 580px">
+      <div class="card" style="flex:2 1 560px">
+        <!-- Pestañas arriba del video -->
         <div class="tabs" id="tabs"></div>
-        <div class="moment-desc" id="momentDesc"></div>
-
-        <div class="controls" style="justify-content:space-between;margin-bottom:8px">
-          <div class="controls">
-            <input id="file" type="file" accept="video/*" />
-            <button class="ghost small" id="clearState">Limpiar</button>
-          </div>
-          <div class="controls">
-            <span class="label">fps objetivo</span>
-            <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:6px"/>
-          </div>
-        </div>
+        <div class="desc" id="momentDesc" style="margin:8px 0 6px">—</div>
 
         <div id="videoWrap">
-          <video id="vid" playsinline webkit-playsinline muted controls preload="metadata"></video>
+          <video id="vid" playsinline muted controls preload="metadata"></video>
           <canvas id="overlay"></canvas>
         </div>
 
-        <div class="scrub">
-          <span class="pill">t=<span id="ctime">0.000</span>s</span>
-          <input id="scrub" type="range" min="0" max="0" step="0.001" value="0">
-          <span class="pill">frame <b id="fnum">0</b></span>
+        <!-- Barra de progreso estilo YouTube -->
+        <div class="seekwrap">
+          <span class="time" id="tcur">0:00</span>
+          <input id="seek" class="seekbar" type="range" min="0" max="1000" value="0" />
+          <span class="time" id="tmax">0:00</span>
         </div>
 
         <div class="controls" style="margin-top:8px;flex-wrap:wrap">
@@ -95,411 +89,356 @@
           <button id="fwd1" class="small">+1 frame</button>
           <button id="back10" class="small">−10</button>
           <button id="fwd10" class="small">+10</button>
+          <button id="snap" class="small">Capturar imagen</button>
+          <button id="invert" class="small">Invertir plantilla (izq/der)</button>
+          <span class="pill">fps <input id="fps" type="number" value="240" min="1" max="480" style="width:70px;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:6px"/></span>
+          <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
+          <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
         </div>
-
-        <div class="diagnose mini" style="margin-top:8px">
-          <div><b>Diagnóstico</b> (si algo no responde, mirá aquí errores en rojo)</div>
-          <div>readyState: <span id="dg-ready">?</span> • hasFrame: <span id="dg-frame">?</span> • last: <span id="dg-last">—</span></div>
-          <div class="err" id="dg-error"></div>
-        </div>
-
       </div>
 
-      <div class="card" style="flex:1 1 360px">
-        <div class="grid" style="gap:10px">
-          <div>
-            <strong>Guías</strong>
-            <div id="templatesPanel" class="grid" style="margin-top:6px"></div>
-            <div class="controls" style="margin-top:6px">
-              <button id="invert" class="small">Invertir guías (izq/der)</button>
-            </div>
-          </div>
-
-          <div class="hr"></div>
-
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <strong>Checklist del momento</strong>
-              <span class="label">toca el switch</span>
-            </div>
-            <div id="questions" class="grid"></div>
-            <div class="controls" style="margin-top:6px">
-              <button id="snap" class="small">Capturar imagen y continuar ➜</button>
-            </div>
-          </div>
-
-          <div class="hr"></div>
-          <div class="grid">
-            <div><span class="label">Puntaje del momento</span><div class="score" id="momentScore">0</div></div>
-            <div><span class="label">Puntaje total</span><div class="score" id="totalScore">0</div></div>
-            <div><span class="label">Clasificación</span><div class="score" id="grade">—</div></div>
-          </div>
-
-          <div class="hr"></div>
-          <div class="grid">
-            <label class="label">Notas del momento</label>
-            <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:8px"></textarea>
-          </div>
-
-          <div class="hr"></div>
-          <div class="grid">
-            <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
-          </div>
+      <div class="card" style="flex:1 1 320px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Checklist del momento</strong>
+          <span class="label">deslizar ON/OFF</span>
+        </div>
+        <div id="questions" class="grid"></div>
+        <div class="hr"></div>
+        <div class="grid">
+          <div><span class="label">Puntaje del momento</span><div class="score" id="momentScore">0</div></div>
+          <div><span class="label">Puntaje total</span><div class="score" id="totalScore">0</div></div>
+          <div><span class="label">Clasificación</span><div class="score" id="grade">—</div></div>
+        </div>
+        <div class="hr"></div>
+        <div class="grid">
+          <label class="label">Notas del momento</label>
+          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:8px"></textarea>
+        </div>
+        <div class="hr"></div>
+        <div class="grid">
+          <button id="printReport">Generar reporte (Imprimir → PDF)</button>
         </div>
       </div>
     </div>
   </main>
 </div>
 
+<!-- Reporte imprimible -->
 <div id="report">
   <h1 style="font-size:18px;margin:.2em 0">Reporte S-MAS</h1>
   <div id="reportContent"></div>
 </div>
 
-<footer>Desarrollado por Santiago Grosso</footer>
+<footer>
+  Desarrollado por Santiago Grosso – S-MAS Project
+</footer>
 
 <script>
-(function(){
-  const SHOWERR = (msg)=>{ const el=document.getElementById('dg-error'); if(el) el.textContent=String(msg); };
-  window.addEventListener('error', e=>SHOWERR(e.error||e.message||e));
-  window.addEventListener('unhandledrejection', e=>SHOWERR('Promise: '+(e.reason||e)));
+/* ========= Estado ========= */
+const MOMENTS = [
+  {key:'toeoff', label:'Toe-off'},
+  {key:'mvp', label:'Max Vertical Projection'},
+  {key:'lateswing', label:'Late Swing'},
+  {key:'touchdown', label:'Touchdown'},
+  {key:'midstance', label:'Mid-stance'},
+];
+const DESC = {
+  toeoff: "Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
+  mvp: "Punto intermedio entre Toe-off y Touchdown; la pelvis está en su punto más alto de la fase de swing.",
+  lateswing: "Punto de máxima extensión de rodilla durante la fase de swing.",
+  touchdown: "Punto de primer contacto con el suelo.",
+  midstance: "Punto donde la pelvis está directamente sobre la articulación del tobillo."
+};
+const QUESTIONS = {
+  toeoff: [ "¿Demasiada extensión de cadera?" ],
+  mvp: [ "¿Rotación excesiva de tronco?", "¿Está el talón de la pierna trasera por encima de la pantorrilla?" ],
+  lateswing: [ "¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?", "¿Está la rodilla por detrás de los glúteos?" ],
+  touchdown: [ "¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?" ],
+  midstance: [ "¿Está la rodilla por delante de la punta del pie?" ]
+};
+const GRADE = (score)=>{
+  if (score<=1) return "Excelente (0–1)";
+  if (score===2) return "Bueno (2)";
+  if (score>=3 && score<=5) return "Promedio (3–5)";
+  if (score===6) return "Pobre (6)";
+  if (score>=7 && score<=11) return "Muy pobre (7–11)";
+  if (score>=12) return "Extremadamente pobre (12)";
+  return "—";
+};
 
-  const MOMENTS=[
-    {key:'toeoff',label:'Toe-off'},
-    {key:'mvp',label:'Max Vertical Projection'},
-    {key:'lateswing',label:'Late Swing'},
-    {key:'touchdown',label:'Touchdown'},
-    {key:'midstance',label:'Mid-stance'},
-  ];
-  const DESCRIPTIONS={
-    toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
-    mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis está en su punto más alto de la fase de swing.",
-    lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",
-    touchdown:"Punto de primer contacto con el suelo.",
-    midstance:"Mitad del apoyo (para referencia de guía específica)."
-  };
-  const QUESTIONS={
-    toeoff:["¿Demasiada extensión de cadera?"],
-    mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],
-    lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"],
-    touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
-    midstance:["¿Está la rodilla por delante de la punta del pie?"]
-  };
-  const TEMPLATE_OPTIONS={
-    toeoff:[{key:'to_cross45',label:'Cruz (vertical + 45°)'}],
-    mvp:[{key:'mvp_vh',label:'Vertical + horizontal'}],
-    lateswing:[{key:'ls_vh',label:'Vertical + horizontal'}],
-    touchdown:[
-      {key:'td_ankleVert',label:'Vertical en tobillo'},
-      {key:'td_cross15',label:'Cruz 15° vs vertical (cadera)'},
-      {key:'td_angle3',label:'Ángulo 3 puntos (muslos)'}
-    ],
-    midstance:[{key:'ms_short',label:'Vertical corta en punta del pie'}]
-  };
+let state = JSON.parse(localStorage.getItem('smas_state_v3')||'null') || {
+  fps:240, invert:false, curMoment:'toeoff',
+  moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
+    anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
+    snapshots:[], captured:false }]))
+};
 
-  const $=s=>document.querySelector(s);
-  const file=$('#file'), vid=$('#vid'), wrap=$('#videoWrap');
-  const cvs=$('#overlay'), ctx=cvs.getContext('2d',{willReadFrequently:true});
-  const fpsInput=$('#fps'), ctime=$('#ctime'), fnum=$('#fnum');
-  const scrub=$('#scrub');
-  const tabs=$('#tabs'), questions=$('#questions'), templatesPanel=$('#templatesPanel');
-  const momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade');
-  const momentDesc=$('#momentDesc'); const notesEl=$('#notes');
-  const btnSnap=$('#snap'), btnInvert=$('#invert'), btnReport=$('#printReport'), btnClear=$('#clearState');
-  const dgReady=$('#dg-ready'), dgFrame=$('#dg-frame'), dgLast=$('#dg-last');
+/* ========= DOM ========= */
+const $ = sel=>document.querySelector(sel);
+const file=$('#file'), vid=$('#vid'), wrap=$('#videoWrap');
+const cvs=$('#overlay'), ctx=cvs.getContext('2d');
+const fpsInput=$('#fps'), ctime=$('#ctime'), fnum=$('#fnum');
+const tabs=$('#tabs'), questions=$('#questions'), momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade'), curMomentLabel=$('#curMomentLabel');
+const notesEl=$('#notes'), momentDesc=$('#momentDesc');
+const tcur=$('#tcur'), tmax=$('#tmax'), seek=$('#seek');
 
-  function defaultState(){
-    return {
-      fps:240, invert:false, curMoment:'toeoff',
-      completed:{toeoff:false,mvp:false,lateswing:false,touchdown:false,midstance:false},
-      moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{
-        t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
-        anchor:{x:200,y:140}, ankle:{x:260,y:200},
-        angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
-        overlays: Object.fromEntries((TEMPLATE_OPTIONS[m.key]||[]).map(opt=>[opt.key,false])),
-        snapshots:[]
-      }]))
-    };
+function save(){ localStorage.setItem('smas_state_v3', JSON.stringify(state)); }
+function setMoment(key){
+  state.curMoment = key; save();
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.key===key));
+  curMomentLabel.textContent = MOMENTS.find(m=>m.key===key).label;
+  momentDesc.textContent = DESC[key] || "—";
+  renderQuestions(); notesEl.value = state.moments[key].notes||''; draw();
+}
+function renderTabs(){
+  tabs.innerHTML='';
+  MOMENTS.forEach((m,idx)=>{
+    const b=document.createElement('button');
+    b.className='tab'+(state.curMoment===m.key?' active':'')+(state.moments[m.key].captured?' done':'');
+    b.textContent=m.label; b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
+    tabs.appendChild(b);
+  });
+}
+function renderQuestions(){
+  const m = state.moments[state.curMoment];
+  questions.innerHTML='';
+  QUESTIONS[state.curMoment].forEach((q,i)=>{
+    const row=document.createElement('div'); row.className='q';
+    const lab=document.createElement('div'); lab.textContent=q;
+    const sw=document.createElement('div'); sw.className='switch'+(m.checks[i]?' on':'');
+    sw.onclick=()=>{ m.checks[i]=!m.checks[i]; sw.classList.toggle('on'); save(); refreshScores(); draw(); };
+    row.appendChild(lab); row.appendChild(sw); questions.appendChild(row);
+  });
+  refreshScores();
+}
+function refreshScores(){
+  const ms = Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
+  const cur = state.moments[state.curMoment].checks.filter(Boolean).length;
+  const total = ms.reduce((a,b)=>a+b,0);
+  momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total);
+}
+
+/* ========= Video & frames ========= */
+function sizeCanvasToWrap(){
+  const r = wrap.getBoundingClientRect();
+  cvs.width = r.width; cvs.height = r.height;
+}
+function draw(){
+  if (!vid.videoWidth) return;
+  sizeCanvasToWrap();
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  ctx.drawImage(vid, 0,0,cvs.width,cvs.height);
+  drawOverlays();
+}
+function stepFrames(n){
+  const fps = Number(state.fps)||240;
+  vid.pause();
+  const dt = n / fps;
+  const t = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + dt));
+  vid.currentTime = t;
+}
+function updateTimeUI(){
+  ctime.textContent = (vid.currentTime||0).toFixed(3);
+  const fps = Number(state.fps)||240;
+  const frame = Math.round((vid.currentTime||0)*fps);
+  fnum.textContent = frame;
+  const m = state.moments[state.curMoment];
+  m.t = vid.currentTime||0; m.frame=frame; save();
+  // seekbar
+  if (vid.duration) {
+    seek.value = Math.round((vid.currentTime/vid.duration)*1000);
+    tcur.textContent = fmt(vid.currentTime);
+    tmax.textContent = fmt(vid.duration);
   }
+}
+function fmt(t){ if (!isFinite(t)) return "0:00"; const m=Math.floor(t/60); const s=Math.floor(t%60); return m+":"+(s<10?"0":"")+s; }
 
-  const STORAGE_KEY='smas_state_v3_5_6r';
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
-      const obj = JSON.parse(raw);
-      if (!obj || typeof obj!=='object' || !obj.moments) throw new Error('schema');
-      return obj;
-    }catch(e){
-      SHOWERR('Estado reseteado (almacenamiento corrupto)');
-      const fresh = defaultState();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
-      return fresh;
+vid.addEventListener('timeupdate', ()=>{ updateTimeUI(); draw(); });
+vid.addEventListener('seeked', ()=>{ updateTimeUI(); draw(); });
+vid.addEventListener('loadeddata', ()=>{ updateTimeUI(); draw(); });
+window.addEventListener('resize', draw);
+
+seek.addEventListener('input', ()=>{
+  if (!vid.duration) return;
+  const target = (seek.value/1000)*vid.duration;
+  vid.currentTime = target;
+});
+
+/* ========= Interacción overlay ========= */
+let dragging=null;
+function toCanvasCoords(ev){
+  const r=cvs.getBoundingClientRect();
+  const x = (ev.touches?ev.touches[0].clientX:ev.clientX) - r.left;
+  const y = (ev.touches?ev.touches[0].clientY:ev.clientY) - r.top;
+  return {x,y};
+}
+function hit(pt, x,y){ return pt && Math.hypot(pt.x-x, pt.y-y) < 16; }
+function currentMoment(){ return state.moments[state.curMoment]; }
+function startDrag(ev){
+  const {x,y}=toCanvasCoords(ev);
+  const m=currentMoment();
+  if (state.curMoment==='touchdown'){
+    if (hit(m.angle3.p0||{x:-1,y:-1},x,y)) dragging='p0';
+    else if (hit(m.angle3.p1||{x:-1,y:-1},x,y)) dragging='p1';
+    else if (hit(m.angle3.p2||{x:-1,y:-1},x,y)) dragging='p2';
+    else if (hit(m.ankle,x,y)) dragging='ankle';
+    else if (hit(m.anchor,x,y)) dragging='anchor';
+    else {
+      if (!m.angle3.p0) { m.angle3.p0={x,y}; dragging='p0'; }
+      else if (!m.angle3.p1){ m.angle3.p1={x,y}; dragging='p1'; }
+      else if (!m.angle3.p2){ m.angle3.p2={x,y}; dragging='p2'; }
+      else { m.anchor={x,y}; dragging='anchor'; }
+      save();
     }
+  } else {
+    if (hit(m.anchor,x,y)) dragging='anchor';
+    else { m.anchor={x,y}; dragging='anchor'; save(); }
   }
-  function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ SHOWERR('No se pudo guardar estado'); } }
+  ev.preventDefault();
+}
+function moveDrag(ev){
+  if (!dragging) return;
+  const {x,y}=toCanvasCoords(ev);
+  const m=currentMoment();
+  if (dragging==='anchor') m.anchor={x,y};
+  if (dragging==='ankle')  m.ankle={x,y};
+  if (dragging==='p0')     m.angle3.p0={x,y};
+  if (dragging==='p1')     m.angle3.p1={x,y};
+  if (dragging==='p2')     m.angle3.p2={x,y};
+  save(); draw();
+  ev.preventDefault();
+}
+function endDrag(){ dragging=null; }
+cvs.addEventListener('mousedown', startDrag);
+cvs.addEventListener('mousemove', moveDrag);
+cvs.addEventListener('mouseup', endDrag);
+cvs.addEventListener('mouseleave', endDrag);
+cvs.addEventListener('touchstart', startDrag,{passive:false});
+cvs.addEventListener('touchmove', moveDrag,{passive:false});
+cvs.addEventListener('touchend', endDrag);
 
-  let state = loadState();
-  function currentMoment(){ return state.moments[state.curMoment]; }
-  function allCompleted(){ return Object.values(state.completed).every(Boolean); }
-  function updateReportAvailability(){ btnReport.disabled = !allCompleted(); }
-
-  function setMoment(key){
-    state.curMoment=key; save();
-    renderTabs();
-    momentDesc.textContent=DESCRIPTIONS[key]||'';
-    renderTemplatesPanel();
-    renderQuestions();
-    notesEl.value=state.moments[key].notes||'';
-    draw();
-  }
-  function renderTabs(){
-    tabs.innerHTML='';
-    MOMENTS.forEach(m=>{
-      const b=document.createElement('button');
-      b.type='button';
-      b.className='tab'+(state.curMoment===m.key?' active':'')+(state.completed[m.key]?' complete':'');
-      b.textContent=m.label; b.dataset.key=m.key;
-      b.addEventListener('click',()=>setMoment(m.key),{passive:true});
-      tabs.appendChild(b);
-    });
-  }
-  function renderTemplatesPanel(){
-    const opts=TEMPLATE_OPTIONS[state.curMoment]||[];
-    const m=currentMoment();
-    templatesPanel.innerHTML='';
-    if(!opts.length){ const p=document.createElement('div'); p.className='label'; p.textContent='Sin guías disponibles para este momento.'; templatesPanel.appendChild(p); return; }
-    opts.forEach(opt=>{
-      const row=document.createElement('div'); row.className='q-guide';
-      const id=`g_${opt.key}`;
-      const chk=document.createElement('input'); chk.type='checkbox'; chk.id=id; chk.checked=!!m.overlays[opt.key];
-      const lab=document.createElement('label'); lab.setAttribute('for', id); lab.textContent=opt.label;
-      chk.addEventListener('change',()=>{ m.overlays[opt.key]=chk.checked; save(); draw(); },{passive:true});
-      row.appendChild(chk); row.appendChild(lab);
-      templatesPanel.appendChild(row);
-    });
-  }
-  function renderQuestions(){
-    const m=currentMoment();
-    questions.innerHTML='';
-    QUESTIONS[state.curMoment].forEach((q,i)=>{
-      const row=document.createElement('div'); row.className='q';
-      const lab=document.createElement('div'); lab.textContent=q; lab.style.flex='1';
-      const sw=document.createElement('label'); sw.className='switch';
-      const chk=document.createElement('input'); chk.type='checkbox'; chk.checked=!!m.checks[i];
-      const slider=document.createElement('span'); slider.className='slider';
-      chk.addEventListener('change',()=>{ m.checks[i]=chk.checked; save(); refreshScores(); },{passive:true});
-      sw.appendChild(chk); sw.appendChild(slider);
-      row.appendChild(lab); row.appendChild(sw);
-      questions.appendChild(row);
-    });
-    refreshScores();
-  }
-  function GRADE(score){
-    if(score<=1) return "Excelente (0–1)";
-    if(score===2) return "Bueno (2)";
-    if(score>=3 && score<=5) return "Promedio (3–5)";
-    if(score===6) return "Pobre (6)";
-    if(score>=7 && score<=11) return "Muy pobre (7–11)";
-    if(score>=12) return "Extremadamente pobre (12)";
-    return "—";
-  }
-  function refreshScores(){
-    const ms=Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
-    const cur=currentMoment().checks.filter(Boolean).length;
-    const total=ms.reduce((a,b)=>a+b,0);
-    momentScoreEl.textContent=cur;
-    totalScoreEl.textContent=total;
-    gradeEl.textContent=GRADE(total);
-  }
-
-  function fitContain(srcW,srcH,dstW,dstH){ const s=Math.min(dstW/srcW,dstH/srcH); const w=srcW*s, h=srcH*s; const x=(dstW-w)/2, y=(dstH-h)/2; return {x,y,w,h,s}; }
-  function invertPointToVideoSpace(px,py,fit){ return {x:(px-fit.x)/fit.s, y:(py-fit.y)/fit.s}; }
-  function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; }
-  function getFit(){ return fitContain(vid.videoWidth, vid.videoHeight, cvs.width, cvs.height); }
-
-  function draw(){
-    sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height);
-    if(!vid.videoWidth||!vid.videoHeight) return;
-    const fit=getFit(); ctx.drawImage(vid,0,0,vid.videoWidth,vid.videoHeight,fit.x,fit.y,fit.w,fit.h); renderOverlaysTo(ctx,fit);
-  }
-  function renderOverlaysTo(ctx2,fit){
-    const m=currentMoment(); const inv=state.invert; const ov=m.overlays||{}; const k=state.curMoment;
-    const line=(x1,y1,x2,y2,dash=[],color='white',w=2)=>{ ctx2.save(); ctx2.setLineDash(dash); ctx2.lineWidth=w; ctx2.strokeStyle=color; ctx2.beginPath(); ctx2.moveTo(fit.x+x1*fit.s,fit.y+y1*fit.s); ctx2.lineTo(fit.x+x2*fit.s,fit.y+y2*fit.s); ctx2.stroke(); ctx2.restore(); };
-    const dot=(x,y,color='white',r=4)=>{ ctx2.save(); ctx2.fillStyle=color; ctx2.beginPath(); ctx2.arc(fit.x+x*fit.s,fit.y+y*fit.s,r,0,Math.PI*2); ctx2.fill(); ctx2.restore(); };
-    const ang=(p0,p1,p2)=>{ const v1={x:p0.x-p1.x,y:p0.y-p1.y}, v2={x:p2.x-p1.x,y:p2.y-p1.y}; const d1=Math.hypot(v1.x,v1.y)||1, d2=Math.hypot(v2.x,v2.y)||1; const c=(v1.x*v2.x+v1.y*v2.y)/(d1*d2); return Math.acos(Math.min(1,Math.max(-1,c)))*180/Math.PI; };
-    const H=vid.videoHeight, W=vid.videoWidth;
-
-    if(k==='toeoff'&&ov.to_cross45){
-      line(m.anchor.x,0,m.anchor.x,H);
-      const a=(inv?-1:1)*(45*Math.PI/180), len=Math.max(W,H);
-      line(m.anchor.x-Math.cos(a)*len, m.anchor.y+Math.sin(a)*len, m.anchor.x+Math.cos(a)*len, m.anchor.y-Math.sin(a)*len,[6,4]);
-      dot(m.anchor.x,m.anchor.y);
+/* ========= Dibujo de plantillas ========= */
+function line(x1,y1,x2,y2, dash=[], color='white', width=2){
+  ctx.save(); ctx.setLineDash(dash); ctx.lineWidth = width; ctx.strokeStyle = color;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+}
+function dot(x,y,color='white'){
+  ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); ctx.restore();
+}
+function drawCrossAt(x,y, invert=false, angleDeg=45){
+  line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
+  const a = (invert? -1: 1) * (angleDeg*Math.PI/180);
+  const len = Math.max(cvs.width,cvs.height);
+  const dx = Math.cos(a)*len, dy = -Math.sin(a)*len;
+  line(x - dx, y + dy, x + dx, y - dy, [6,4], 'rgba(255,255,255,.85)');
+  dot(x,y);
+}
+function drawVHAt(x,y){
+  line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
+  line(0,y,cvs.width,y,[], 'rgba(255,255,255,.85)');
+  dot(x,y);
+}
+function angleBetween(p0,p1,p2){
+  const v1={x:p0.x-p1.x, y:p0.y-p1.y}, v2={x:p2.x-p1.x, y:p2.y-p1.y};
+  const d1=Math.hypot(v1.x,v1.y)||1, d2=Math.hypot(v2.x,v2.y)||1;
+  const cos = (v1.x*v2.x + v1.y*v2.y)/(d1*d2);
+  const ang = Math.acos(Math.min(1,Math.max(-1,cos)))*180/Math.PI;
+  return ang;
+}
+function drawOverlays(){
+  const m = currentMoment(); const invert = state.invert;
+  if (state.curMoment==='toeoff'){ drawCrossAt(m.anchor.x, m.anchor.y, invert, 45); }
+  else if (state.curMoment==='mvp'){ drawVHAt(m.anchor.x, m.anchor.y); }
+  else if (state.curMoment==='lateswing'){ drawVHAt(m.anchor.x, m.anchor.y); }
+  else if (state.curMoment==='touchdown'){
+    line(m.ankle.x, 0, m.ankle.x, cvs.height, [4,4], 'rgba(255,255,255,.7)'); dot(m.ankle.x, m.ankle.y||m.ankle.x);
+    drawCrossAt(m.anchor.x, m.anchor.y, invert, 15);
+    const {p0,p1,p2}=m.angle3;
+    if (p0) dot(p0.x,p0.y); if (p1) dot(p1.x,p1.y); if (p2) dot(p2.x,p2.y);
+    if (p0 && p1 && p2){
+      line(p1.x,p1.y,p0.x,p0.y,[], '#fff',2); line(p1.x,p1.y,p2.x,p2.y,[], '#fff',2);
+      const ang = angleBetween(p0,p1,p2); m.angle3.val = ang; m.angle3.over20 = ang>20; save();
+      ctx.save(); ctx.fillStyle = m.angle3.over20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
+      ctx.font = 'bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, p1.x+8, p1.y-8); ctx.restore();
+      if (m.angle3.over20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p1.x,p1.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
     }
-    if(k==='mvp'&&ov.mvp_vh){ line(m.anchor.x,0,m.anchor.x,H); line(0,m.anchor.y,W,m.anchor.y); dot(m.anchor.x,m.anchor.y); }
-    if(k==='lateswing'&&ov.ls_vh){ line(m.anchor.x,0,m.anchor.x,H); line(0,m.anchor.y,W,m.anchor.y); dot(m.anchor.x,m.anchor.y); }
-    if(k==='touchdown'){
-      if(ov.td_ankleVert){ line(m.ankle.x,0,m.ankle.x,H,[4,4],'rgba(255,255,255,.7)'); dot(m.ankle.x,m.ankle.y||m.ankle.x); }
-      if(ov.td_cross15){
-        line(m.anchor.x,0,m.anchor.x,H);
-        const a=(inv?-1:1)*(75*Math.PI/180), len=Math.max(W,H);
-        line(m.anchor.x-Math.cos(a)*len, m.anchor.y+Math.sin(a)*len, m.anchor.x+Math.cos(a)*len, m.anchor.y-Math.sin(a)*len,[6,4]);
-        dot(m.anchor.x,m.anchor.y);
-      }
-      if(ov.td_angle3){
-        const {p0,p1,p2}=m.angle3; if(p0)dot(p0.x,p0.y); if(p1)dot(p1.x,p1.y); if(p2)dot(p2.x,p2.y);
-        if(p0&&p1&&p2){ line(p1.x,p1.y,p0.x,p0.y); line(p1.x,p1.y,p2.x,p2.y); const a2=ang(p0,p1,p2); m.angle3.val=a2; m.angle3.over20=a2>20; save(); ctx2.save(); ctx2.fillStyle=a2>20?'rgba(231,76,60,.9)':'rgba(25,179,106,.9)'; ctx2.font='bold 14px system-ui'; ctx2.fillText(`${a2.toFixed(1)}°`, fit.x+p1.x*fit.s+8, fit.y+p1.y*fit.s-8); ctx2.restore(); if(a2>20){ ctx2.save(); ctx2.strokeStyle='rgba(231,76,60,1)'; ctx2.lineWidth=4; ctx2.beginPath(); ctx2.arc(fit.x+p1.x*fit.s, fit.y+p1.y*fit.s, 24, 0, Math.PI*2); ctx2.stroke(); ctx2.restore(); } }
-      }
-    }
-    if(k==='midstance'&&ov.ms_short){ const hh=vid.videoHeight*0.12; line(m.anchor.x,m.anchor.y-hh/2,m.anchor.x,m.anchor.y+hh/2,[], 'rgba(255,255,255,.85)',3); dot(m.anchor.x,m.anchor.y); }
+  } else if (state.curMoment==='midstance'){
+    const h = cvs.height*0.12; line(m.anchor.x, m.anchor.y-h/2, m.anchor.x, m.anchor.y+h/2, [], 'rgba(255,255,255,.85)', 3); dot(m.anchor.x, m.anchor.y);
   }
+  // Indicador: arrastrar
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui';
+  ctx.fillText('Arrastrá los puntos para posicionar las plantillas', 10, cvs.height-10); ctx.restore();
+}
 
-  function updateTimeUI(){
-    ctime.textContent=(vid.currentTime||0).toFixed(3);
-    const fps=Number(state.fps)||240;
-    const frame=Math.round((vid.currentTime||0)*fps);
-    fnum.textContent=frame;
-    scrub.max=vid.duration||0; scrub.value=vid.currentTime||0;
-    const m=currentMoment(); m.t=vid.currentTime||0; m.frame=frame; save();
-    dgReady.textContent=String(vid.readyState);
-    dgFrame.textContent=String(!!vid.videoWidth);
-  }
-  function stepFrames(n){ const fps=Number(state.fps)||240; vid.pause(); const dt=n/fps; const t=Math.max(0, Math.min(vid.duration||0, (vid.currentTime||0)+dt)); vid.currentTime=t; }
-  vid.addEventListener('timeupdate',()=>{ updateTimeUI(); draw(); });
-  vid.addEventListener('seeked',()=>{ updateTimeUI(); draw(); });
-  vid.addEventListener('loadeddata',()=>{ updateTimeUI(); draw(); });
-  window.addEventListener('resize',draw);
-  scrub.addEventListener('input',()=>{ vid.currentTime=Number(scrub.value)||0; });
+/* ========= Acciones ========= */
+$('#play').onclick = async ()=>{ try{ if (vid.paused) await vid.play(); else vid.pause(); }catch(e){} };
+$('#back1').onclick = ()=>stepFrames(-1);
+$('#fwd1').onclick  = ()=>stepFrames(1);
+$('#back10').onclick= ()=>stepFrames(-10);
+$('#fwd10').onclick = ()=>stepFrames(10);
+$('#invert').onclick= ()=>{ state.invert=!state.invert; save(); draw(); };
 
-  let dragging=null;
-  function toVideoSpace(ev){ const r=cvs.getBoundingClientRect(); const px=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left; const py=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top; const fit=getFit(); return invertPointToVideoSpace(px,py,fit); }
-  function hit(pt,x,y){ return pt && Math.hypot(pt.x-x, pt.y-y) < 16; }
-  function pointerDownAt(x,y){
-    const k=state.curMoment, m=currentMoment(), ov=m.overlays||{};
-    if(k==='toeoff'&&ov.to_cross45){ dragging='anchor'; return; }
-    if(k==='mvp'&&ov.mvp_vh){ dragging='anchor'; return; }
-    if(k==='lateswing'&&ov.ls_vh){ dragging='anchor'; return; }
-    if(k==='midstance'&&ov.ms_short){ dragging='anchor'; return; }
-    if(k==='touchdown'){
-      if(ov.td_angle3){
-        if(!m.angle3.p0){ m.angle3.p0={x,y}; save(); draw(); return; }
-        if(!m.angle3.p1){ m.angle3.p1={x,y}; save(); draw(); return; }
-        if(!m.angle3.p2){ m.angle3.p2={x,y}; save(); draw(); return; }
-        if(hit(m.angle3.p0,x,y)){ dragging='p0'; return; }
-        if(hit(m.angle3.p1,x,y)){ dragging='p1'; return; }
-        if(hit(m.angle3.p2,x,y)){ dragging='p2'; return; }
-      }
-      if(ov.td_ankleVert && hit(m.ankle,x,y)){ dragging='ankle'; return; }
-      if(ov.td_cross15 && hit(m.anchor,x,y)){ dragging='anchor'; return; }
-      if(ov.td_cross15){ dragging='anchor'; return; }
-    }
-    dragging=null;
-  }
-  function pointerMoveTo(x,y){
-    if(!dragging) return;
-    const m=currentMoment();
-    if(dragging==='anchor') m.anchor={x,y};
-    if(dragging==='ankle') m.ankle={x,y};
-    if(dragging==='p0') m.angle3.p0={x,y};
-    if(dragging==='p1') m.angle3.p1={x,y};
-    if(dragging==='p2') m.angle3.p2={x,y};
-    save(); draw();
-  }
-  const onTouchStart=(ev)=>{ const {x,y}=toVideoSpace(ev); pointerDownAt(x,y); ev.preventDefault(); };
-  const onTouchMove=(ev)=>{ if(!dragging) return; const {x,y}=toVideoSpace(ev); pointerMoveTo(x,y); ev.preventDefault(); };
-  const onTouchEnd=()=>{ dragging=null; };
-  const onMouseDown=(ev)=>{ const p=toVideoSpace(ev); pointerDownAt(p.x,p.y); };
-  const onMouseMove=(ev)=>{ if(!dragging) return; const p=toVideoSpace(ev); pointerMoveTo(p.x,p.y); };
-  const onMouseUp=()=>{ dragging=null; };
+// Capturar imagen: guarda + marca pestaña done + avanza al siguiente momento (sin descargar)
+$('#snap').onclick  = ()=>{
+  const dataURL = cvs.toDataURL('image/png');
+  const key = state.curMoment;
+  const m = state.moments[key];
+  m.snapshots.push({dataURL, when: new Date().toISOString(), frame:m.frame, t:m.t});
+  m.captured = true; save(); renderTabs(); // pestaña en verde
+  // avanzar al siguiente momento
+  const idx = MOMENTS.findIndex(mm=>mm.key===key);
+  const next = MOMENTS[idx+1]?.key || key;
+  setMoment(next);
+};
 
-  cvs.addEventListener('touchstart', onTouchStart, {passive:false});
-  cvs.addEventListener('touchmove', onTouchMove, {passive:false});
-  cvs.addEventListener('touchend', onTouchEnd, {passive:false});
-  cvs.addEventListener('mousedown', onMouseDown);
-  cvs.addEventListener('mousemove', onMouseMove);
-  cvs.addEventListener('mouseup', onMouseUp);
-  cvs.addEventListener('mouseleave', onMouseUp);
+notesEl.oninput = ()=>{ state.moments[state.curMoment].notes = notesEl.value; save(); };
+fpsInput.onchange = ()=>{ state.fps = Number(fpsInput.value)||240; save(); updateTimeUI(); };
 
-  async function waitForStableFrame(){
-    return new Promise(res=>{
-      if ('requestVideoFrameCallback' in HTMLVideoElement.prototype){
-        vid.requestVideoFrameCallback(()=>{ requestAnimationFrame(()=>res()); });
-      } else {
-        requestAnimationFrame(()=>requestAnimationFrame(res));
-      }
-    });
-  }
-  async function captureCompat(){
-    if (vid.readyState < 2){ await new Promise(r=>vid.addEventListener('loadeddata', r, {once:true})); }
-    if (!vid.paused) vid.pause();
-    await waitForStableFrame();
-    const prevControls = vid.controls, prevVis = vid.style.visibility;
-    vid.controls=false; vid.style.visibility='hidden'; void vid.offsetWidth;
-    const vw=vid.videoWidth, vh=vid.videoHeight;
-    const tmp=document.createElement('canvas'); tmp.width=vw; tmp.height=vh;
-    const tctx=tmp.getContext('2d',{willReadFrequently:true});
-    tctx.drawImage(vid,0,0,vw,vh);
-    renderOverlaysTo(tctx,{x:0,y:0,w:vw,h:vh,s:1});
-    vid.style.visibility=prevVis||'visible'; vid.controls=prevControls;
-    return tmp.toDataURL('image/png');
-  }
-
-  $('#play').addEventListener('click', async ()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } } catch(e){ SHOWERR(e);} }, {passive:true});
-  $('#back1').addEventListener('click', ()=>stepFrames(-1),{passive:true});
-  $('#fwd1').addEventListener('click', ()=>stepFrames(1),{passive:true});
-  $('#back10').addEventListener('click', ()=>stepFrames(-10),{passive:true});
-  $('#fwd10').addEventListener('click', ()=>stepFrames(10),{passive:true});
-  btnInvert.addEventListener('click', ()=>{ state.invert=!state.invert; save(); draw(); },{passive:true});
-  btnSnap.addEventListener('click', async ()=>{
-    try{
-      const dataURL = await captureCompat();
-      const m=currentMoment();
-      m.snapshots.push({dataURL, when:new Date().toISOString(), frame:m.frame, t:m.t});
-      state.completed[state.curMoment]=true; save(); renderTabs(); updateReportAvailability();
-      const idx=MOMENTS.findIndex(mm=>mm.key===state.curMoment); const next=MOMENTS[idx+1]; if(next) setMoment(next.key);
-      dgLast.textContent='capt ok';
-    }catch(err){ dgLast.textContent='capt err'; SHOWERR(err); alert('No se pudo capturar. En iPad: Pausar ▶︎ y volver a intentar.'); }
-  },{passive:true});
-
-  btnReport.addEventListener('click', ()=>{
-    const cont=document.getElementById('reportContent'); cont.innerHTML='';
-    MOMENTS.forEach(m=>{
-      const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
-      const checks=QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
-      const ms=mm.checks.filter(Boolean).length;
-      const page=document.createElement('div'); page.className='page';
-      page.innerHTML=`<h2>${m.label}</h2>
+$('#printReport').onclick = ()=>{
+  const container = document.getElementById('reportContent');
+  container.innerHTML='';
+  MOMENTS.forEach(m=>{
+    const mm = state.moments[m.key];
+    const latest = mm.snapshots[mm.snapshots.length-1];
+    const checks = QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
+    const ms = mm.checks.filter(Boolean).length;
+    const page = document.createElement('div');
+    page.className='page';
+    page.innerHTML = `
+      <h2>${m.label}</h2>
       <div><small>t=${(mm.t||0).toFixed(3)}s • frame ${mm.frame||0}</small></div>
-      ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}" style="max-width:100%"/></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
+      ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}" /></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
       <div style="margin-top:6px"><strong>Puntaje del momento:</strong> ${ms}</div>
       <div><strong>Checklist</strong><ul>${checks}</ul></div>
-      ${mm.notes? `<div><strong>Notas:</strong> ${mm.notes}</div>`:''}`;
-      cont.appendChild(page);
-    });
-    const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length,0);
-    const sum=document.createElement('div'); sum.className='page';
-    sum.innerHTML=`<h2>Resumen</h2><div><strong>Puntaje total:</strong> ${total}</div><div><strong>Clasificación:</strong> ${ (function(score){ if(score<=1) return "Excelente (0–1)"; if(score===2) return "Bueno (2)"; if(score>=3 && score<=5) return "Promedio (3–5)"; if(score===6) return "Pobre (6)"; if(score>=7 && score<=11) return "Muy pobre (7–11)"; if(score>=12) return "Extremadamente pobre (12)"; return "—"; })(total) }</div>`;
-    cont.prepend(sum);
-    window.print();
-  },{passive:true});
+      ${mm.notes ? `<div><strong>Notas:</strong> ${mm.notes}</div>` : ``}
+    `;
+    container.appendChild(page);
+  });
+  const total = Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  const sum = document.createElement('div');
+  sum.className='page';
+  sum.innerHTML = `<h2>Resumen</h2>
+    <div><strong>Puntaje total:</strong> ${total}</div>
+    <div><strong>Clasificación:</strong> ${GRADE(total)}</div>`;
+  container.prepend(sum);
+  window.print();
+};
 
-  btnClear.addEventListener('click', ()=>{
-    if(confirm('¿Borrar trabajo guardado?')){ localStorage.removeItem(STORAGE_KEY); location.reload(); }
-  },{passive:true});
+$('#clearState').onclick = ()=>{ if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v3'); location.reload(); } };
 
-  notesEl.addEventListener('input', ()=>{ currentMoment().notes=notesEl.value; save(); },{passive:true});
-  fpsInput.addEventListener('change', ()=>{ state.fps=Number(fpsInput.value)||240; save(); updateTimeUI(); },{passive:true});
+/* ========= Carga de video ========= */
+file.onchange = ()=>{
+  const f=file.files[0]; if (!f) return;
+  const url=URL.createObjectURL(f);
+  vid.src=url; vid.load();
+  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime = 0.001; tmax.textContent = fmt(vid.duration||0); };
+};
 
-  file.addEventListener('change', ()=>{
-    const f=file.files[0]; if(!f) return;
-    const url=URL.createObjectURL(f);
-    vid.src=url; vid.load();
-    vid.onloadedmetadata=()=>{ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; vid.currentTime=0.001; scrub.max=vid.duration||0; };
-  },{passive:true});
-
-  function init(){ renderTabs(); setMoment(state.curMoment); updateReportAvailability(); fpsInput.value=state.fps; }
-  try{ init(); }catch(e){ SHOWERR('init: '+e); }
-})();
+function init(){
+  renderTabs(); setMoment(state.curMoment);
+  fpsInput.value = state.fps;
+}
+init();
 </script>
 </body>
 </html>
