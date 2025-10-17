@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.1)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c;
+    --bdr:#204667;
   }
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
@@ -25,38 +26,45 @@
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  /* Pestañas */
+  /* Pestañas (más bajas, solo esquinas superiores redondeadas, activa sin borde inferior) */
   .tabsWrap{width:100%;}
   .tabs{display:flex;gap:0; width:100%;}
   .tab{
-    flex:1 1 0; text-align:center; padding:10px 6px;
-    background:#0f2a44; border:1px solid #204667; border-right:none;
-    cursor:pointer; font-size:13px; user-select:none;
+    flex:1 1 0; text-align:center; padding:7px 4px; /* más bajitas */
+    background:#0f2a44; border:1px solid var(--bdr); border-right:none; border-bottom:1px solid var(--bdr);
+    cursor:pointer; font-size:12.5px; user-select:none; line-height:1;
+    border-top-left-radius:10px; border-top-right-radius:10px;
+    border-bottom-left-radius:0; border-bottom-right-radius:0;
   }
-  .tab:first-child{border-top-left-radius:10px}
-  .tab:last-child{border-top-right-radius:10px;border-right:1px solid #204667}
-  .tab.active{background:var(--acc);color:#000;border-color:var(--acc)}
-  .tab.captured{background:var(--ok);color:#000;border-color:#10a55f}
-  /* Descripción del momento */
+  .tab:first-child{}
+  .tab:last-child{border-right:1px solid var(--bdr)}
+  .tab.active{
+    background:var(--acc); color:#000; border-color:var(--acc);
+    border-bottom-color:transparent; /* mostrar continuidad con el frame actual */
+  }
+  .tab.captured{background:var(--ok);color:#000;border-color:#10a55f;border-bottom-color:transparent}
+  /* Descripción del momento pegada a las pestañas */
   .momentDesc{
-    width:100%; background:#0f2a44; border:1px solid #204667; border-top:none;
-    padding:8px 10px; color:#d8e4f1; border-bottom-left-radius:10px;border-bottom-right-radius:10px;
-    font-size:13px; min-height:38px; display:flex; align-items:center;
+    width:100%; background:#0f2a44; border:1px solid var(--bdr); border-top:none;
+    margin-top:-1px; /* se "pega" a la pestaña activa sin línea entre medio */
+    padding:6px 10px; color:#d8e4f1; border-bottom-left-radius:10px;border-bottom-right-radius:10px;
+    font-size:13px; min-height:34px; display:flex; align-items:center;
   }
-  /* Switch iOS */
-  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid #204667}
+  /* Switch iOS (compacto, tipo interruptor cortito) */
+  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr)}
   .q label{flex:1}
-  .switch{position:relative;width:46px;height:28px;flex:0 0 46px}
+  .switch{position:relative;width:40px;height:24px;flex:0 0 40px}
   .switch input{opacity:0;width:0;height:0}
   .slider{
-    position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease;
+    position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
   }
   .slider:before{
-    content:""; position:absolute; height:22px; width:22px; left:3px; top:3px; background:white; border-radius:50%; transition:transform .2s ease;
-    box-shadow:0 1px 2px rgba(0,0,0,.3);
+    content:""; position:absolute; height:20px; width:20px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,.35);
   }
-  .switch input:checked + .slider{ background:var(--ok); }
-  .switch input:checked + .slider:before{ transform: translateX(18px); }
+  .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .switch input:checked + .slider:before{ transform: translateX(16px); }
   /* Reporte imprimible */
   #report{display:none;background:#fff;color:#000;padding:12px}
   #report h2{margin:.2em 0 .4em;font-size:16px}
@@ -84,7 +92,7 @@
           </div>
           <div class="controls">
             <span class="label">fps objetivo</span>
-            <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:6px"/>
+            <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
           </div>
         </div>
 
@@ -129,7 +137,7 @@
         <div class="hr"></div>
         <div class="grid">
           <label class="label">Notas del momento</label>
-          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid #204667;border-radius:8px;padding:8px"></textarea>
+          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px"></textarea>
         </div>
         <div class="hr"></div>
         <div class="grid">
@@ -181,7 +189,7 @@ const GRADE = (score)=>{
   return "—";
 };
 
-let state = JSON.parse(localStorage.getItem('smas_state_v3')||'null') || {
+let state = JSON.parse(localStorage.getItem('smas_state_v31')||'null') || {
   fps:240, invert:false, curMoment:'toeoff',
   moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
     anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
@@ -196,7 +204,7 @@ const fpsInput=$('#fps'), ctime=$('#ctime'), fnum=$('#fnum');
 const tabs=$('#tabs'), momentDesc=$('#momentDesc'), questions=$('#questions'), momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade'), curMomentLabel=$('#curMomentLabel');
 const notesEl=$('#notes');
 
-function save(){ localStorage.setItem('smas_state_v3', JSON.stringify(state)); }
+function save(){ localStorage.setItem('smas_state_v31', JSON.stringify(state)); }
 function setMoment(key){
   state.curMoment = key; save();
   renderTabs();
@@ -331,11 +339,7 @@ function dot(x,y,color='white', r=4){
   ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
 }
 function drawVerticalPlusAngleFromVertical(x,y, angleFromVerticalDeg, invert=false){
-  // Línea vertical
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
-  // Diagonal a N° respecto de la vertical (no de la horizontal)
-  // Convertimos a un ángulo respecto de la horizontal:
-  // si la vertical equivale a 90°, entonces horizontalAngle = 90° - angleFromVertical
   const base = 90 - angleFromVerticalDeg;
   const theta = (invert? -1: 1) * (base * Math.PI/180);
   const len = Math.max(cvs.width,cvs.height);
@@ -358,18 +362,13 @@ function angleBetween(p0,p1,p2){
 function drawOverlays(){
   const m = currentMoment(); const invert = state.invert;
   if (state.curMoment==='toeoff'){
-    // 45° respecto de la horizontal (como antes)
-    // Para mantener lo que definimos inicialmente para toe-off:
-    drawVerticalPlusAngleFromVertical(m.anchor.x, m.anchor.y, 45/*from vertical?*/, invert);
+    drawVerticalPlusAngleFromVertical(m.anchor.x, m.anchor.y, 45, invert);
   }
   else if (state.curMoment==='mvp'){ drawVHAt(m.anchor.x, m.anchor.y); }
   else if (state.curMoment==='lateswing'){ drawVHAt(m.anchor.x, m.anchor.y); }
   else if (state.curMoment==='touchdown'){
-    // Vertical en tobillo
     line(m.ankle.x, 0, m.ankle.x, cvs.height, [4,4], 'rgba(255,255,255,.7)'); dot(m.ankle.x, m.ankle.y||m.ankle.x);
-    // Diagonal a 15° respecto de la vertical en el trocánter
     drawVerticalPlusAngleFromVertical(m.anchor.x, m.anchor.y, 15, invert);
-    // Ángulo 3 puntos
     const {p0,p1,p2}=m.angle3;
     if (p0) dot(p0.x,p0.y); if (p1) dot(p1.x,p1.y); if (p2) dot(p2.x,p2.y);
     if (p0 && p1 && p2){
@@ -381,7 +380,6 @@ function drawOverlays(){
     }
   }
   else if (state.curMoment==='midstance'){
-    // pequeña vertical en punta del pie con puntos en ambos extremos
     const h = cvs.height*0.12;
     const x=m.anchor.x, y1=m.anchor.y-h/2, y2=m.anchor.y+h/2;
     line(x, y1, x, y2, [], 'rgba(255,255,255,.95)', 3);
@@ -400,7 +398,6 @@ $('#back10').onclick= ()=>stepFrames(-10);
 $('#fwd10').onclick = ()=>stepFrames(10);
 $('#invert').onclick= ()=>{ state.invert=!state.invert; save(); draw(); }
 $('#snap').onclick  = ()=>{
-  // Guardar captura sin descargar y marcar pestaña en verde (captured=true)
   const dataURL = cvs.toDataURL('image/png');
   const mKey = state.curMoment;
   const m = state.moments[mKey];
@@ -442,15 +439,14 @@ $('#printReport').onclick = ()=>{
 };
 
 $('#clearState').onclick = ()=>{
-  if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v3'); location.reload(); }
+  if (confirm('¿Borrar trabajo guardado?')) { localStorage.removeItem('smas_state_v31'); location.reload(); }
 };
 
 /* ========= Carga de video ========= */
 file.onchange = ()=>{
   const f=file.files[0]; if (!f) return;
   const url=URL.createObjectURL(f);
-  vid.src=url;
-  vid.load();
+  vid.src=url; vid.load();
   vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime = 0.001; momentDesc.textContent = DESCRIPTIONS[state.curMoment]; };
 };
 
