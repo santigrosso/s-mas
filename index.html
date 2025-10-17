@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.3 • sin guardado local)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.4 • scrubber)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
-    --tab-active:#0f2a44;   /* azul igual al cuadro debajo del video */
-    --tab-inactive:#c9d1dc; /* gris claro para pestañas apagadas */
-    --tab-inactive-text:#0f1720; /* texto oscuro para contraste en gris */
+    --tab-active:#0f2a44; --tab-inactive:#c9d1dc; --tab-inactive-text:#0f1720;
+    --scrub-bg:#1a324c; --scrub-buffer:#2b5178; --scrub-played:#ff7a00; --scrub-thumb:#ffffff;
   }
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
@@ -28,7 +27,7 @@
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  /* Pestañas */
+  /* Tabs */
   .tabsWrap{width:100%;}
   .tabs{display:flex;gap:0;width:100%;}
   .tab{
@@ -41,37 +40,40 @@
     display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .tab:last-child{border-right:1px solid #b8c4d2}
-  .tab.active{
-    background:var(--tab-active); color:#fff; border-color:var(--tab-active);
-    border-bottom-color:transparent;
-  }
+  .tab.active{ background:var(--tab-active); color:#fff; border-color:var(--tab-active); border-bottom-color:transparent; }
   .tab .tick{display:none; font-weight:900}
   .tab.captured .tick{display:inline}
-  /* Descripción del momento */
   .momentDesc{
     width:100%; background:var(--tab-active); border:1px solid var(--tab-active); border-top:none;
     margin-top:-1px; padding:6px 10px; color:#d8e4f1;
     border-bottom-left-radius:10px;border-bottom-right-radius:10px;
     font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
   }
-  /* Switch iOS compacto */
+  /* iOS switch compact */
   .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr)}
   .q label{flex:1}
   .switch{position:relative;width:36px;height:22px;flex:0 0 36px}
   .switch input{opacity:0;width:0;height:0}
-  .slider{
-    position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
-  }
-  .slider:before{
-    content:""; position:absolute; height:18px; width:18px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease;
-    box-shadow:0 1px 2px rgba(0,0,0,.35);
-  }
+  .slider{ position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease; box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); }
+  .slider:before{ content:""; position:absolute; height:18px; width:18px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease; box-shadow:0 1px 2px rgba(0,0,0,.35); }
   .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
   .switch input:checked + .slider:before{ transform: translateX(14px); }
-  /* Botón deshabilitado */
   button[disabled]{opacity:.5; cursor:not-allowed}
-  /* Reporte imprimible */
+  /* Scrubber (YouTube-like) */
+  .scrubWrap{margin:8px 0 6px}
+  .scrubRow{display:flex;align-items:center;gap:10px}
+  .time{font-variant-numeric:tabular-nums; font-size:12px; color:var(--mut); min-width:60px; text-align:center}
+  .scrubber{
+    position:relative; height:10px; flex:1 1 auto; border-radius:999px; background:var(--scrub-bg);
+    cursor:pointer; touch-action:none; /* enable custom touch handling */
+  }
+  .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
+  .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
+  .scrubber .thumb{
+    position:absolute; top:50%; transform:translate(-50%,-50%);
+    width:14px; height:14px; border-radius:50%; background:var(--scrub-thumb); box-shadow:0 1px 2px rgba(0,0,0,.5);
+  }
+  /* Report print */
   #report{display:none;background:#fff;color:#000;padding:12px}
   #report h2{margin:.2em 0 .4em;font-size:16px}
   #report .page{break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}
@@ -102,17 +104,32 @@
           </div>
         </div>
 
-        <!-- Pestañas y descripción arriba del video -->
+        <!-- Tabs + description -->
         <div class="tabsWrap">
           <div class="tabs" id="tabs"></div>
           <div class="momentDesc" id="momentDesc"></div>
         </div>
 
+        <!-- Video -->
         <div id="videoWrap">
           <video id="vid" playsinline muted controls preload="metadata"></video>
           <canvas id="overlay"></canvas>
         </div>
 
+        <!-- Scrubber -->
+        <div class="scrubWrap">
+          <div class="scrubRow">
+            <div class="time" id="curT">0:00</div>
+            <div class="scrubber" id="scrubber">
+              <div class="buffer" id="bufBar"></div>
+              <div class="played" id="playBar"></div>
+              <div class="thumb" id="thumb" style="left:0%"></div>
+            </div>
+            <div class="time" id="durT">0:00</div>
+          </div>
+        </div>
+
+        <!-- Controls -->
         <div class="controls" style="margin-top:8px;flex-wrap:wrap">
           <button id="play" class="small">▶︎ Play/Pause</button>
           <button id="back1" class="small">−1 frame</button>
@@ -164,93 +181,79 @@
 <footer>Desarrollado por Santiago Grosso · 2025</footer>
 
 <script>
-/* ========= Estado (memoria de sesión: sin localStorage) ========= */
-const MOMENTS = [
-  {key:'toeoff', label:'Toe-off'},
-  {key:'mvp', label:'Max Vertical Projection'},
-  {key:'lateswing', label:'Late Swing'},
-  {key:'touchdown', label:'Touchdown'},
-  {key:'midstance', label:'Mid-stance'},
+/* ======= Estado sólo en memoria (sin localStorage) ======= */
+const MOMENTS=[
+  {key:'toeoff',label:'Toe-off'},
+  {key:'mvp',label:'Max Vertical Projection'},
+  {key:'lateswing',label:'Late Swing'},
+  {key:'touchdown',label:'Touchdown'},
+  {key:'midstance',label:'Mid-stance'},
 ];
-const DESCRIPTIONS = {
-  toeoff: "Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
-  mvp: "Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
-  lateswing: "Punto de máxima extensión de rodilla durante la fase de swing.",
-  touchdown: "Punto de primer contacto con el suelo.",
-  midstance: "Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
+const DESCRIPTIONS={
+  toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
+  mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
+  lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",
+  touchdown:"Punto de primer contacto con el suelo.",
+  midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
 };
-const QUESTIONS = {
-  toeoff: [ "¿Demasiada extensión de cadera?" ],
-  mvp: [ "¿Rotación excesiva de tronco?", "¿Está el talón de la pierna trasera por encima de la pantorrilla?" ],
-  lateswing: [ "¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?", "¿Está la rodilla por detrás de los glúteos?" ],
-  touchdown: [ "¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?" ],
-  midstance: [ "¿Está la rodilla por delante de la punta del pie?" ]
+const QUESTIONS={
+  toeoff:["¿Demasiada extensión de cadera?"],
+  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],
+  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"],
+  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
+  midstance:["¿Está la rodilla por delante de la punta del pie?"]
 };
-const GRADE = (score)=>{
-  if (score<=1) return "Excelente (0–1)";
-  if (score===2) return "Bueno (2)";
-  if (score>=3 && score<=5) return "Promedio (3–5)";
-  if (score===6) return "Pobre (6)";
-  if (score>=7 && score<=11) return "Muy pobre (7–11)";
-  if (score>=12) return "Extremadamente pobre (12)";
-  return "—";
+const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
+
+let state={
+  fps:240,invert:false,curMoment:'toeoff',
+  moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false),
+    anchor:{x:100,y:100},ankle:{x:150,y:150},angle3:{p0:null,p1:null,p2:null,val:null,over20:false},
+    snapshots:[],captured:false}]))
 };
 
-let state = {
-  fps:240, invert:false, curMoment:'toeoff',
-  moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
-    anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
-    snapshots:[], captured:false }]))
-};
-
-/* ========= DOM ========= */
-const $ = sel=>document.querySelector(sel);
-const file=$('#file'), vid=$('#vid'), wrap=$('#videoWrap');
-const cvs=$('#overlay'), ctx=cvs.getContext('2d');
-const fpsInput=$('#fps'), ctime=$('#ctime'), fnum=$('#fnum');
-const tabs=$('#tabs'), momentDesc=$('#momentDesc'), questions=$('#questions'), momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade'), curMomentLabel=$('#curMomentLabel');
+/* ======= DOM ======= */
+const $=s=>document.querySelector(s);
+const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
+const cvs=$('#overlay'),ctx=cvs.getContext('2d');
+const fpsInput=$('#fps'),ctime=$('#ctime'),fnum=$('#fnum');
+const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),momentScoreEl=$('#momentScore'),totalScoreEl=$('#totalScore'),gradeEl=$('#grade'),curMomentLabel=$('#curMomentLabel');
 const notesEl=$('#notes');
-const printBtn=$('#printReport'), reportHint=$('#reportHint');
+const printBtn=$('#printReport'),reportHint=$('#reportHint');
+/* Scrubber refs */
+const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
-function save(){ /* no-op: sin almacenamiento persistente */ }
 function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
-function updateReportAvailability(){
-  const ok = allCaptured();
-  printBtn.disabled = !ok;
-  reportHint.style.display = ok ? 'none' : 'inline';
-}
-
+function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 function setMoment(key){
-  state.curMoment = key; save();
+  state.curMoment=key;
   renderTabs();
-  momentDesc.textContent = DESCRIPTIONS[key];
-  curMomentLabel.textContent = MOMENTS.find(m=>m.key===key).label;
-  renderQuestions(); notesEl.value = state.moments[key].notes||''; draw();
+  momentDesc.textContent=DESCRIPTIONS[key];
+  curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
+  renderQuestions(); notesEl.value=state.moments[key].notes||''; draw();
 }
-
 function renderTabs(){
   tabs.innerHTML='';
   MOMENTS.forEach(m=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curMoment===m.key?' active':'');
-    if (state.moments[m.key].captured) b.classList.add('captured');
+    if(state.moments[m.key].captured) b.classList.add('captured');
     b.dataset.key=m.key;
     b.onclick=()=>setMoment(m.key);
-    b.innerHTML = `<span class="text">${m.label}</span><span class="tick">✓</span>`;
+    b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`;
     tabs.appendChild(b);
   });
   updateReportAvailability();
 }
-
 function renderQuestions(){
-  const m = state.moments[state.curMoment];
+  const m=state.moments[state.curMoment];
   questions.innerHTML='';
   QUESTIONS[state.curMoment].forEach((q,i)=>{
     const row=document.createElement('div'); row.className='q';
     const lab=document.createElement('label'); lab.textContent=q;
     const sw=document.createElement('label'); sw.className='switch';
     const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i];
-    input.onchange=()=>{ m.checks[i]=input.checked; save(); refreshScores(); draw(); };
+    input.onchange=()=>{ m.checks[i]=input.checked; refreshScores(); draw(); };
     const slid=document.createElement('span'); slid.className='slider';
     sw.appendChild(input); sw.appendChild(slid);
     row.appendChild(lab); row.appendChild(sw);
@@ -258,86 +261,112 @@ function renderQuestions(){
   });
   refreshScores();
 }
-
 function refreshScores(){
-  const ms = Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
-  const cur = state.moments[state.curMoment].checks.filter(Boolean).length;
-  const total = ms.reduce((a,b)=>a+b,0);
-  momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total);
+  const ms=Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
+  const cur=state.moments[state.curMoment].checks.filter(Boolean).length;
+  const total=ms.reduce((a,b)=>a+b,0);
+  momentScoreEl.textContent=cur; totalScoreEl.textContent=total; gradeEl.textContent=GRADE(total);
 }
 
-/* ========= Video & frames ========= */
-function sizeCanvasToWrap(){
-  const r = wrap.getBoundingClientRect();
-  cvs.width = r.width; cvs.height = r.height;
-}
+/* ======= Video & frames ======= */
+function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; }
 function draw(){
-  if (!vid.videoWidth) return;
+  if(!vid.videoWidth) return;
   sizeCanvasToWrap();
   ctx.clearRect(0,0,cvs.width,cvs.height);
-  ctx.drawImage(vid, 0,0,cvs.width,cvs.height);
+  ctx.drawImage(vid,0,0,cvs.width,cvs.height);
   drawOverlays();
 }
 function stepFrames(n){
-  const fps = Number(state.fps)||240;
-  vid.pause();
-  const dt = n / fps;
-  const t = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + dt));
-  vid.currentTime = t;
+  const fps=Number(state.fps)||240; vid.pause();
+  const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t;
 }
 function updateTimeUI(){
-  ctime.textContent = (vid.currentTime||0).toFixed(3);
-  const fps = Number(state.fps)||240;
-  const frame = Math.round((vid.currentTime||0)*fps);
-  fnum.textContent = frame;
-  const m = state.moments[state.curMoment];
-  m.t = vid.currentTime||0; m.frame=frame; save();
+  const t=vid.currentTime||0, d=vid.duration||0;
+  ctime.textContent=t.toFixed(3);
+  const fps=Number(state.fps)||240; fnum.textContent=Math.round(t*fps);
+  const m=state.moments[state.curMoment]; m.t=t; m.frame=Math.round(t*fps);
+  /* scrubber visuals */
+  if(d>0){
+    const pct=(t/d)*100; playBar.style.width=pct+'%'; thumb.style.left=pct+'%';
+    durT.textContent=formatTime(d); curT.textContent=formatTime(t);
+    /* buffer */
+    try{
+      let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); }
+      bufBar.style.width=(Math.min(end,d)/d)*100+'%';
+    }catch(e){ /* ignore */ }
+  }
 }
-vid.addEventListener('timeupdate', ()=>{ updateTimeUI(); draw(); });
-vid.addEventListener('seeked', ()=>{ updateTimeUI(); draw(); });
-vid.addEventListener('loadeddata', ()=>{ updateTimeUI(); draw(); });
+function formatTime(s){
+  s=Math.max(0,Math.floor(s||0)); const m=Math.floor(s/60); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`;
+}
+vid.addEventListener('timeupdate',()=>{ updateTimeUI(); draw(); });
+vid.addEventListener('seeked',()=>{ updateTimeUI(); draw(); });
+vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); });
+vid.addEventListener('progress',()=>{ updateTimeUI(); });
 window.addEventListener('resize', draw);
 
-/* ========= Interacción overlay ========= */
+/* ======= Scrubber interactions (mouse + touch) ======= */
+let scrubbing=false;
+function posToTime(clientX){
+  const r=scrub.getBoundingClientRect();
+  const x=Math.max(0,Math.min(clientX - r.left, r.width));
+  const pct=x/r.width; return (vid.duration||0)*pct;
+}
+function beginScrub(clientX){
+  scrubbing=true; vid.pause();
+  vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
+}
+function moveScrub(clientX){
+  if(!scrubbing) return;
+  vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
+}
+function endScrub(){
+  if(!scrubbing) return; scrubbing=false;
+}
+/* Mouse */
+scrub.addEventListener('mousedown',(e)=>{ beginScrub(e.clientX); e.preventDefault(); });
+window.addEventListener('mousemove',(e)=>{ moveScrub(e.clientX); });
+window.addEventListener('mouseup',()=>{ endScrub(); });
+/* Touch */
+scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.touches[0].clientX); } e.preventDefault(); }, {passive:false});
+window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
+window.addEventListener('touchend',()=>{ endScrub(); });
+
+/* ======= Overlay interaction ======= */
 let dragging=null;
 function toCanvasCoords(ev){
   const r=cvs.getBoundingClientRect();
-  const x = (ev.touches?ev.touches[0].clientX:ev.clientX) - r.left;
-  const y = (ev.touches?ev.touches[0].clientY:ev.clientY) - r.top;
+  const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+  const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
   return {x,y};
 }
-function hit(pt, x,y){ return pt && Math.hypot(pt.x-x, pt.y-y) < 16; }
+function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
 function currentMoment(){ return state.moments[state.curMoment]; }
 function startDrag(ev){
-  const {x,y}=toCanvasCoords(ev);
-  const m=currentMoment();
-  if (state.curMoment==='touchdown'){
-    if (hit(m.angle3.p0||{x:-1,y:-1},x,y)) dragging='p0';
-    else if (hit(m.angle3.p1||{x:-1,y:-1},x,y)) dragging='p1';
-    else if (hit(m.angle3.p2||{x:-1,y:-1},x,y)) dragging='p2';
-    else if (hit(m.ankle,x,y)) dragging='ankle';
-    else if (hit(m.anchor,x,y)) dragging='anchor';
-    else {
-      if (!m.angle3.p0) { m.angle3.p0={x,y}; dragging='p0'; }
-      else if (!m.angle3.p1){ m.angle3.p1={x,y}; dragging='p1'; }
-      else if (!m.angle3.p2){ m.angle3.p2={x,y}; dragging='p2'; }
-      else { m.anchor={x,y}; dragging='anchor'; }
-    }
+  const {x,y}=toCanvasCoords(ev); const m=currentMoment();
+  if(state.curMoment==='touchdown'){
+    if(hit(m.angle3.p0||{x:-1,y:-1},x,y)) dragging='p0';
+    else if(hit(m.angle3.p1||{x:-1,y:-1},x,y)) dragging='p1';
+    else if(hit(m.angle3.p2||{x:-1,y:-1},x,y)) dragging='p2';
+    else if(hit(m.ankle,x,y)) dragging='ankle';
+    else if(hit(m.anchor,x,y)) dragging='anchor';
+    else { if(!m.angle3.p0){ m.angle3.p0={x,y}; dragging='p0'; }
+           else if(!m.angle3.p1){ m.angle3.p1={x,y}; dragging='p1'; }
+           else if(!m.angle3.p2){ m.angle3.p2={x,y}; dragging='p2'; }
+           else { m.anchor={x,y}; dragging='anchor'; } }
   } else {
-    if (hit(m.anchor,x,y)) dragging='anchor';
-    else { m.anchor={x,y}; dragging='anchor'; }
+    if(hit(m.anchor,x,y)) dragging='anchor'; else { m.anchor={x,y}; dragging='anchor'; }
   }
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
-  if (!dragging) return;
-  const {x,y}=toCanvasCoords(ev);
-  const m=currentMoment();
-  if (dragging==='anchor') m.anchor={x,y};
-  if (dragging==='ankle')  m.ankle={x,y};
-  if (dragging==='p0')     m.angle3.p0={x,y};
-  if (dragging==='p1')     m.angle3.p1={x,y};
-  if (dragging==='p2')     m.angle3.p2={x,y};
+  if(!dragging) return; const {x,y}=toCanvasCoords(ev); const m=currentMoment();
+  if(dragging==='anchor') m.anchor={x,y};
+  if(dragging==='ankle')  m.ankle={x,y};
+  if(dragging==='p0')     m.angle3.p0={x,y};
+  if(dragging==='p1')     m.angle3.p1={x,y};
+  if(dragging==='p2')     m.angle3.p2={x,y};
   draw(); ev.preventDefault();
 }
 function endDrag(){ dragging=null; }
@@ -349,95 +378,71 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* ========= Dibujo de plantillas ========= */
-function line(x1,y1,x2,y2, dash=[], color='white', width=2){
-  ctx.save(); ctx.setLineDash(dash); ctx.lineWidth = width; ctx.strokeStyle = color;
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
-}
-function dot(x,y,color='white', r=4){
-  ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
-}
-function drawVerticalPlusAngleFromVertical(x,y, angleFromVerticalDeg, invert=false){
+/* ======= Drawing helpers ======= */
+function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
+function dot(x,y,color='white',r=4){ ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
-  const base = 90 - angleFromVerticalDeg;
-  const theta = (invert? -1: 1) * (base * Math.PI/180);
-  const len = Math.max(cvs.width,cvs.height);
-  const dx = Math.cos(theta)*len, dy = -Math.sin(theta)*len;
-  line(x - dx, y + dy, x + dx, y - dy, [6,4], 'rgba(255,255,255,.85)');
-  dot(x,y);
+  const base=90-deg, theta=(invert?-1:1)*(base*Math.PI/180), len=Math.max(cvs.width,cvs.height);
+  const dx=Math.cos(theta)*len, dy=-Math.sin(theta)*len;
+  line(x-dx, y+dy, x+dx, y-dy, [6,4], 'rgba(255,255,255,.85)'); dot(x,y);
 }
-function drawVHAt(x,y){
-  line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
-  line(0,y,cvs.width,y,[], 'rgba(255,255,255,.85)');
-  dot(x,y);
-}
+function drawVHAt(x,y){ line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)'); line(0,y,cvs.width,y,[], 'rgba(255,255,255,.85)'); dot(x,y); }
 function angleBetween(p0,p1,p2){
-  const v1={x:p0.x-p1.x, y:p0.y-p1.y}, v2={x:p2.x-p1.x, y:p2.y-p1.y};
+  const v1={x:p0.x-p1.x,y:p0.y-p1.y}, v2={x:p2.x-p1.x,y:p2.y-p1.y};
   const d1=Math.hypot(v1.x,v1.y)||1, d2=Math.hypot(v2.x,v2.y)||1;
-  const cos = (v1.x*v2.x + v1.y*v2.y)/(d1*d2);
-  const ang = Math.acos(Math.min(1,Math.max(-1,cos)))*180/Math.PI;
-  return ang;
+  const cos=(v1.x*v2.x+v1.y*v2.y)/(d1*d2);
+  return Math.acos(Math.min(1,Math.max(-1,cos)))*180/Math.PI;
 }
 function drawOverlays(){
-  const m = currentMoment(); const invert = state.invert;
-  if (state.curMoment==='toeoff'){
-    drawVerticalPlusAngleFromVertical(m.anchor.x, m.anchor.y, 45, invert);
-  }
-  else if (state.curMoment==='mvp'){ drawVHAt(m.anchor.x, m.anchor.y); }
-  else if (state.curMoment==='lateswing'){ drawVHAt(m.anchor.x, m.anchor.y); }
-  else if (state.curMoment==='touchdown'){
-    line(m.ankle.x, 0, m.ankle.x, cvs.height, [4,4], 'rgba(255,255,255,.7)'); dot(m.ankle.x, m.ankle.y||m.ankle.x);
-    drawVerticalPlusAngleFromVertical(m.anchor.x, m.anchor.y, 15, invert);
+  const m=currentMoment(), invert=state.invert;
+  if(state.curMoment==='toeoff'){ drawVerticalPlusAngleFromVertical(m.anchor.x,m.anchor.y,45,invert); }
+  else if(state.curMoment==='mvp'){ drawVHAt(m.anchor.x,m.anchor.y); }
+  else if(state.curMoment==='lateswing'){ drawVHAt(m.anchor.x,m.anchor.y); }
+  else if(state.curMoment==='touchdown'){
+    line(m.ankle.x,0,m.ankle.x,cvs.height,[4,4],'rgba(255,255,255,.7)'); dot(m.ankle.x,m.ankle.y||m.ankle.x);
+    drawVerticalPlusAngleFromVertical(m.anchor.x,m.anchor.y,15,invert);
     const {p0,p1,p2}=m.angle3;
-    if (p0) dot(p0.x,p0.y); if (p1) dot(p1.x,p1.y); if (p2) dot(p2.x,p2.y);
-    if (p0 && p1 && p2){
+    if(p0)dot(p0.x,p0.y); if(p1)dot(p1.x,p1.y); if(p2)dot(p2.x,p2.y);
+    if(p0&&p1&&p2){
       line(p1.x,p1.y,p0.x,p0.y,[], '#fff',2); line(p1.x,p1.y,p2.x,p2.y,[], '#fff',2);
-      const ang = angleBetween(p0,p1,p2); m.angle3.val = ang; m.angle3.over20 = ang>20;
-      ctx.save(); ctx.fillStyle = m.angle3.over20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
-      ctx.font = 'bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, p1.x+8, p1.y-8); ctx.restore();
-      if (m.angle3.over20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p1.x,p1.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+      const ang=angleBetween(p0,p1,p2); m.angle3.val=ang; m.angle3.over20=ang>20;
+      ctx.save(); ctx.fillStyle=m.angle3.over20?'rgba(231,76,60,.9)':'rgba(25,179,106,.9)';
+      ctx.font='bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, p1.x+8, p1.y-8); ctx.restore();
+      if(m.angle3.over20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p1.x,p1.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
     }
+  } else if(state.curMoment==='midstance'){
+    const h=cvs.height*0.12; const x=m.anchor.x, y1=m.anchor.y-h/2, y2=m.anchor.y+h/2;
+    line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1,'white',4); dot(x,y2,'white',4);
   }
-  else if (state.curMoment==='midstance'){
-    const h = cvs.height*0.12;
-    const x=m.anchor.x, y1=m.anchor.y-h/2, y2=m.anchor.y+h/2;
-    line(x, y1, x, y2, [], 'rgba(255,255,255,.95)', 3);
-    dot(x,y1,'white',4); dot(x,y2,'white',4);
-  }
-  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Arrastrá los puntos para posicionar las plantillas', 10, cvs.height-10); ctx.restore();
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Arrastrá los puntos para posicionar las plantillas',10,cvs.height-10); ctx.restore();
 }
 
-/* ========= Acciones ========= */
-$('#play').onclick = async ()=>{
-  try{ if (vid.paused) { await vid.play(); } else { vid.pause(); } }catch(e){ console.warn(e); }
+/* ======= Actions ======= */
+$('#play').onclick=async()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } }catch(e){} };
+$('#back1').onclick=()=>stepFrames(-1);
+$('#fwd1').onclick=()=>stepFrames(1);
+$('#back10').onclick=()=>stepFrames(-10);
+$('#fwd10').onclick=()=>stepFrames(10);
+$('#invert').onclick=()=>{ state.invert=!state.invert; draw(); };
+$('#snap').onclick=()=>{
+  const dataURL=cvs.toDataURL('image/png');
+  const mKey=state.curMoment, m=state.moments[mKey];
+  m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
+  m.captured=true; renderTabs();
 };
-$('#back1').onclick = ()=>stepFrames(-1);
-$('#fwd1').onclick  = ()=>stepFrames(1);
-$('#back10').onclick= ()=>stepFrames(-10);
-$('#fwd10').onclick = ()=>stepFrames(10);
-$('#invert').onclick= ()=>{ state.invert=!state.invert; draw(); }
-$('#snap').onclick  = ()=>{
-  const dataURL = cvs.toDataURL('image/png');
-  const mKey = state.curMoment;
-  const m = state.moments[mKey];
-  m.snapshots.push({dataURL, when: new Date().toISOString(), frame:m.frame, t:m.t});
-  m.captured = true; renderTabs();
-};
+notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
+fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
-notesEl.oninput = ()=>{ state.moments[state.curMoment].notes = notesEl.value; };
-fpsInput.onchange = ()=>{ state.fps = Number(fpsInput.value)||240; updateTimeUI(); };
-
-$('#printReport').onclick = ()=>{
-  const container = document.getElementById('reportContent');
-  container.innerHTML='';
+/* Report */
+$('#printReport').onclick=()=>{
+  const container=document.getElementById('reportContent'); container.innerHTML='';
   MOMENTS.forEach(m=>{
-    const mm = state.moments[m.key];
-    const latest = mm.snapshots[mm.snapshots.length-1];
-    const checks = QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
-    const ms = mm.checks.filter(Boolean).length;
-    const page = document.createElement('div');
-    page.className='page';
-    page.innerHTML = `
+    const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
+    const checks=QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
+    const ms=mm.checks.filter(Boolean).length;
+    const page=document.createElement('div'); page.className='page';
+    page.innerHTML=`
       <h2>${m.label}</h2>
       <div><small>t=${(mm.t||0).toFixed(3)}s • frame ${mm.frame||0}</small></div>
       ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}" /></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
@@ -447,40 +452,31 @@ $('#printReport').onclick = ()=>{
     `;
     container.appendChild(page);
   });
-  const total = Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
-  const sum = document.createElement('div');
-  sum.className='page';
-  sum.innerHTML = `<h2>Resumen</h2>
-    <div><strong>Puntaje total:</strong> ${total}</div>
-    <div><strong>Clasificación:</strong> ${GRADE(total)}</div>`;
+  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  const sum=document.createElement('div'); sum.className='page';
+  sum.innerHTML=`<h2>Resumen</h2><div><strong>Puntaje total:</strong> ${total}</div><div><strong>Clasificación:</strong> ${GRADE(total)}</div>`;
   container.prepend(sum);
   window.print();
 };
 
-$('#clearState').onclick = ()=>{
-  if (confirm('¿Borrar progreso de esta sesión?')) {
-    state = {
-      fps:240, invert:false, curMoment:'toeoff',
-      moments: Object.fromEntries(MOMENTS.map(m=>[m.key,{ t:0, frame:0, notes:'', checks: QUESTIONS[m.key].map(()=>false),
-        anchor:{x:100,y:100}, ankle:{x:150,y:150}, angle3:{p0:null,p1:null,p2:null, val:null, over20:false},
-        snapshots:[], captured:false }]))
-    };
-    renderTabs(); setMoment('toeoff'); fpsInput.value = state.fps;
+/* Clear session */
+$('#clearState').onclick=()=>{
+  if(confirm('¿Borrar progreso de esta sesión?')){
+    state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false),
+      anchor:{x:100,y:100},ankle:{x:150,y:150},angle3:{p0:null,p1:null,p2:null,val:null,over20:false}, snapshots:[],captured:false}]))};
+    renderTabs(); setMoment('toeoff'); fpsInput.value=state.fps;
   }
 };
 
-/* ========= Carga de video ========= */
-file.onchange = ()=>{
-  const f=file.files[0]; if (!f) return;
-  const url=URL.createObjectURL(f);
-  vid.src=url; vid.load();
-  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime = 0.001; momentDesc.textContent = DESCRIPTIONS[state.curMoment]; };
+/* Video load */
+file.onchange=()=>{
+  const f=file.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f); vid.src=url; vid.load();
+  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime=0.001; momentDesc.textContent=DESCRIPTIONS[state.curMoment]; updateTimeUI(); };
 };
 
-// Init
-(function init(){
-  renderTabs(); setMoment(state.curMoment); fpsInput.value = state.fps; updateReportAvailability();
-})();
+/* Init */
+(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); })();
 </script>
 </body>
 </html>
