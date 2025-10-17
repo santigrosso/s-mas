@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.4 • scrubber)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.5 • Guías)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -50,7 +50,7 @@
     font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
   }
   /* iOS switch compact */
-  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr)}
+  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr); margin-bottom:8px}
   .q label{flex:1}
   .switch{position:relative;width:36px;height:22px;flex:0 0 36px}
   .switch input{opacity:0;width:0;height:0}
@@ -59,26 +59,16 @@
   .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
   .switch input:checked + .slider:before{ transform: translateX(14px); }
   button[disabled]{opacity:.5; cursor:not-allowed}
-  /* Scrubber (YouTube-like) */
+  .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#d0def0; margin-left:6px; cursor:pointer}
+  .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:10; box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  /* Scrubber */
   .scrubWrap{margin:8px 0 6px}
   .scrubRow{display:flex;align-items:center;gap:10px}
   .time{font-variant-numeric:tabular-nums; font-size:12px; color:var(--mut); min-width:60px; text-align:center}
-  .scrubber{
-    position:relative; height:10px; flex:1 1 auto; border-radius:999px; background:var(--scrub-bg);
-    cursor:pointer; touch-action:none; /* enable custom touch handling */
-  }
+  .scrubber{ position:relative; height:10px; flex:1 1 auto; border-radius:999px; background:var(--scrub-bg); cursor:pointer; touch-action:none; }
   .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
   .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
-  .scrubber .thumb{
-    position:absolute; top:50%; transform:translate(-50%,-50%);
-    width:14px; height:14px; border-radius:50%; background:var(--scrub-thumb); box-shadow:0 1px 2px rgba(0,0,0,.5);
-  }
-  /* Report print */
-  #report{display:none;background:#fff;color:#000;padding:12px}
-  #report h2{margin:.2em 0 .4em;font-size:16px}
-  #report .page{break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}
-  #report img{max-width:100%}
-  @media print { header, #app, footer { display:none } #report{display:block} body{background:#fff} }
+  .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:var(--scrub-thumb); box-shadow:0 1px 2px rgba(0,0,0,.5); }
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
 </style>
 </head>
@@ -137,7 +127,6 @@
           <button id="back10" class="small">−10</button>
           <button id="fwd10" class="small">+10</button>
           <button id="snap" class="small">Capturar imagen</button>
-          <button id="invert" class="small">Invertir plantilla (izq/der)</button>
           <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
           <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
         </div>
@@ -145,23 +134,36 @@
         <div class="hr"></div>
       </div>
 
-      <div class="card" style="flex:1 1 320px">
+      <div class="card" style="flex:1 1 360px">
+        <!-- Panel Guías -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Guías</strong>
+          <button id="invert" class="ghost small" title="Espejar guías izquierda/derecha">Invertir (izq/der)</button>
+        </div>
+        <div id="guidesPanel"></div>
+
+        <div class="hr"></div>
+
+        <!-- Panel Preguntas -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Preguntas (on/off)</strong>
           <span class="label">toca para alternar</span>
         </div>
-        <div id="questions" class="grid"></div>
+        <div id="questions"></div>
+
         <div class="hr"></div>
         <div class="grid">
           <div><span class="label">Puntaje del momento</span><div class="score" id="momentScore">0</div></div>
           <div><span class="label">Puntaje total</span><div class="score" id="totalScore">0</div></div>
           <div><span class="label">Clasificación</span><div class="score" id="grade">—</div></div>
         </div>
+
         <div class="hr"></div>
         <div class="grid">
           <label class="label">Notas del momento</label>
           <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px"></textarea>
         </div>
+
         <div class="hr"></div>
         <div class="grid">
           <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
@@ -203,13 +205,33 @@ const QUESTIONS={
   touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
   midstance:["¿Está la rodilla por delante de la punta del pie?"]
 };
+const GUIDE_DEFS={
+  toeoff:[
+    {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'}
+  ],
+  mvp:[
+    {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'}
+  ],
+  lateswing:[
+    {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'}
+  ],
+  touchdown:[
+    {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
+    {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
+    {key:'cdg', label:'Guía distancia CdG', use:'Marcá dos puntos y medí la distancia horizontal (Δx) entre ellos en píxeles.'}
+  ],
+  midstance:[
+    {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'}
+  ]
+};
 const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
 
 let state={
   fps:240,invert:false,curMoment:'toeoff',
-  moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false),
-    anchor:{x:100,y:100},ankle:{x:150,y:150},angle3:{p0:null,p1:null,p2:null,val:null,over20:false},
-    snapshots:[],captured:false}]))
+  moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
+    t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false,
+    guides: {}
+  }]))
 };
 
 /* ======= DOM ======= */
@@ -218,16 +240,26 @@ const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
 const cvs=$('#overlay'),ctx=cvs.getContext('2d');
 const fpsInput=$('#fps'),ctime=$('#ctime'),fnum=$('#fnum');
 const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),momentScoreEl=$('#momentScore'),totalScoreEl=$('#totalScore'),gradeEl=$('#grade'),curMomentLabel=$('#curMomentLabel');
-const notesEl=$('#notes');
+const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
+const invertBtn=$('#invert');
 /* Scrubber refs */
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
+/* ======= Helpers ======= */
+function ensureGuideState(momentKey, guideKey){
+  const m=state.moments[momentKey];
+  if(!m.guides[guideKey]){
+    m.guides[guideKey]={on:false, data:{}};
+  }
+  return m.guides[guideKey];
+}
 function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
 function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 function setMoment(key){
   state.curMoment=key;
   renderTabs();
+  renderGuidesPanel();
   momentDesc.textContent=DESCRIPTIONS[key];
   curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
   renderQuestions(); notesEl.value=state.moments[key].notes||''; draw();
@@ -238,13 +270,46 @@ function renderTabs(){
     const b=document.createElement('button');
     b.className='tab'+(state.curMoment===m.key?' active':'');
     if(state.moments[m.key].captured) b.classList.add('captured');
-    b.dataset.key=m.key;
-    b.onclick=()=>setMoment(m.key);
+    b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
     b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`;
     tabs.appendChild(b);
   });
   updateReportAvailability();
 }
+function renderGuidesPanel(){
+  guidesPanel.innerHTML='';
+  const defs = GUIDE_DEFS[state.curMoment]||[];
+  defs.forEach(def=>{
+    const row=document.createElement('div'); row.className='q';
+    const lab=document.createElement('label'); lab.textContent=def.label;
+    const help=document.createElement('span'); help.className='help'; help.textContent='?';
+    help.onclick=(e)=>showTip(e.currentTarget, def.use);
+    const sw=document.createElement('label'); sw.className='switch';
+    const g = ensureGuideState(state.curMoment, def.key);
+    const input=document.createElement('input'); input.type='checkbox'; input.checked=!!g.on;
+    input.onchange=()=>{ g.on=input.checked; draw(); };
+    const slid=document.createElement('span'); slid.className='slider';
+    sw.appendChild(input); sw.appendChild(slid);
+    lab.appendChild(help);
+    row.appendChild(lab); row.appendChild(sw);
+    guidesPanel.appendChild(row);
+  });
+}
+
+let tipEl=null;
+function showTip(anchorEl, text){
+  if(tipEl){ tipEl.remove(); tipEl=null; }
+  tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
+  document.body.appendChild(tipEl);
+  const r=anchorEl.getBoundingClientRect();
+  const tt=tipEl.getBoundingClientRect();
+  tipEl.style.left = (r.left - tt.width - 8) + 'px';
+  tipEl.style.top  = (r.top + window.scrollY - (tt.height/2) + (r.height/2)) + 'px';
+  const close=()=>{ if(tipEl){ tipEl.remove(); tipEl=null; } window.removeEventListener('click', onWin); };
+  const onWin=(e)=>{ if(!tipEl.contains(e.target) && e.target!==anchorEl) close(); };
+  setTimeout(()=>window.addEventListener('click', onWin), 0);
+}
+
 function renderQuestions(){
   const m=state.moments[state.curMoment];
   questions.innerHTML='';
@@ -275,7 +340,7 @@ function draw(){
   sizeCanvasToWrap();
   ctx.clearRect(0,0,cvs.width,cvs.height);
   ctx.drawImage(vid,0,0,cvs.width,cvs.height);
-  drawOverlays();
+  drawGuides();
 }
 function stepFrames(n){
   const fps=Number(state.fps)||240; vid.pause();
@@ -286,15 +351,13 @@ function updateTimeUI(){
   ctime.textContent=t.toFixed(3);
   const fps=Number(state.fps)||240; fnum.textContent=Math.round(t*fps);
   const m=state.moments[state.curMoment]; m.t=t; m.frame=Math.round(t*fps);
-  /* scrubber visuals */
   if(d>0){
     const pct=(t/d)*100; playBar.style.width=pct+'%'; thumb.style.left=pct+'%';
     durT.textContent=formatTime(d); curT.textContent=formatTime(t);
-    /* buffer */
     try{
       let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); }
       bufBar.style.width=(Math.min(end,d)/d)*100+'%';
-    }catch(e){ /* ignore */ }
+    }catch(e){}
   }
 }
 function formatTime(s){
@@ -306,7 +369,7 @@ vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); });
 vid.addEventListener('progress',()=>{ updateTimeUI(); });
 window.addEventListener('resize', draw);
 
-/* ======= Scrubber interactions (mouse + touch) ======= */
+/* ======= Scrubber interactions ======= */
 let scrubbing=false;
 function posToTime(clientX){
   const r=scrub.getBoundingClientRect();
@@ -321,20 +384,16 @@ function moveScrub(clientX){
   if(!scrubbing) return;
   vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
 }
-function endScrub(){
-  if(!scrubbing) return; scrubbing=false;
-}
-/* Mouse */
+function endScrub(){ if(!scrubbing) return; scrubbing=false; }
 scrub.addEventListener('mousedown',(e)=>{ beginScrub(e.clientX); e.preventDefault(); });
 window.addEventListener('mousemove',(e)=>{ moveScrub(e.clientX); });
 window.addEventListener('mouseup',()=>{ endScrub(); });
-/* Touch */
 scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.touches[0].clientX); } e.preventDefault(); }, {passive:false});
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
 
 /* ======= Overlay interaction ======= */
-let dragging=null;
+let dragging=null, dragKey=null;
 function toCanvasCoords(ev){
   const r=cvs.getBoundingClientRect();
   const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
@@ -342,34 +401,57 @@ function toCanvasCoords(ev){
   return {x,y};
 }
 function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
-function currentMoment(){ return state.moments[state.curMoment]; }
+function cm(){ return state.moments[state.curMoment]; }
+function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
+
 function startDrag(ev){
-  const {x,y}=toCanvasCoords(ev); const m=currentMoment();
-  if(state.curMoment==='touchdown'){
-    if(hit(m.angle3.p0||{x:-1,y:-1},x,y)) dragging='p0';
-    else if(hit(m.angle3.p1||{x:-1,y:-1},x,y)) dragging='p1';
-    else if(hit(m.angle3.p2||{x:-1,y:-1},x,y)) dragging='p2';
-    else if(hit(m.ankle,x,y)) dragging='ankle';
-    else if(hit(m.anchor,x,y)) dragging='anchor';
-    else { if(!m.angle3.p0){ m.angle3.p0={x,y}; dragging='p0'; }
-           else if(!m.angle3.p1){ m.angle3.p1={x,y}; dragging='p1'; }
-           else if(!m.angle3.p2){ m.angle3.p2={x,y}; dragging='p2'; }
-           else { m.anchor={x,y}; dragging='anchor'; } }
-  } else {
-    if(hit(m.anchor,x,y)) dragging='anchor'; else { m.anchor={x,y}; dragging='anchor'; }
+  const {x,y}=toCanvasCoords(ev);
+  const list = activeGuides();
+  for(const [key, g] of list){
+    const d=g.data;
+    if(key==='thighs'){
+      if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if(key==='cdg'){
+      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if(key==='heel'){
+      if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
+    } else if(['vh','t15','g45','knee'].includes(key)){
+      if(hit(d.anchor,x,y)){ dragging='anchor'; dragKey=key; return ev.preventDefault(); }
+    }
+  }
+  for(const [key,g] of list){
+    const d=g.data;
+    if(key==='thighs'){
+      if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
+      else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
+      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+    } else if(key==='cdg'){
+      if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
+      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+    } else if(key==='heel'){
+      if(!d.p){ d.p={x,y}; dragging='p'; dragKey=key; break; }
+    } else if(['vh','t15','g45','knee'].includes(key)){
+      if(!d.anchor){ d.anchor={x,y}; dragging='anchor'; dragKey=key; break; }
+    }
   }
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
-  if(!dragging) return; const {x,y}=toCanvasCoords(ev); const m=currentMoment();
-  if(dragging==='anchor') m.anchor={x,y};
-  if(dragging==='ankle')  m.ankle={x,y};
-  if(dragging==='p0')     m.angle3.p0={x,y};
-  if(dragging==='p1')     m.angle3.p1={x,y};
-  if(dragging==='p2')     m.angle3.p2={x,y};
+  if(!dragging) return;
+  const {x,y}=toCanvasCoords(ev);
+  const g=cm().guides[dragKey]; if(!g) return;
+  const d=g.data;
+  if(dragging==='v') d.v={x,y};
+  if(dragging==='a') d.a={x,y};
+  if(dragging==='b') d.b={x,y};
+  if(dragging==='p') d.p={x,y};
+  if(dragging==='anchor') d.anchor={x,y};
   draw(); ev.preventDefault();
 }
-function endDrag(){ dragging=null; }
+function endDrag(){ dragging=null; dragKey=null; }
 cvs.addEventListener('mousedown', startDrag);
 cvs.addEventListener('mousemove', moveDrag);
 cvs.addEventListener('mouseup', endDrag);
@@ -378,7 +460,7 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* ======= Drawing helpers ======= */
+/* ======= Drawing helpers for guides ======= */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
 function dot(x,y,color='white',r=4){ ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
@@ -394,28 +476,58 @@ function angleBetween(p0,p1,p2){
   const cos=(v1.x*v2.x+v1.y*v2.y)/(d1*d2);
   return Math.acos(Math.min(1,Math.max(-1,cos)))*180/Math.PI;
 }
-function drawOverlays(){
-  const m=currentMoment(), invert=state.invert;
-  if(state.curMoment==='toeoff'){ drawVerticalPlusAngleFromVertical(m.anchor.x,m.anchor.y,45,invert); }
-  else if(state.curMoment==='mvp'){ drawVHAt(m.anchor.x,m.anchor.y); }
-  else if(state.curMoment==='lateswing'){ drawVHAt(m.anchor.x,m.anchor.y); }
-  else if(state.curMoment==='touchdown'){
-    line(m.ankle.x,0,m.ankle.x,cvs.height,[4,4],'rgba(255,255,255,.7)'); dot(m.ankle.x,m.ankle.y||m.ankle.x);
-    drawVerticalPlusAngleFromVertical(m.anchor.x,m.anchor.y,15,invert);
-    const {p0,p1,p2}=m.angle3;
-    if(p0)dot(p0.x,p0.y); if(p1)dot(p1.x,p1.y); if(p2)dot(p2.x,p2.y);
-    if(p0&&p1&&p2){
-      line(p1.x,p1.y,p0.x,p0.y,[], '#fff',2); line(p1.x,p1.y,p2.x,p2.y,[], '#fff',2);
-      const ang=angleBetween(p0,p1,p2); m.angle3.val=ang; m.angle3.over20=ang>20;
-      ctx.save(); ctx.fillStyle=m.angle3.over20?'rgba(231,76,60,.9)':'rgba(25,179,106,.9)';
-      ctx.font='bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, p1.x+8, p1.y-8); ctx.restore();
-      if(m.angle3.over20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p1.x,p1.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+function drawGuides(){
+  const list = activeGuides();
+  for(const [key,g] of list){
+    const d=g.data;
+    if(key==='g45' && d.anchor){
+      drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 45, state.invert);
     }
-  } else if(state.curMoment==='midstance'){
-    const h=cvs.height*0.12; const x=m.anchor.x, y1=m.anchor.y-h/2, y2=m.anchor.y+h/2;
-    line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1,'white',4); dot(x,y2,'white',4);
+    if(key==='heel' && d.p){
+      line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2);
+      dot(d.p.x,d.p.y,'white',4);
+    }
+    if(key==='vh' && d.anchor){
+      drawVHAt(d.anchor.x, d.anchor.y);
+    }
+    if(key==='t15' && d.anchor){
+      drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 15, state.invert);
+    }
+    if(key==='thighs'){
+      const {v,a,b}=d;
+      if(v) dot(v.x,v.y);
+      if(a) dot(a.x,a.y);
+      if(b) dot(b.x,b.y);
+      if(v && a){ line(v.x,v.y,a.x,a.y,[], '#fff',2); }
+      if(v && b){ line(v.x,v.y,b.x,b.y,[], '#fff',2); }
+      if(v && a && b){
+        const ang=angleBetween(a,v,b);
+        ctx.save(); ctx.fillStyle = ang>20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
+        ctx.font='bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, v.x+8, v.y-8); ctx.restore();
+        if(ang>20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(v.x,v.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+      }
+    }
+    if(key==='cdg'){
+      const {a,b}=d;
+      if(a) dot(a.x,a.y);
+      if(b) dot(b.x,b.y);
+      if(a && b){
+        const ymid = (a.y+b.y)/2;
+        line(a.x, ymid, b.x, ymid, [6,4], 'rgba(255,255,255,.85)',2);
+        const dx = Math.abs(Math.round(b.x - a.x));
+        ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
+        ctx.fillText(`Δx: ${dx}px`, Math.min(a.x,b.x)+5, ymid-8);
+        ctx.restore();
+      }
+    }
+    if(key==='knee' && d.anchor){
+      const h = cvs.height*0.12;
+      const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
+      dot(x,y1,'white',4); dot(x,y2,'white',4);
+    }
   }
-  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Arrastrá los puntos para posicionar las plantillas',10,cvs.height-10); ctx.restore();
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
 }
 
 /* ======= Actions ======= */
@@ -424,7 +536,7 @@ $('#back1').onclick=()=>stepFrames(-1);
 $('#fwd1').onclick=()=>stepFrames(1);
 $('#back10').onclick=()=>stepFrames(-10);
 $('#fwd10').onclick=()=>stepFrames(10);
-$('#invert').onclick=()=>{ state.invert=!state.invert; draw(); };
+invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
 $('#snap').onclick=()=>{
   const dataURL=cvs.toDataURL('image/png');
   const mKey=state.curMoment, m=state.moments[mKey];
@@ -462,8 +574,9 @@ $('#printReport').onclick=()=>{
 /* Clear session */
 $('#clearState').onclick=()=>{
   if(confirm('¿Borrar progreso de esta sesión?')){
-    state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false),
-      anchor:{x:100,y:100},ankle:{x:150,y:150},angle3:{p0:null,p1:null,p2:null,val:null,over20:false}, snapshots:[],captured:false}]))};
+    state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
+      t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false, guides:{}
+    }]))};
     renderTabs(); setMoment('toeoff'); fpsInput.value=state.fps;
   }
 };
