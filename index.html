@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.9.3)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.9.4)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -20,7 +20,17 @@
   #videoWrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
   video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
   canvas{position:absolute;left:0;top:0}
-  #magnifier{position:absolute; left:0; top:0; pointer-events:none; display:none;}
+  #overlay{z-index:2}
+  #magnifier{position:absolute; left:0; top:0; pointer-events:none; display:none; z-index:3;}
+  /* Visor PIP */
+  #pipWrap{ position:absolute; right:10px; bottom:10px; width:220px; height:160px;
+            border-radius:10px; overflow:hidden; display:none; z-index:4;
+            box-shadow:0 10px 22px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08); }
+  #pipCanvas{ width:100%; height:100%; display:block; background:#000; }
+  #pipHeader{ position:absolute; left:0; top:0; right:0; height:24px; display:flex; align-items:center; gap:8px;
+              background:rgba(15,42,68,.8); color:#d8e4f1; font-size:12px; padding:0 8px; user-select:none; }
+  #pipHeader .dot{ width:8px; height:8px; border-radius:50%; background:#ff7a00; }
+  #pipHeader .hint{ margin-left:auto; opacity:.8; }
   .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
@@ -88,6 +98,10 @@
     #report .needBox { border:1px solid #a6c8ff; background:#e9f2ff; padding:6px 8px; border-radius:6px; font-size:12px; color:#0b1b2b; }
     #printFooter { position: fixed; bottom: 0; left: 0; right: 0; text-align:center; font-size:10px; color:#4b5563; border-top:1px solid #e5e7eb; padding-top:6px; }
   }
+  /* Slider de zoom */
+  .zoomRow{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .zoomRow input[type=range]{flex:1;appearance:none;height:8px;border-radius:999px;background:#1a324c;outline:none}
+  .zoomRow input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.5);cursor:pointer}
 </style>
 </head>
 <body>
@@ -121,6 +135,11 @@
           <video id="vid" playsinline muted controls preload="metadata"></video>
           <canvas id="overlay"></canvas>
           <canvas id="magnifier" width="1" height="1"></canvas>
+          <!-- Visor PIP -->
+          <div id="pipWrap">
+            <div id="pipHeader"><span class="dot"></span> Visor de zoom <span class="hint">arrastrá</span></div>
+            <canvas id="pipCanvas" width="220" height="160"></canvas>
+          </div>
         </div>
 
         <div class="scrubWrap">
@@ -162,6 +181,18 @@
           <span class="pill">Total: <b id="totalScore">0</b></span>
           <span class="pill">Clasificación: <b id="grade">Excelente (0–1)</b></span>
         </div>
+
+        <!-- Controles de visor -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Visor de zoom</strong>
+          <button id="togglePip" class="ghost small">🔍 Mostrar visor</button>
+        </div>
+        <div class="zoomRow">
+          <span class="label" style="min-width:80px">Zoom: <b id="zoomLabel">1.5×</b></span>
+          <input type="range" id="zoomRange" min="1" max="3" step="0.1" value="1.5" />
+        </div>
+
+        <div class="hr"></div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Preguntas (on/off)</strong>
@@ -215,11 +246,11 @@ const MOMENTS=[
   {key:'midstance',label:'Mid-stance'},
 ];
 const QUESTIONS={
-  toeoff:["¿Demasiada extensión de cadera?"],                               // #1
-  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"], // #2 #3
-  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"], // #4 #5
-  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"], // #6..#11
-  midstance:["¿Está la rodilla por delante de la punta del pie?"]            // #12
+  toeoff:["¿Demasiada extensión de cadera?"],
+  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],
+  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"],
+  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
+  midstance:["¿Está la rodilla por delante de la punta del pie?"]
 };
 
 /* ===== Estado ===== */
@@ -243,6 +274,70 @@ const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
 const momentScoreEl=document.getElementById('momentScore'), totalScoreEl=document.getElementById('totalScore'), gradeEl=document.getElementById('grade');
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
+
+/* ===== Visor PIP ===== */
+const pipWrap=$('#pipWrap'), pipCanvas=$('#pipCanvas'), pctx=pipCanvas.getContext('2d');
+const togglePip=$('#togglePip'), zoomRange=$('#zoomRange'), zoomLabel=$('#zoomLabel');
+let pipOn=false, pipDragging=false, pipDragOff={x:0,y:0};
+let zoom=Number(zoomRange.value)||1.5;
+let zoomSrc={x:0,y:0};
+function ensureZoomSrcDefault(){ if(!zoomSrc.x && !zoomSrc.y){ zoomSrc.x=cvs.width/2; zoomSrc.y=cvs.height/2; } }
+togglePip.onclick=()=>{ pipOn=!pipOn; pipWrap.style.display=pipOn?'block':'none'; togglePip.textContent=pipOn?'🔍 Ocultar visor':'🔍 Mostrar visor'; drawZoomViewer(); };
+zoomRange.oninput=()=>{ zoom=Number(zoomRange.value)||1; zoomLabel.textContent=zoom.toFixed(1)+'×'; drawZoomViewer(); };
+function clamp(val,min,max){ return Math.max(min,Math.min(max,val)); }
+function drawZoomViewer(){
+  if(!pipOn) return;
+  ensureZoomSrcDefault();
+  const w=pipCanvas.width, h=pipCanvas.height;
+  pctx.clearRect(0,0,w,h);
+  if(!vid.videoWidth){ return; }
+  const srcW = w/zoom;
+  const srcH = h/zoom;
+  const sx = clamp(zoomSrc.x - srcW/2, 0, Math.max(0, cvs.width - srcW));
+  const sy = clamp(zoomSrc.y - srcH/2, 0, Math.max(0, cvs.height - srcH));
+  try{
+    pctx.imageSmoothingEnabled=true;
+    pctx.drawImage(cvs, sx, sy, srcW, srcH, 0, 0, w, h);
+    pctx.save();
+    pctx.strokeStyle='rgba(255,255,255,.9)'; pctx.lineWidth=1;
+    pctx.beginPath(); pctx.moveTo(0,h/2); pctx.lineTo(w,h/2); pctx.moveTo(w/2,0); pctx.lineTo(w/2,h); pctx.stroke();
+    pctx.restore();
+  }catch(e){}
+}
+const pipHeader=document.getElementById('pipHeader');
+pipHeader.addEventListener('mousedown',(e)=>{
+  pipDragging=true;
+  const r=pipWrap.getBoundingClientRect(), rw=wrap.getBoundingClientRect();
+  pipDragOff.x=e.clientX - r.left + rw.left;
+  pipDragOff.y=e.clientY - r.top + rw.top;
+  e.preventDefault();
+});
+window.addEventListener('mousemove',(e)=>{
+  if(!pipDragging) return;
+  const rw=wrap.getBoundingClientRect();
+  let x=e.clientX - pipDragOff.x; let y=e.clientY - pipDragOff.y;
+  const maxX = rw.width - pipWrap.offsetWidth, maxY = rw.height - pipWrap.offsetHeight;
+  x = clamp(x, 0, maxX); y = clamp(y, 0, maxY);
+  pipWrap.style.left = x + 'px'; pipWrap.style.top = y + 'px'; pipWrap.style.right='auto'; pipWrap.style.bottom='auto';
+});
+window.addEventListener('mouseup',()=>{ pipDragging=false; });
+pipHeader.addEventListener('touchstart',(e)=>{
+  const t=e.touches[0];
+  pipDragging=true;
+  const r=pipWrap.getBoundingClientRect(), rw=wrap.getBoundingClientRect();
+  pipDragOff.x=t.clientX - r.left + rw.left;
+  pipDragOff.y=t.clientY - r.top + rw.top;
+  e.preventDefault();
+},{passive:false});
+window.addEventListener('touchmove',(e)=>{
+  if(!pipDragging) return;
+  const t=e.touches[0]; const rw=wrap.getBoundingClientRect();
+  let x=t.clientX - pipDragOff.x; let y=t.clientY - pipDragOff.y;
+  const maxX = rw.width - pipWrap.offsetWidth, maxY = rw.height - pipWrap.offsetHeight;
+  x = clamp(x, 0, maxX); y = clamp(y, 0, maxY);
+  pipWrap.style.left = x + 'px'; pipWrap.style.top = y + 'px'; pipWrap.style.right='auto'; pipWrap.style.bottom='auto';
+},{passive:false});
+window.addEventListener('touchend',()=>{ pipDragging=false; });
 
 /* ===== Tooltips ===== */
 let tipEl=null, tipAnchor=null;
@@ -356,7 +451,7 @@ function refreshScores(){
 
 /* ===== Video / Dibujo ===== */
 function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; mag.width=r.width; mag.height=r.height; }
-function draw(){ if(!vid.videoWidth) return; sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height); ctx.drawImage(vid,0,0,cvs.width,cvs.height); drawGuides(); drawMagnifier(); }
+function draw(){ if(!vid.videoWidth) return; sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height); ctx.drawImage(vid,0,0,cvs.width,cvs.height); drawGuides(); drawMagnifier(); drawZoomViewer(); }
 function stepFrames(n){ const fps=Number(state.fps)||240; vid.pause(); const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t; }
 function updateTimeUI(){
   const t=vid.currentTime||0, d=vid.duration||0;
@@ -389,7 +484,7 @@ scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.to
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
 
-/* ===== Overlay + Lupa ===== */
+/* ===== Overlay + Lupa + Visor ===== */
 let dragging=null, dragKey=null; let placingActive=false;
 const MAG_RADIUS=70, MAG_SCALE=2.5, MAG_OFFSET={x:90,y:-90};
 let magVisible=false, magSrc={x:0,y:0}, magPos={x:0,y:0};
@@ -397,8 +492,8 @@ function toCanvasCoords(ev){ const r=cvs.getBoundingClientRect(); const x=(ev.to
 function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
 function cm(){ return state.moments[state.curMoment]; }
 function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
-function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
-function moveMag(cx,cy,px,py){ if(!magVisible) return; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
+function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); zoomSrc={x:cx,y:cy}; drawZoomViewer(); }
+function moveMag(cx,cy,px,py){ if(!magVisible) return; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); zoomSrc={x:cx,y:cy}; drawZoomViewer(); }
 function hideMag(){ magVisible=false; mag.style.display='none'; }
 function drawMagnifier(){
   const mw=cvs.width, mh=cvs.height; mag.width=mw; mag.height=mh; mctx.clearRect(0,0,mw,mh); if(!magVisible) return;
@@ -412,57 +507,10 @@ function drawMagnifier(){
   mctx.moveTo(magPos.x, magPos.y-MAG_RADIUS); mctx.lineTo(magPos.x, magPos.y+MAG_RADIUS); mctx.stroke();
   mctx.strokeStyle='rgba(255,255,255,.8)'; mctx.lineWidth=2; mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.stroke(); mctx.restore();
 }
-function startDrag(ev){
-  placingActive=true; const {x,y}=toCanvasCoords(ev); showMag(x,y,x,y);
-  const list = activeGuides();
-  for(const [key, g] of list){
-    const d=g.data;
-    if(key==='thighs'){
-      if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
-      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
-      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
-    } else if(key==='cdg'){
-      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
-      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
-    } else if(key==='heel'){
-      if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
-    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
-      if(hit(d.anchor,x,y)){ dragging='anchor'; dragKey=key; return ev.preventDefault(); }
-    }
-  }
-  for(const [key,g] of list){
-    const d=g.data;
-    if(key==='thighs'){
-      if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
-      else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
-      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
-    } else if(key==='cdg'){
-      if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
-      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
-    } else if(key==='heel'){
-      if(!d.p){ d.p={x,y}; dragging='p'; dragKey=key; break; }
-    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
-      if(!d.anchor){ d.anchor={x,y}; dragging='anchor'; dragKey=key; break; }
-    }
-  }
-  draw(); ev.preventDefault();
-}
-function moveDrag(ev){
-  if(!placingActive) return; const {x,y}=toCanvasCoords(ev); moveMag(x,y,x,y);
-  if(!dragging) return; const g=cm().guides[dragKey]; if(!g) return; const d=g.data;
-  if(dragging==='v') d.v={x,y}; if(dragging==='a') d.a={x,y}; if(dragging==='b') d.b={x,y}; if(dragging==='p') d.p={x,y}; if(dragging==='anchor') d.anchor={x,y};
-  draw(); ev.preventDefault();
-}
-function endDrag(){ placingActive=false; dragging=null; dragKey=null; hideMag(); draw(); }
-cvs.addEventListener('mousedown', startDrag);
-cvs.addEventListener('mousemove', moveDrag);
-cvs.addEventListener('mouseup', endDrag);
-cvs.addEventListener('mouseleave', endDrag);
-cvs.addEventListener('touchstart', startDrag,{passive:false});
-cvs.addEventListener('touchmove', moveDrag,{passive:false});
-cvs.addEventListener('touchend', endDrag);
+cvs.addEventListener('mousemove',(e)=>{ if(!pipOn) return; const r=cvs.getBoundingClientRect(); zoomSrc={x:e.clientX-r.left,y:e.clientY-r.top}; drawZoomViewer(); });
+cvs.addEventListener('touchmove',(e)=>{ if(!pipOn || !e.touches.length) return; const t=e.touches[0]; const r=cvs.getBoundingClientRect(); zoomSrc={x:t.clientX-r.left,y:t.clientY-r.top}; drawZoomViewer(); }, {passive:true});
 
-/* ===== Dibujo de guías ===== */
+/* ===== Draw helpers ===== */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
 function dot(x,y){ ctx.save(); const rr=(placingActive?10:4); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
@@ -473,9 +521,9 @@ function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
 }
 function drawVHAt(x,y){ line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)'); line(0,y,cvs.width,y,[], 'rgba(255,255,255,.85)'); dot(x,y); }
 function angleBetween(p0,p1,p2){
-  const v1={x:p0.x-p1.x,y:p0.y-p1.y}, v2={x:p2.x-p1.x,y:p2.y-p1.y};
-  const d1=Math.hypot(v1.x,v1.y)||1, d2=Math.hypot(v2.x,v2.y)||1;
-  const cos=(v1.x*v2.x+v1.y*v2.y)/(d1*d2);
+  const v1x=p0.x-p1.x, v1y=p0.y-p1.y, v2x=p2.x-p1.x, v2y=p2.y-p1.y;
+  const d1=Math.hypot(v1x,v1y)||1, d2=Math.hypot(v2x,v2y)||1;
+  const cos=(v1x*v2x+v1y*v2y)/(d1*d2);
   return Math.acos(Math.min(1,Math.max(-1,cos)))*180/Math.PI;
 }
 function drawGuides(){
@@ -545,26 +593,15 @@ function computeNeeds(){
   const answers=[];
   function pushMoment(key){ const arr=state.moments[key].checks; for(let i=0;i<arr.length;i++){ answers.push(arr[i]); } }
   pushMoment('toeoff'); pushMoment('mvp'); pushMoment('lateswing'); pushMoment('touchdown'); pushMoment('midstance');
-  const groups={
-    'Control lumbopélvico':[2,4,7],
-    'Back-side mechanics':[1,3,5,8],
-    'Overstriding':[6,9,10,11,12]
-  };
-  const tally={};
-  for(const [name, idxs] of Object.entries(groups)){
-    tally[name]=idxs.reduce((s,i)=> s + (answers[i-1]?1:0), 0);
-  }
-  const max = Math.max(...Object.values(tally));
-  const winners = Object.keys(tally).filter(k=>tally[k]===max && max>0);
+  const groups={ 'Control lumbopélvico':[2,4,7], 'Back-side mechanics':[1,3,5,8], 'Overstriding':[6,9,10,11,12] };
+  const tally={}; for(const [name, idxs] of Object.entries(groups)){ tally[name]=idxs.reduce((s,i)=> s + (answers[i-1]?1:0), 0); }
+  const max = Math.max(...Object.values(tally)); const winners = Object.keys(tally).filter(k=>tally[k]===max && max>0);
   return {tally, winners, max};
 }
-
 document.getElementById('printReport').onclick=()=>{
   const container=document.getElementById('reportContent'); container.innerHTML='';
   const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
-  const grade=GRADE(total);
-  const needs=computeNeeds();
-
+  const grade=GRADE(total); const needs=computeNeeds();
   const page1=document.createElement('div'); page1.className='page';
   const coverHTML=`
     <div style="display:flex;align-items:center;gap:10px">
@@ -590,7 +627,6 @@ document.getElementById('printReport').onclick=()=>{
     </div>
   `;
   const coverDiv=document.createElement('div'); coverDiv.innerHTML=coverHTML; page1.appendChild(coverDiv);
-
   const blocks=[];
   MOMENTS.forEach(m=>{
     const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
@@ -613,17 +649,14 @@ document.getElementById('printReport').onclick=()=>{
   });
   if(blocks.length){ page1.appendChild(blocks[0]); }
   container.appendChild(page1);
-
   const page2=document.createElement('div'); page2.className='page';
   if(blocks[1]) page2.appendChild(blocks[1]);
   if(blocks[2]) page2.appendChild(blocks[2]);
   container.appendChild(page2);
-
   const page3=document.createElement('div'); page3.className='page';
   if(blocks[3]) page3.appendChild(blocks[3]);
   if(blocks[4]) page3.appendChild(blocks[4]);
   container.appendChild(page3);
-
   window.print();
 };
 
@@ -642,7 +675,7 @@ file.onchange=()=>{
   const url=URL.createObjectURL(f); vid.src=url; vid.load();
   vid.onloadedmetadata=()=>{ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; vid.currentTime=0.001; updateTimeUI(); };
 };
-(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); })();
+(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); zoomLabel.textContent=(Number(zoomRange.value)).toFixed(1)+'×'; })();
 </script>
 </body>
 </html>
