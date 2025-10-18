@@ -1,1 +1,605 @@
-placeholder for smas_v3_6.html - full code content would be generated here per prior structure
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>S-MAS • Sprint Mechanics Assessment (v3.6 • Guías)</title>
+<style>
+  :root{
+    --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
+    --tab-active:#0f2a44; --tab-inactive:#c9d1dc; --tab-inactive-text:#0f1720;
+    --scrub-bg:#1a324c; --scrub-buffer:#2b5178; --scrub-played:#ff7a00; --scrub-thumb:#ffffff;
+  }
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
+  header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+  header .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
+  main{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .card{background:var(--panel);border:1px solid #163551;border-radius:12px;padding:10px}
+  #videoWrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
+  video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+  canvas{position:absolute;left:0;top:0}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
+  button.small{padding:6px 8px;border-radius:8px;font-weight:600}
+  .label{font-size:12px;color:var(--mut)}
+  .hr{height:1px;background:#173a5d;margin:10px 0}
+  .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
+  /* Tabs */
+  .tabsWrap{width:100%;}
+  .tabs{display:flex;gap:0;width:100%;}
+  .tab{
+    flex:1 1 0; text-align:center; padding:7px 4px;
+    background:var(--tab-inactive); color:var(--tab-inactive-text);
+    border:1px solid #b8c4d2; border-right:none; border-bottom:1px solid #b8c4d2;
+    cursor:pointer; font-size:12.5px; user-select:none; line-height:1;
+    border-top-left-radius:10px; border-top-right-radius:10px;
+    border-bottom-left-radius:0; border-bottom-right-radius:0;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .tab:last-child{border-right:1px solid #b8c4d2}
+  .tab.active{ background:var(--tab-active); color:#fff; border-color:var(--tab-active); border-bottom-color:transparent; }
+  .tab .tick{display:none; font-weight:900}
+  .tab.captured .tick{display:inline}
+  .momentDesc{
+    width:100%; background:var(--tab-active); border:1px solid var(--tab-active); border-top:none;
+    margin-top:-1px; padding:6px 10px; color:#d8e4f1;
+    border-bottom-left-radius:10px;border-bottom-right-radius:10px;
+    font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
+  }
+  /* iOS switch compact */
+  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr); margin-bottom:8px}
+  .q label{flex:1}
+  .switch{position:relative;width:36px;height:22px;flex:0 0 36px}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{ position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease; box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); }
+  .slider:before{ content:""; position:absolute; height:18px; width:18px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease; box-shadow:0 1px 2px rgba(0,0,0,.35); }
+  .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .switch input:checked + .slider:before{ transform: translateX(14px); }
+  button[disabled]{opacity:.5; cursor:not-allowed}
+  .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#d0def0; margin-left:6px; cursor:pointer}
+  .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:10; box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  /* Scrubber */
+  .scrubWrap{margin:8px 0 6px}
+  .scrubRow{display:flex;align-items:center;gap:10px}
+  .time{font-variant-numeric:tabular-nums; font-size:12px; color:var(--mut); min-width:60px; text-align:center}
+  .scrubber{ position:relative; height:10px; flex:1 1 auto; border-radius:999px; background:var(--scrub-bg); cursor:pointer; touch-action:none; }
+  .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
+  .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
+  .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:var(--scrub-thumb); box-shadow:0 1px 2px rgba(0,0,0,.5); }
+  footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>S-MAS • Sprint Mechanics Assessment</h1>
+  <span class="pill">Local • Offline</span>
+  <span class="pill">HEVC / 240 fps</span>
+</header>
+
+<div id="app">
+  <main>
+    <div class="row">
+      <div class="card" style="flex:2 1 520px">
+        <div class="controls" style="justify-content:space-between;margin-bottom:8px">
+          <div class="controls">
+            <input id="file" type="file" accept="video/*" />
+            <button class="ghost small" id="clearState">Limpiar</button>
+          </div>
+          <div class="controls">
+            <span class="label">fps objetivo</span>
+            <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
+          </div>
+        </div>
+
+        <!-- Tabs + description -->
+        <div class="tabsWrap">
+          <div class="tabs" id="tabs"></div>
+          <div class="momentDesc" id="momentDesc"></div>
+        </div>
+
+        <!-- Video -->
+        <div id="videoWrap">
+          <video id="vid" playsinline muted controls preload="metadata"></video>
+          <canvas id="overlay"></canvas>
+        </div>
+
+        <!-- Scrubber -->
+        <div class="scrubWrap">
+          <div class="scrubRow">
+            <div class="time" id="curT">0:00</div>
+            <div class="scrubber" id="scrubber">
+              <div class="buffer" id="bufBar"></div>
+              <div class="played" id="playBar"></div>
+              <div class="thumb" id="thumb" style="left:0%"></div>
+            </div>
+            <div class="time" id="durT">0:00</div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls" style="margin-top:8px;flex-wrap:wrap">
+          <button id="play" class="small">▶︎ Play/Pause</button>
+          <button id="back1" class="small">−1 frame</button>
+          <button id="fwd1" class="small">+1 frame</button>
+          <button id="back10" class="small">−10</button>
+          <button id="fwd10" class="small">+10</button>
+          <button id="snap" class="small">Capturar imagen</button>
+          <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
+          <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
+        </div>
+
+        <div class="hr"></div>
+      </div>
+
+      <div class="card" style="flex:1 1 360px">
+        <!-- Panel Guías -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Guías</strong>
+          <button id="invert" class="ghost small" title="Espejar guías izquierda/derecha">Invertir (izq/der)</button>
+        </div>
+        <div id="guidesPanel"></div>
+
+        <div class="hr"></div>
+
+        <!-- Panel Preguntas -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Preguntas (on/off)</strong>
+          <span class="label">toca para alternar</span>
+        </div>
+        <div id="questions"></div>
+
+        <div class="hr"></div>
+        <div class="grid">
+          <div><span class="label">Puntaje del momento</span><div class="score" id="momentScore">0</div></div>
+          <div><span class="label">Puntaje total</span><div class="score" id="totalScore">0</div></div>
+          <div><span class="label">Clasificación</span><div class="score" id="grade">—</div></div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="grid">
+          <label class="label">Notas del momento</label>
+          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px"></textarea>
+        </div>
+
+        <div class="hr"></div>
+        <div class="grid">
+          <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
+          <span class="label" id="reportHint">Necesitás capturar los 5 momentos (ver tildes en las pestañas).</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Reporte imprimible -->
+<div id="report">
+  <h1 style="font-size:18px;margin:.2em 0">Reporte S-MAS</h1>
+  <div id="reportContent"></div>
+</div>
+
+<footer>Desarrollado por Santiago Grosso · 2025</footer>
+
+<script>
+/* ======= Estado sólo en memoria (sin localStorage) ======= */
+const MOMENTS=[
+  {key:'toeoff',label:'Toe-off'},
+  {key:'mvp',label:'Max Vertical Projection'},
+  {key:'lateswing',label:'Late Swing'},
+  {key:'touchdown',label:'Touchdown'},
+  {key:'midstance',label:'Mid-stance'},
+];
+const DESCRIPTIONS={
+  toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
+  mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
+  lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",
+  touchdown:"Punto de primer contacto con el suelo.",
+  midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
+};
+const QUESTIONS={
+  toeoff:["¿Demasiada extensión de cadera?"],
+  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],
+  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"],
+  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
+  midstance:["¿Está la rodilla por delante de la punta del pie?"]
+};
+const GUIDE_DEFS={
+  toeoff:[
+    {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'}
+  ],
+  mvp:[
+    {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'}
+  ],
+  lateswing:[
+    {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'}
+  ],
+  touchdown:[
+    {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
+    {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
+    {key:'cdg', label:'Guía distancia CdG', use:'Marcá dos puntos y medí la distancia horizontal (Δx) entre ellos en píxeles.'},
+    {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
+  ],
+  midstance:[
+    {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'}
+  ]
+};
+const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
+
+let state={
+  fps:240,invert:false,curMoment:'toeoff',
+  moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
+    t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false,
+    guides: {}
+  }]))
+};
+
+/* ======= DOM ======= */
+const $=s=>document.querySelector(s);
+const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
+const cvs=$('#overlay'),ctx=cvs.getContext('2d');
+const fpsInput=$('#fps'),ctime=$('#ctime'),fnum=$('#fnum');
+const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),momentScoreEl=$('#momentScore'),totalScoreEl=$('#totalScore'),gradeEl=$('#grade'),curMomentLabel=$('#curMomentLabel');
+const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
+const printBtn=$('#printReport'),reportHint=$('#reportHint');
+const invertBtn=$('#invert');
+/* Scrubber refs */
+const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
+
+/* ======= Helpers ======= */
+function ensureGuideState(momentKey, guideKey){
+  const m=state.moments[momentKey];
+  if(!m.guides[guideKey]){
+    m.guides[guideKey]={on:false, data:{}};
+  }
+  return m.guides[guideKey];
+}
+function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
+function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
+function setMoment(key){
+  state.curMoment=key;
+  renderTabs();
+  renderGuidesPanel();
+  momentDesc.textContent=DESCRIPTIONS[key];
+  curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
+  renderQuestions(); notesEl.value=state.moments[key].notes||''; draw();
+}
+function renderTabs(){
+  tabs.innerHTML='';
+  MOMENTS.forEach(m=>{
+    const b=document.createElement('button');
+    b.className='tab'+(state.curMoment===m.key?' active':'');
+    if(state.moments[m.key].captured) b.classList.add('captured');
+    b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
+    b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`;
+    tabs.appendChild(b);
+  });
+  updateReportAvailability();
+}
+function renderGuidesPanel(){
+  guidesPanel.innerHTML='';
+  const defs = GUIDE_DEFS[state.curMoment]||[];
+  defs.forEach(def=>{
+    const row=document.createElement('div'); row.className='q';
+    const lab=document.createElement('label'); lab.textContent=def.label;
+    const help=document.createElement('span'); help.className='help'; help.textContent='?';
+    help.onclick=(e)=>showTip(e.currentTarget, def.use);
+    const sw=document.createElement('label'); sw.className='switch';
+    const g = ensureGuideState(state.curMoment, def.key);
+    const input=document.createElement('input'); input.type='checkbox'; input.checked=!!g.on;
+    input.onchange=()=>{ g.on=input.checked; draw(); };
+    const slid=document.createElement('span'); slid.className='slider';
+    sw.appendChild(input); sw.appendChild(slid);
+    lab.appendChild(help);
+    row.appendChild(lab); row.appendChild(sw);
+    guidesPanel.appendChild(row);
+  });
+}
+
+let tipEl=null;
+function showTip(anchorEl, text){
+  if(tipEl){ tipEl.remove(); tipEl=null; }
+  tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
+  document.body.appendChild(tipEl);
+  const r=anchorEl.getBoundingClientRect();
+  const tt=tipEl.getBoundingClientRect();
+  tipEl.style.left = (r.left - tt.width - 8) + 'px';
+  tipEl.style.top  = (r.top + window.scrollY - (tt.height/2) + (r.height/2)) + 'px';
+  const close=()=>{ if(tipEl){ tipEl.remove(); tipEl=null; } window.removeEventListener('click', onWin); };
+  const onWin=(e)=>{ if(!tipEl.contains(e.target) && e.target!==anchorEl) close(); };
+  setTimeout(()=>window.addEventListener('click', onWin), 0);
+}
+
+function renderQuestions(){
+  const m=state.moments[state.curMoment];
+  questions.innerHTML='';
+  QUESTIONS[state.curMoment].forEach((q,i)=>{
+    const row=document.createElement('div'); row.className='q';
+    const lab=document.createElement('label'); lab.textContent=q;
+    const sw=document.createElement('label'); sw.className='switch';
+    const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i];
+    input.onchange=()=>{ m.checks[i]=input.checked; refreshScores(); draw(); };
+    const slid=document.createElement('span'); slid.className='slider';
+    sw.appendChild(input); sw.appendChild(slid);
+    row.appendChild(lab); row.appendChild(sw);
+    questions.appendChild(row);
+  });
+  refreshScores();
+}
+function refreshScores(){
+  const ms=Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
+  const cur=state.moments[state.curMoment].checks.filter(Boolean).length;
+  const total=ms.reduce((a,b)=>a+b,0);
+  momentScoreEl.textContent=cur; totalScoreEl.textContent=total; gradeEl.textContent=GRADE(total);
+}
+
+/* ======= Video & frames ======= */
+function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; }
+function draw(){
+  if(!vid.videoWidth) return;
+  sizeCanvasToWrap();
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  ctx.drawImage(vid,0,0,cvs.width,cvs.height);
+  drawGuides();
+}
+function stepFrames(n){
+  const fps=Number(state.fps)||240; vid.pause();
+  const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t;
+}
+function updateTimeUI(){
+  const t=vid.currentTime||0, d=vid.duration||0;
+  ctime.textContent=t.toFixed(3);
+  const fps=Number(state.fps)||240; fnum.textContent=Math.round(t*fps);
+  const m=state.moments[state.curMoment]; m.t=t; m.frame=Math.round(t*fps);
+  if(d>0){
+    const pct=(t/d)*100; playBar.style.width=pct+'%'; thumb.style.left=pct+'%';
+    durT.textContent=formatTime(d); curT.textContent=formatTime(t);
+    try{
+      let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); }
+      bufBar.style.width=(Math.min(end,d)/d)*100+'%';
+    }catch(e){}
+  }
+}
+function formatTime(s){
+  s=Math.max(0,Math.floor(s||0)); const m=Math.floor(s/60); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`;
+}
+vid.addEventListener('timeupdate',()=>{ updateTimeUI(); draw(); });
+vid.addEventListener('seeked',()=>{ updateTimeUI(); draw(); });
+vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); });
+vid.addEventListener('progress',()=>{ updateTimeUI(); });
+window.addEventListener('resize', draw);
+
+/* ======= Scrubber interactions ======= */
+let scrubbing=false;
+function posToTime(clientX){
+  const r=scrub.getBoundingClientRect();
+  const x=Math.max(0,Math.min(clientX - r.left, r.width));
+  const pct=x/r.width; return (vid.duration||0)*pct;
+}
+function beginScrub(clientX){
+  scrubbing=true; vid.pause();
+  vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
+}
+function moveScrub(clientX){
+  if(!scrubbing) return;
+  vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
+}
+function endScrub(){ if(!scrubbing) return; scrubbing=false; }
+scrub.addEventListener('mousedown',(e)=>{ beginScrub(e.clientX); e.preventDefault(); });
+window.addEventListener('mousemove',(e)=>{ moveScrub(e.clientX); });
+window.addEventListener('mouseup',()=>{ endScrub(); });
+scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.touches[0].clientX); } e.preventDefault(); }, {passive:false});
+window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
+window.addEventListener('touchend',()=>{ endScrub(); });
+
+/* ======= Overlay interaction ======= */
+let dragging=null, dragKey=null;
+function toCanvasCoords(ev){
+  const r=cvs.getBoundingClientRect();
+  const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+  const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
+  return {x,y};
+}
+function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
+function cm(){ return state.moments[state.curMoment]; }
+function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
+
+function startDrag(ev){
+  const {x,y}=toCanvasCoords(ev);
+  const list = activeGuides();
+  for(const [key, g] of list){
+    const d=g.data;
+    if(key==='thighs'){
+      if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if(key==='cdg'){
+      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if(key==='heel'){
+      if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
+    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
+      if(hit(d.anchor,x,y)){ dragging='anchor'; dragKey=key; return ev.preventDefault(); }
+    }
+  }
+  for(const [key,g] of list){
+    const d=g.data;
+    if(key==='thighs'){
+      if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
+      else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
+      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+    } else if(key==='cdg'){
+      if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
+      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+    } else if(key==='heel'){
+      if(!d.p){ d.p={x,y}; dragging='p'; dragKey=key; break; }
+    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
+      if(!d.anchor){ d.anchor={x,y}; dragging='anchor'; dragKey=key; break; }
+    }
+  }
+  draw(); ev.preventDefault();
+}
+function moveDrag(ev){
+  if(!dragging) return;
+  const {x,y}=toCanvasCoords(ev);
+  const g=cm().guides[dragKey]; if(!g) return;
+  const d=g.data;
+  if(dragging==='v') d.v={x,y};
+  if(dragging==='a') d.a={x,y};
+  if(dragging==='b') d.b={x,y};
+  if(dragging==='p') d.p={x,y};
+  if(dragging==='anchor') d.anchor={x,y};
+  draw(); ev.preventDefault();
+}
+function endDrag(){ dragging=null; dragKey=null; }
+cvs.addEventListener('mousedown', startDrag);
+cvs.addEventListener('mousemove', moveDrag);
+cvs.addEventListener('mouseup', endDrag);
+cvs.addEventListener('mouseleave', endDrag);
+cvs.addEventListener('touchstart', startDrag,{passive:false});
+cvs.addEventListener('touchmove', moveDrag,{passive:false});
+cvs.addEventListener('touchend', endDrag);
+
+/* ======= Drawing helpers for guides ======= */
+function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
+function dot(x,y,color='white',r=4){ ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
+  line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
+  const base=90-deg, theta=(invert?-1:1)*(base*Math.PI/180), len=Math.max(cvs.width,cvs.height);
+  const dx=Math.cos(theta)*len, dy=-Math.sin(theta)*len;
+  line(x-dx, y+dy, x+dx, y-dy, [6,4], 'rgba(255,255,255,.85)'); dot(x,y);
+}
+function drawVHAt(x,y){ line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)'); line(0,y,cvs.width,y,[], 'rgba(255,255,255,.85)'); dot(x,y); }
+function angleBetween(p0,p1,p2){
+  const v1={x:p0.x-p1.x,y:p0.y-p1.y}, v2={x:p2.x-p1.x,y:p2.y-p1.y};
+  const d1=Math.hypot(v1.x,v1.y)||1, d2=Math.hypot(v2.x,v2.y)||1;
+  const cos=(v1.x*v2.x+v1.y*v2.y)/(d1*d2);
+  return Math.acos(Math.min(1,Math.max(-1,cos)))*180/Math.PI;
+}
+function drawGuides(){
+  const list = activeGuides();
+  for(const [key,g] of list){
+    const d=g.data;
+    if(key==='g45' && d.anchor){
+      drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 45, state.invert);
+    }
+    if(key==='heel' && d.p){
+      line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2);
+      dot(d.p.x,d.p.y,'white',4);
+    }
+    if(key==='vh' && d.anchor){
+      drawVHAt(d.anchor.x, d.anchor.y);
+    }
+    if(key==='t15' && d.anchor){
+      drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 15, state.invert);
+    }
+    if(key==='thighs'){
+      const {v,a,b}=d;
+      if(v) dot(v.x,v.y);
+      if(a) dot(a.x,a.y);
+      if(b) dot(b.x,b.y);
+      if(v && a){ line(v.x,v.y,a.x,a.y,[], '#fff',2); }
+      if(v && b){ line(v.x,v.y,b.x,b.y,[], '#fff',2); }
+      if(v && a && b){
+        const ang=angleBetween(a,v,b);
+        ctx.save(); ctx.fillStyle = ang>20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
+        ctx.font='bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, v.x+8, v.y-8); ctx.restore();
+        if(ang>20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(v.x,v.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+      }
+    }
+    if(key==='cdg'){
+      const {a,b}=d;
+      if(a) dot(a.x,a.y);
+      if(b) dot(b.x,b.y);
+      if(a && b){
+        // FIX: keep horizontal at the Y of the FIRST point
+        const y = a.y;
+        const x1 = a.x, x2 = b.x;
+        line(x1, y, x2, y, [6,4], 'rgba(255,255,255,.85)',2);
+        const dx = Math.abs(Math.round(x2 - x1));
+        ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
+        ctx.fillText(`Δx: ${dx}px`, Math.min(x1,x2)+5, y-8);
+        ctx.restore();
+      }
+    }
+    if(key==='knee' && d.anchor){
+      const h = cvs.height*0.12;
+      const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
+      dot(x,y1,'white',4); dot(x,y2,'white',4);
+    }
+    if(key==='tibia' && d.anchor){
+      // NEW: vertical short line like mid-stance
+      const h = cvs.height*0.12;
+      const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
+      dot(x,y1,'white',4); dot(x,y2,'white',4);
+    }
+  }
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
+}
+
+/* ======= Actions ======= */
+$('#play').onclick=async()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } }catch(e){} };
+$('#back1').onclick=()=>stepFrames(-1);
+$('#fwd1').onclick=()=>stepFrames(1);
+$('#back10').onclick=()=>stepFrames(-10);
+$('#fwd10').onclick=()=>stepFrames(10);
+invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
+$('#snap').onclick=()=>{
+  const dataURL=cvs.toDataURL('image/png');
+  const mKey=state.curMoment, m=state.moments[mKey];
+  m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
+  m.captured=true; renderTabs();
+};
+notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
+fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
+
+/* Report */
+$('#printReport').onclick=()=>{
+  const container=document.getElementById('reportContent'); container.innerHTML='';
+  MOMENTS.forEach(m=>{
+    const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
+    const checks=QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
+    const ms=mm.checks.filter(Boolean).length;
+    const page=document.createElement('div'); page.className='page';
+    page.innerHTML=`
+      <h2>${m.label}</h2>
+      <div><small>t=${(mm.t||0).toFixed(3)}s • frame ${mm.frame||0}</small></div>
+      ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}" /></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
+      <div style="margin-top:6px"><strong>Puntaje del momento:</strong> ${ms}</div>
+      <div><strong>Checklist</strong><ul>${checks}</ul></div>
+      ${mm.notes ? `<div><strong>Notas:</strong> ${mm.notes}</div>` : ``}
+    `;
+    container.appendChild(page);
+  });
+  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  const sum=document.createElement('div'); sum.className='page';
+  sum.innerHTML=`<h2>Resumen</h2><div><strong>Puntaje total:</strong> ${total}</div><div><strong>Clasificación:</strong> ${GRADE(total)}</div>`;
+  container.prepend(sum);
+  window.print();
+};
+
+/* Clear session */
+$('#clearState').onclick=()=>{
+  if(confirm('¿Borrar progreso de esta sesión?')){
+    state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
+      t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false, guides:{}
+    }]))};
+    renderTabs(); setMoment('toeoff'); fpsInput.value=state.fps;
+  }
+};
+
+/* Video load */
+file.onchange=()=>{
+  const f=file.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f); vid.src=url; vid.load();
+  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime=0.001; momentDesc.textContent=DESCRIPTIONS[state.curMoment]; updateTimeUI(); };
+};
+
+/* Init */
+(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); })();
+</script>
+</body>
+</html>
