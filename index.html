@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.6 • Guías)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.7 • Tooltips mejorados)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -59,8 +59,8 @@
   .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
   .switch input:checked + .slider:before{ transform: translateX(14px); }
   button[disabled]{opacity:.5; cursor:not-allowed}
-  .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#d0def0; margin-left:6px; cursor:pointer}
-  .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:10; box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; color:#d0def0; margin-left:6px; cursor:pointer; touch-action:manipulation}
+  .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:1000; box-shadow:0 6px 20px rgba(0,0,0,.35)}
   /* Scrubber */
   .scrubWrap{margin:8px 0 6px}
   .scrubRow{display:flex;align-items:center;gap:10px}
@@ -245,9 +245,8 @@ const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
 /* Scrubber refs */
-const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
+const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT']);
 
-/* ======= Helpers ======= */
 function ensureGuideState(momentKey, guideKey){
   const m=state.moments[momentKey];
   if(!m.guides[guideKey]){
@@ -284,7 +283,8 @@ function renderGuidesPanel(){
     const row=document.createElement('div'); row.className='q';
     const lab=document.createElement('label'); lab.textContent=def.label;
     const help=document.createElement('span'); help.className='help'; help.textContent='?';
-    help.onclick=(e)=>showTip(e.currentTarget, def.use);
+    help.addEventListener('click', (e)=>toggleTip(e.currentTarget, def.use));
+    help.addEventListener('touchstart', (e)=>{ e.preventDefault(); toggleTip(e.currentTarget, def.use); }, {passive:false});
     const sw=document.createElement('label'); sw.className='switch';
     const g = ensureGuideState(state.curMoment, def.key);
     const input=document.createElement('input'); input.type='checkbox'; input.checked=!!g.on;
@@ -297,18 +297,54 @@ function renderGuidesPanel(){
   });
 }
 
-let tipEl=null;
+let tipEl=null, tipAnchor=null;
+function toggleTip(anchor, text){
+  if(tipEl && tipAnchor===anchor){ closeTip(); return; }
+  showTip(anchor, text);
+}
 function showTip(anchorEl, text){
-  if(tipEl){ tipEl.remove(); tipEl=null; }
+  closeTip();
   tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
   document.body.appendChild(tipEl);
-  const r=anchorEl.getBoundingClientRect();
+  tipAnchor=anchorEl;
+  positionTip();
+
+  setTimeout(()=>{
+    document.addEventListener('mousedown', onDocDown, true);
+    document.addEventListener('touchstart', onDocDown, {passive:false, capture:true});
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', closeTip, {passive:true});
+    window.addEventListener('resize', onResize, {passive:true});
+  },0);
+}
+function positionTip(){
+  if(!tipEl || !tipAnchor) return;
+  const r=tipAnchor.getBoundingClientRect();
   const tt=tipEl.getBoundingClientRect();
-  tipEl.style.left = (r.left - tt.width - 8) + 'px';
-  tipEl.style.top  = (r.top + window.scrollY - (tt.height/2) + (r.height/2)) + 'px';
-  const close=()=>{ if(tipEl){ tipEl.remove(); tipEl=null; } window.removeEventListener('click', onWin); };
-  const onWin=(e)=>{ if(!tipEl.contains(e.target) && e.target!==anchorEl) close(); };
-  setTimeout(()=>window.addEventListener('click', onWin), 0);
+  let left = r.left - tt.width - 8;
+  let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2);
+  if(left < 6){ left = r.right + 8; }
+  const maxTop = window.scrollY + window.innerHeight - tt.height - 6;
+  const minTop = window.scrollY + 6;
+  top = Math.max(minTop, Math.min(maxTop, top));
+  tipEl.style.left = left + 'px';
+  tipEl.style.top  = top + 'px';
+}
+function onDocDown(e){
+  if(!tipEl) return;
+  if(tipEl.contains(e.target) || e.target===tipAnchor){ return; }
+  closeTip();
+}
+function onKey(e){ if(e.key==='Escape') closeTip(); }
+function onResize(){ positionTip(); }
+function closeTip(){
+  if(!tipEl) return;
+  tipEl.remove(); tipEl=null; tipAnchor=null;
+  document.removeEventListener('mousedown', onDocDown, true);
+  document.removeEventListener('touchstart', onDocDown, {capture:true});
+  window.removeEventListener('keydown', onKey);
+  window.removeEventListener('scroll', closeTip);
+  window.removeEventListener('resize', onResize);
 }
 
 function renderQuestions(){
@@ -513,7 +549,6 @@ function drawGuides(){
       if(a) dot(a.x,a.y);
       if(b) dot(b.x,b.y);
       if(a && b){
-        // FIX: keep horizontal at the Y of the FIRST point
         const y = a.y;
         const x1 = a.x, x2 = b.x;
         line(x1, y, x2, y, [6,4], 'rgba(255,255,255,.85)',2);
@@ -530,7 +565,6 @@ function drawGuides(){
       dot(x,y1,'white',4); dot(x,y2,'white',4);
     }
     if(key==='tibia' && d.anchor){
-      // NEW: vertical short line like mid-stance
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
