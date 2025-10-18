@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.9.1)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.9.2)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -70,20 +70,22 @@
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
   #report{ display:none; }
   @media print {
-    @page { size: A4; margin: 14mm 12mm 16mm 12mm; }
+    @page { size: A4; margin: 12mm 10mm 14mm 10mm; }
     body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     header, #app, footer { display: none !important; }
     #report { display: block; background:#fff; color:#000; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
     #report .page { page-break-after: always; }
     #report h1, #report h2, #report h3 { color:#0b1b2b; }
-    #report .cover { display:flex; flex-direction:column; gap:12px; }
     #report .legend { font-size:12px; color:#333; }
-    #report .momentBlock { break-inside: avoid; page-break-inside: avoid; margin: 8mm 0; padding-bottom: 2mm; border-bottom: 1px solid #eee; }
+    #report .momentBlock { break-inside: avoid; page-break-inside: avoid; margin: 5mm 0; padding-bottom: 1.5mm; border-bottom: 1px solid #eee; }
     #report .momentBlock:last-child { border-bottom:none; }
-    #report img { width:100%; height:auto; border:1px solid #e5e7eb; border-radius:6px; background:#fff; }
+    #report img { width:60%; height:auto; border:1px solid #e5e7eb; border-radius:6px; background:#fff; }
+    #report .row { display:flex; gap:8px; align-items:flex-start; }
+    #report .col { flex:1; }
     #report .meta { font-size:11px; color:#444; }
-    #report ul { margin:4px 0 0 18px; }
-    #report .notes { margin-top:4px; font-size:12px; color:#222; white-space:pre-wrap; }
+    #report ul { margin:2px 0 0 16px; font-size:11px; }
+    #report .notes { margin-top:2mm; font-size:11px; color:#222; white-space:pre-wrap; }
+    #report .needBox { border:1px solid #a6c8ff; background:#e9f2ff; padding:6px 8px; border-radius:6px; font-size:12px; color:#0b1b2b; }
     #printFooter { position: fixed; bottom: 0; left: 0; right: 0; text-align:center; font-size:10px; color:#4b5563; border-top:1px solid #e5e7eb; padding-top:6px; }
   }
 </style>
@@ -189,12 +191,22 @@
 
 <div id="report">
   <div id="reportContent"></div>
-  <div id="printFooter">Desarrollado por Santiago Grosso · 2025</div>
+  <div id="printFooter">Desarrollado por Santiago Grosso – S-MAS Project · 2025</div>
 </div>
 
-<footer>Desarrollado por Santiago Grosso · 2025</footer>
+<footer>Desarrollado por Santiago Grosso – S-MAS Project · 2025</footer>
 
 <script>
+/* ===== Descripciones (reactivado) ===== */
+const DESCRIPTIONS={
+  toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
+  mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
+  lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",
+  touchdown:"Punto de primer contacto con el suelo.",
+  midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
+};
+
+/* ===== Estructura momentos/preguntas ===== */
 const MOMENTS=[
   {key:'toeoff',label:'Toe-off'},
   {key:'mvp',label:'Max Vertical Projection'},
@@ -203,14 +215,15 @@ const MOMENTS=[
   {key:'midstance',label:'Mid-stance'},
 ];
 const QUESTIONS={
-  toeoff:["¿Demasiada extensión de cadera?"],
-  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],
-  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"],
-  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
-  midstance:["¿Está la rodilla por delante de la punta del pie?"]
+  toeoff:["¿Demasiada extensión de cadera?"],                               // #1
+  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"], // #2 #3
+  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"], // #4 #5
+  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"], // #6..#11
+  midstance:["¿Está la rodilla por delante de la punta del pie?"]            // #12
 };
-const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
 
+/* ===== App state ===== */
+const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
 let state={
   fps:240,invert:false,curMoment:'toeoff',
   moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
@@ -218,6 +231,7 @@ let state={
   }]))
 };
 
+/* ===== DOM ===== */
 const $=s=>document.querySelector(s);
 const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
 const cvs=$('#overlay'),ctx=cvs.getContext('2d');
@@ -230,7 +244,7 @@ const invertBtn=$('#invert');
 const momentScoreEl=document.getElementById('momentScore'), totalScoreEl=document.getElementById('totalScore'), gradeEl=document.getElementById('grade');
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
-/* Tooltips */
+/* ===== Tooltips ===== */
 let tipEl=null, tipAnchor=null;
 function toggleTip(anchor, text){ if(tipEl && tipAnchor===anchor){ closeTip(); return; } showTip(anchor, text); }
 function showTip(anchorEl, text){
@@ -261,7 +275,7 @@ function closeTip(){ if(!tipEl) return; tipEl.remove(); tipEl=null; tipAnchor=nu
   window.removeEventListener('resize', onResize);
 }
 
-/* Helpers */
+/* ===== Helpers ===== */
 function ensureGuideState(momentKey, guideKey){
   const m=state.moments[momentKey];
   if(!m.guides[guideKey]){ m.guides[guideKey]={on:false, data:{}}; }
@@ -272,7 +286,7 @@ function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!
 function setMoment(key){
   state.curMoment=key;
   renderTabs(); renderGuidesPanel();
-  momentDesc.textContent=""; // no mostramos descripción en esta versión
+  momentDesc.textContent=DESCRIPTIONS[key]; /* <= restaurado */
   curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
   renderQuestions(); notesEl.value=state.moments[key].notes||''; refreshScores(); draw();
 }
@@ -290,7 +304,7 @@ function renderTabs(){
 }
 function renderGuidesPanel(){
   guidesPanel.innerHTML='';
-  const defs = {
+  const GUIDE_DEFS={
     toeoff:[ {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'} ],
     mvp:[ {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'} ],
     lateswing:[ {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'} ],
@@ -302,7 +316,7 @@ function renderGuidesPanel(){
     ],
     midstance:[ {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'} ]
   }[state.curMoment]||[];
-  defs.forEach(def=>{
+  GUIDE_DEFS.forEach(def=>{
     const row=document.createElement('div'); row.className='q';
     const lab=document.createElement('label'); lab.textContent=def.label;
     const help=document.createElement('span'); help.className='help'; help.textContent='?';
@@ -340,7 +354,7 @@ function refreshScores(){
   momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total);
 }
 
-/* Video */
+/* ===== Video y dibujo ===== */
 function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; mag.width=r.width; mag.height=r.height; }
 function draw(){ if(!vid.videoWidth) return; sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height); ctx.drawImage(vid,0,0,cvs.width,cvs.height); drawGuides(); drawMagnifier(); }
 function stepFrames(n){ const fps=Number(state.fps)||240; vid.pause(); const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t; }
@@ -362,7 +376,7 @@ vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); });
 vid.addEventListener('progress',()=>{ updateTimeUI(); });
 window.addEventListener('resize', draw);
 
-/* Scrubber */
+/* ===== Scrubber ===== */
 let scrubbing=false;
 function posToTime(clientX){ const r=scrub.getBoundingClientRect(); const x=Math.max(0,Math.min(clientX - r.left, r.width)); const pct=x/r.width; return (vid.duration||0)*pct; }
 function beginScrub(clientX){ scrubbing=true; vid.pause(); vid.currentTime=posToTime(clientX); updateTimeUI(); draw(); }
@@ -375,7 +389,7 @@ scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.to
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
 
-/* Overlay + lupa */
+/* ===== Overlay + lupa ===== */
 let dragging=null, dragKey=null; let placingActive=false;
 const HANDLE_R_BASE=4, HANDLE_R_ACTIVE=10;
 function toCanvasCoords(ev){ const r=cvs.getBoundingClientRect(); const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left; const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top; return {x,y}; }
@@ -384,7 +398,7 @@ function cm(){ return state.moments[state.curMoment]; }
 function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
 const MAG_RADIUS=70, MAG_SCALE=2.5, MAG_OFFSET={x:90,y:-90};
 let magVisible=false, magSrc={x:0,y:0}, magPos={x:0,y:0};
-function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
+function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAGADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function moveMag(cx,cy,px,py){ if(!magVisible) return; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function hideMag(){ magVisible=false; mag.style.display='none'; }
 function drawMagnifier(){
@@ -392,7 +406,7 @@ function drawMagnifier(){
   const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE), sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
   const sw = (MAG_RADIUS*2)/MAG_SCALE, sh = (MAG_RADIUS*2)/MAG_SCALE;
   mctx.save(); mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.closePath(); mctx.clip();
-  mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
+  mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAGADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
   mctx.imageSmoothingEnabled=true; mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
   mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5; mctx.beginPath();
   mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y); mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y);
@@ -449,7 +463,7 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* Draw helpers */
+/* ===== Draw helpers ===== */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
 function dot(x,y){ ctx.save(); const rr=(placingActive?10:4); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
@@ -507,7 +521,7 @@ function drawGuides(){
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
 }
 
-/* Controles */
+/* ===== Controles ===== */
 document.getElementById('play').onclick=async()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } }catch(e){} };
 document.getElementById('back1').onclick=()=>stepFrames(-1);
 document.getElementById('fwd1').onclick=()=>stepFrames(1);
@@ -527,12 +541,35 @@ document.getElementById('snap').onclick=()=>{
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
-/* Reporte */
+/* ===== Reporte (máx. 3 hojas) ===== */
+function computeNeeds(){
+  // Mapa global por orden 1..12 (coincide con definición de QUESTIONS)
+  const answers=[];
+  function pushMoment(key){ const arr=state.moments[key].checks; for(let i=0;i<arr.length;i++){ answers.push(arr[i]); } }
+  pushMoment('toeoff'); pushMoment('mvp'); pushMoment('lateswing'); pushMoment('touchdown'); pushMoment('midstance');
+  const groups={
+    'Control lumbopélvico':[2,4,7],
+    'Back-side mechanics':[1,3,5,8],
+    'Overstriding':[6,9,10,11,12]
+  };
+  const tally={};
+  for(const [name, idxs] of Object.entries(groups)){
+    tally[name]=idxs.reduce((s,i)=> s + (answers[i-1]?1:0), 0);
+  }
+  const max = Math.max(...Object.values(tally));
+  const winners = Object.keys(tally).filter(k=>tally[k]===max && max>0);
+  return {tally, winners, max};
+}
+
 document.getElementById('printReport').onclick=()=>{
   const container=document.getElementById('reportContent'); container.innerHTML='';
   const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
   const grade=GRADE(total);
-  const cover=document.createElement('div'); cover.className='page cover'; cover.innerHTML=`
+  const needs=computeNeeds();
+
+  // ==== PÁGINA 1: Portada + Primer Momento ====
+  const page1=document.createElement('div'); page1.className='page';
+  const coverHTML=`
     <div style="display:flex;align-items:center;gap:10px">
       <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
@@ -541,18 +578,23 @@ document.getElementById('printReport').onclick=()=>{
       </svg>
       <div>
         <h1 style="margin:0;font-size:20px">S-MAS • Sprint Mechanics Assessment</h1>
-        <div style="font-size:12px;color:#444">Reporte automático</div>
+        <div style="font-size:12px;color:#444"><strong>Desarrollado por Santiago Grosso – S-MAS Project</strong></div>
+        <div style="font-size:11px;color:#666"><em>Reporte automatizado desarrollado por Santiago Grosso</em></div>
       </div>
     </div>
-    <div style="margin-top:14px;font-size:16px"><strong>Puntaje total:</strong> ${total}</div>
-    <div style="font-size:16px"><strong>Clasificación:</strong> ${grade}</div>
-    <div class="legend" style="margin-top:6px">
-      <strong>Escala:</strong>
-      <div>Excelente: 0–1 · Bueno: 2 · Promedio: 3–5 · Pobre: 6 · Muy pobre: 7–11 · Extremadamente pobre: 12</div>
+    <div style="margin-top:10px;font-size:15px"><strong>Puntaje total:</strong> ${total}</div>
+    <div style="font-size:15px"><strong>Clasificación:</strong> ${grade}</div>
+    <div class="needBox" style="margin-top:8px">
+      <div><strong>Área de mayor necesidad:</strong> ${needs.winners.length? needs.winners.join(' · ') : '—'}</div>
+      <div style="margin-top:4px; font-size:11px">
+        <strong>Criterios:</strong>
+        Control lumbopélvico → 2,4,7 · Back-side mechanics → 1,3,5,8 · Overstriding → 6,9,10,11,12
+      </div>
     </div>
   `;
-  container.appendChild(cover);
+  const coverDiv=document.createElement('div'); coverDiv.innerHTML=coverHTML; page1.appendChild(coverDiv);
 
+  // Momentos
   const blocks=[];
   MOMENTS.forEach(m=>{
     const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
@@ -561,32 +603,38 @@ document.getElementById('printReport').onclick=()=>{
     const img = latest ? `<img src="${latest.dataURL}" alt="${m.label}" />` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
     const block=document.createElement('div'); block.className='momentBlock';
     block.innerHTML=`
-      <h2 style="margin:2mm 0 1mm 0;">${m.label}</h2>
-      ${img}
-      <div style="display:flex; gap:10px; margin-top:3mm">
-        <div style="flex:2">
+      <h2 style="margin:3mm 0 1mm 0;">${m.label}</h2>
+      <div class="row">
+        ${img}
+        <div class="col">
           <strong>Checklist</strong>
           <ul>${checks}</ul>
+          ${notes}
         </div>
-        <div style="flex:3">${notes}</div>
       </div>
     `;
     blocks.push(block);
   });
+  if(blocks.length){ page1.appendChild(blocks[0]); }
+  container.appendChild(page1);
 
-  if(blocks.length){
-    const p1=document.createElement('div'); p1.className='page'; p1.appendChild(blocks[0]); container.appendChild(p1);
-  }
-  for(let i=1;i<blocks.length;i+=2){
-    const pg=document.createElement('div'); pg.className='page';
-    pg.appendChild(blocks[i]);
-    if(blocks[i+1]) pg.appendChild(blocks[i+1]);
-    container.appendChild(pg);
-  }
+  // ==== PÁGINA 2 ====
+  const page2=document.createElement('div'); page2.className='page';
+  if(blocks[1]) page2.appendChild(blocks[1]);
+  if(blocks[2]) page2.appendChild(blocks[2]);
+  container.appendChild(page2);
+
+  // ==== PÁGINA 3 ====
+  const page3=document.createElement('div'); page3.className='page';
+  if(blocks[3]) page3.appendChild(blocks[3]);
+  if(blocks[4]) page3.appendChild(blocks[4]);
+  container.appendChild(page3);
+
   window.print();
 };
 
-/* Init */
+/* ===== Init ===== */
+function updateReportAvailability(){ const ok=Object.values(state.moments).every(mm=>mm.captured); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 document.getElementById('clearState').onclick=()=>{
   if(confirm('¿Borrar progreso de esta sesión?')){
     state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
@@ -600,22 +648,7 @@ file.onchange=()=>{
   const url=URL.createObjectURL(f); vid.src=url; vid.load();
   vid.onloadedmetadata=()=>{ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; vid.currentTime=0.001; updateTimeUI(); };
 };
-(function init(){
-  const tabsEl=document.getElementById('tabs');
-  function renderTabsLocal(){
-    tabsEl.innerHTML='';
-    MOMENTS.forEach(m=>{
-      const b=document.createElement('button');
-      b.className='tab'+(state.curMoment===m.key?' active':'');
-      if(state.moments[m.key].captured) b.classList.add('captured');
-      b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
-      b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`;
-      tabsEl.appendChild(b);
-    });
-    updateReportAvailability();
-  }
-  window.renderTabs = renderTabsLocal; // expone para otras funciones
-  renderTabsLocal(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability();
-})();</script>
+(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); })();
+</script>
 </body>
 </html>
