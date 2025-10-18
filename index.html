@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.8.0)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.8.1)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -73,6 +73,9 @@
   .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
   .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
   .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,.5); }
+  /* Score card */
+  .score{display:flex;gap:8px;flex-wrap:wrap}
+  .score .pill{background:#0f2a44;border:1px solid var(--bdr)}
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
 </style>
 </head>
@@ -148,6 +151,13 @@
 
         <div class="hr"></div>
 
+        <!-- Score (restaurado) -->
+        <div class="score" id="scoreCard" style="margin-bottom:6px">
+          <span class="pill">Momento: <b id="momentScore">0</b></span>
+          <span class="pill">Total: <b id="totalScore">0</b></span>
+          <span class="pill">Clasificación: <b id="grade">Excelente (0–1)</b></span>
+        </div>
+
         <!-- Panel Preguntas -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Preguntas (on/off)</strong>
@@ -220,7 +230,7 @@ const GUIDE_DEFS={
   touchdown:[
     {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
     {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
-    {key:'cdg', label:'Guía distancia CdG', use:'Marcá dos puntos y medí la distancia horizontal (Δx) entre ellos en píxeles.'},
+    {key:'cdg', label:'Guía distancia CdG', use:'Ubica el punto en el talón y compara la medida del pie con la distancia a la vertical.'},
     {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
   ],
   midstance:[
@@ -247,6 +257,8 @@ const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),curM
 const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
+/* Score DOM */
+const momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade');
 /* Scrubber refs */
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
@@ -316,7 +328,7 @@ function setMoment(key){
   renderGuidesPanel();
   momentDesc.textContent=DESCRIPTIONS[key];
   curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
-  renderQuestions(); notesEl.value=state.moments[key].notes||''; draw();
+  renderQuestions(); notesEl.value=state.moments[key].notes||''; refreshScores(); draw();
 }
 function renderTabs(){
   tabs.innerHTML='';
@@ -359,12 +371,20 @@ function renderQuestions(){
     const lab=document.createElement('label'); lab.textContent=q;
     const sw=document.createElement('label'); sw.className='switch';
     const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i];
-    input.onchange=()=>{ m.checks[i]=input.checked; draw(); };
+    input.onchange=()=>{ m.checks[i]=input.checked; refreshScores(); draw(); };
     const slid=document.createElement('span'); slid.className='slider';
     sw.appendChild(input); sw.appendChild(slid);
     row.appendChild(lab); row.appendChild(sw);
     questions.appendChild(row);
   });
+}
+
+function refreshScores(){
+  const cur = state.moments[state.curMoment].checks.filter(Boolean).length;
+  const total = Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  momentScoreEl.textContent = cur;
+  totalScoreEl.textContent = total;
+  gradeEl.textContent = GRADE(total);
 }
 
 /* ======= Video & frames ======= */
@@ -468,7 +488,6 @@ function moveMag(cx,cy,px,py){
 function hideMag(){ magVisible=false; mag.style.display='none'; }
 
 function drawMagnifier(){
-  // Dibuja desde lo que ya está en cvs (video + guías) para que la lupa muestre todo
   const mw=cvs.width, mh=cvs.height;
   mag.width=mw; mag.height=mh;
   mctx.clearRect(0,0,mw,mh);
@@ -477,15 +496,12 @@ function drawMagnifier(){
   const sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
   const sw = (MAG_RADIUS*2)/MAG_SCALE;
   const sh = (MAG_RADIUS*2)/MAG_SCALE;
-  // Clip circular
   mctx.save();
   mctx.beginPath();
   mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2);
   mctx.closePath();
   mctx.clip();
-  // Fondo negro para contraste si sale del borde
   mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
-  // Dibujo ampliado desde overlay
   mctx.imageSmoothingEnabled=true;
   mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
   // Cruceta
@@ -565,12 +581,15 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* ======= Drawing helpers for guides (handles grandes durante colocación) ======= */
+/* ======= Drawing helpers for guides (handles translúcidos) ======= */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
 function dot(x,y,color='white',r){
-  ctx.save(); ctx.fillStyle=color;
+  ctx.save();
   const rr = r ?? (placingActive ? HANDLE_R_ACTIVE : HANDLE_R_BASE);
-  ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore();
+  // Blanco translúcido
+  ctx.fillStyle='rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill();
+  ctx.restore();
 }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
@@ -594,7 +613,7 @@ function drawGuides(){
     }
     if(key==='heel' && d.p){
       line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2);
-      dot(d.p.x,d.p.y,'white');
+      dot(d.p.x,d.p.y);
     }
     if(key==='vh' && d.anchor){
       drawVHAt(d.anchor.x, d.anchor.y);
@@ -634,13 +653,13 @@ function drawGuides(){
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
-      dot(x,y1,'white'); dot(x,y2,'white');
+      dot(x,y1); dot(x,y2);
     }
     if(key==='tibia' && d.anchor){
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
-      dot(x,y1,'white'); dot(x,y2,'white');
+      dot(x,y1); dot(x,y2);
     }
   }
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
@@ -654,7 +673,6 @@ $('#back10').onclick=()=>stepFrames(-10);
 $('#fwd10').onclick=()=>stepFrames(10);
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
 $('#snap').onclick=()=>{
-  // asegurar que la lupa no aparezca en capturas: se dibuja en canvas aparte.
   const dataURL=cvs.toDataURL('image/png');
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
@@ -717,7 +735,7 @@ file.onchange=()=>{
 };
 
 /* Init */
-(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); })();
+(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); refreshScores(); })();
 </script>
 </body>
 </html>
