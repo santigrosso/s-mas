@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.7.6)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.8.0)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -20,6 +20,10 @@
   #videoWrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
   video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
   canvas{position:absolute;left:0;top:0}
+  /* Magnifier canvas */
+  #magnifier{
+    position:absolute; left:0; top:0; pointer-events:none; display:none;
+  }
   .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
@@ -68,7 +72,7 @@
   .scrubber{ position:relative; height:10px; flex:1 1 auto; border-radius:999px; background:var(--scrub-bg); cursor:pointer; touch-action:none; }
   .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
   .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
-  .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:var(--scrub-thumb); box-shadow:0 1px 2px rgba(0,0,0,.5); }
+  .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,.5); }
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
 </style>
 </head>
@@ -104,6 +108,7 @@
         <div id="videoWrap">
           <video id="vid" playsinline muted controls preload="metadata"></video>
           <canvas id="overlay"></canvas>
+          <canvas id="magnifier" width="1" height="1"></canvas>
         </div>
 
         <!-- Scrubber -->
@@ -236,15 +241,16 @@ let state={
 const $=s=>document.querySelector(s);
 const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
 const cvs=$('#overlay'),ctx=cvs.getContext('2d');
+const mag=$('#magnifier'), mctx=mag.getContext('2d');
 const fpsInput=$('#fps'),ctime=$('#ctime'),fnum=$('#fnum');
-const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),momentScoreEl=$('#momentScore'),totalScoreEl=$('#totalScore'),gradeEl=$('#grade'),curMomentLabel=$('#curMomentLabel');
+const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),curMomentLabel=$('#curMomentLabel');
 const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
 /* Scrubber refs */
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
-/* ======= Tooltip helpers (mejorados) ======= */
+/* ======= Tooltip helpers (sin cambios) ======= */
 let tipEl=null, tipAnchor=null;
 function toggleTip(anchor, text){
   if(tipEl && tipAnchor===anchor){ closeTip(); return; }
@@ -306,7 +312,6 @@ function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); 
 function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 function setMoment(key){
   state.curMoment=key;
-  // mantenemos estado de guías por momento
   renderTabs();
   renderGuidesPanel();
   momentDesc.textContent=DESCRIPTIONS[key];
@@ -354,29 +359,23 @@ function renderQuestions(){
     const lab=document.createElement('label'); lab.textContent=q;
     const sw=document.createElement('label'); sw.className='switch';
     const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i];
-    input.onchange=()=>{ m.checks[i]=input.checked; refreshScores(); draw(); };
+    input.onchange=()=>{ m.checks[i]=input.checked; draw(); };
     const slid=document.createElement('span'); slid.className='slider';
     sw.appendChild(input); sw.appendChild(slid);
     row.appendChild(lab); row.appendChild(sw);
     questions.appendChild(row);
   });
-  refreshScores();
-}
-function refreshScores(){
-  const ms=Object.values(state.moments).map(m=>m.checks.filter(Boolean).length);
-  const cur=state.moments[state.curMoment].checks.filter(Boolean).length;
-  const total=ms.reduce((a,b)=>a+b,0);
-  momentScoreEl.textContent=cur; totalScoreEl.textContent=total; gradeEl.textContent=GRADE(total);
 }
 
 /* ======= Video & frames ======= */
-function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; }
+function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; mag.width=r.width; mag.height=r.height; }
 function draw(){
   if(!vid.videoWidth) return;
   sizeCanvasToWrap();
   ctx.clearRect(0,0,cvs.width,cvs.height);
   ctx.drawImage(vid,0,0,cvs.width,cvs.height);
   drawGuides();
+  drawMagnifier(); // dibuja lupa por encima (en su propio canvas)
 }
 function stepFrames(n){
   const fps=Number(state.fps)||240; vid.pause();
@@ -428,8 +427,11 @@ scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.to
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
 
-/* ======= Overlay interaction ======= */
+/* ======= Overlay interaction + Lupa/Handles ======= */
 let dragging=null, dragKey=null;
+let placingActive=false; // para handles grandes
+const HANDLE_R_BASE=4, HANDLE_R_ACTIVE=10;
+
 function toCanvasCoords(ev){
   const r=cvs.getBoundingClientRect();
   const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
@@ -440,8 +442,71 @@ function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
 function cm(){ return state.moments[state.curMoment]; }
 function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
 
+/* Lupa: parámetros */
+const MAG_RADIUS=70;        // radio del círculo en px
+const MAG_SCALE=2.5;        // factor de ampliación
+const MAG_OFFSET={x:90,y:-90}; // posición relativa respecto del dedo
+
+let magVisible=false;
+let magSrc={x:0,y:0};  // punto central a ampliar (coords canvas)
+let magPos={x:0,y:0};  // posición del círculo (coords canvas)
+
+function showMag(cx,cy,px,py){
+  magVisible=true; mag.style.display='block';
+  magSrc.x=cx; magSrc.y=cy;
+  magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x));
+  magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y));
+  drawMagnifier();
+}
+function moveMag(cx,cy,px,py){
+  if(!magVisible) return;
+  magSrc.x=cx; magSrc.y=cy;
+  magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x));
+  magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y));
+  drawMagnifier();
+}
+function hideMag(){ magVisible=false; mag.style.display='none'; }
+
+function drawMagnifier(){
+  // Dibuja desde lo que ya está en cvs (video + guías) para que la lupa muestre todo
+  const mw=cvs.width, mh=cvs.height;
+  mag.width=mw; mag.height=mh;
+  mctx.clearRect(0,0,mw,mh);
+  if(!magVisible) return;
+  const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE);
+  const sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
+  const sw = (MAG_RADIUS*2)/MAG_SCALE;
+  const sh = (MAG_RADIUS*2)/MAG_SCALE;
+  // Clip circular
+  mctx.save();
+  mctx.beginPath();
+  mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2);
+  mctx.closePath();
+  mctx.clip();
+  // Fondo negro para contraste si sale del borde
+  mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
+  // Dibujo ampliado desde overlay
+  mctx.imageSmoothingEnabled=true;
+  mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
+  // Cruceta
+  mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5;
+  mctx.beginPath();
+  mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y);
+  mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y);
+  mctx.moveTo(magPos.x, magPos.y-MAG_RADIUS);
+  mctx.lineTo(magPos.x, magPos.y+MAG_RADIUS);
+  mctx.stroke();
+  // Borde
+  mctx.strokeStyle='rgba(255,255,255,.8)'; mctx.lineWidth=2;
+  mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.stroke();
+  mctx.restore();
+}
+
+/* Input handlers (mantienen flujo, sólo añaden lupa/handles) */
 function startDrag(ev){
+  placingActive=true;
   const {x,y}=toCanvasCoords(ev);
+  showMag(x,y,x,y);
   const list = activeGuides();
   for(const [key, g] of list){
     const d=g.data;
@@ -476,8 +541,10 @@ function startDrag(ev){
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
-  if(!dragging) return;
+  if(!placingActive) return;
   const {x,y}=toCanvasCoords(ev);
+  moveMag(x,y,x,y);
+  if(!dragging) return;
   const g=cm().guides[dragKey]; if(!g) return;
   const d=g.data;
   if(dragging==='v') d.v={x,y};
@@ -487,7 +554,9 @@ function moveDrag(ev){
   if(dragging==='anchor') d.anchor={x,y};
   draw(); ev.preventDefault();
 }
-function endDrag(){ dragging=null; dragKey=null; }
+function endDrag(){
+  placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
+}
 cvs.addEventListener('mousedown', startDrag);
 cvs.addEventListener('mousemove', moveDrag);
 cvs.addEventListener('mouseup', endDrag);
@@ -496,9 +565,13 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* ======= Drawing helpers for guides ======= */
+/* ======= Drawing helpers for guides (handles grandes durante colocación) ======= */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
-function dot(x,y,color='white',r=4){ ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+function dot(x,y,color='white',r){
+  ctx.save(); ctx.fillStyle=color;
+  const rr = r ?? (placingActive ? HANDLE_R_ACTIVE : HANDLE_R_BASE);
+  ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore();
+}
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
   const base=90-deg, theta=(invert?-1:1)*(base*Math.PI/180), len=Math.max(cvs.width,cvs.height);
@@ -521,7 +594,7 @@ function drawGuides(){
     }
     if(key==='heel' && d.p){
       line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2);
-      dot(d.p.x,d.p.y,'white',4);
+      dot(d.p.x,d.p.y,'white');
     }
     if(key==='vh' && d.anchor){
       drawVHAt(d.anchor.x, d.anchor.y);
@@ -561,13 +634,13 @@ function drawGuides(){
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
-      dot(x,y1,'white',4); dot(x,y2,'white',4);
+      dot(x,y1,'white'); dot(x,y2,'white');
     }
     if(key==='tibia' && d.anchor){
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
-      dot(x,y1,'white',4); dot(x,y2,'white',4);
+      dot(x,y1,'white'); dot(x,y2,'white');
     }
   }
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
@@ -581,6 +654,7 @@ $('#back10').onclick=()=>stepFrames(-10);
 $('#fwd10').onclick=()=>stepFrames(10);
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
 $('#snap').onclick=()=>{
+  // asegurar que la lupa no aparezca en capturas: se dibuja en canvas aparte.
   const dataURL=cvs.toDataURL('image/png');
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
@@ -588,7 +662,7 @@ $('#snap').onclick=()=>{
   // Apagar guías del momento actual y limpiar interacción
   const gobj = m.guides;
   Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
-  dragging=null; dragKey=null; draw();
+  placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
   // Avance automático al siguiente momento (sin delay)
   const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
   if(idx < MOMENTS.length - 1){
