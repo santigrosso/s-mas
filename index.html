@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.9.2)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.9.3)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -197,7 +197,7 @@
 <footer>Desarrollado por Santiago Grosso – S-MAS Project · 2025</footer>
 
 <script>
-/* ===== Descripciones (reactivado) ===== */
+/* ===== Descripciones ===== */
 const DESCRIPTIONS={
   toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
   mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
@@ -206,7 +206,7 @@ const DESCRIPTIONS={
   midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
 };
 
-/* ===== Estructura momentos/preguntas ===== */
+/* ===== Momentos/Preguntas ===== */
 const MOMENTS=[
   {key:'toeoff',label:'Toe-off'},
   {key:'mvp',label:'Max Vertical Projection'},
@@ -222,7 +222,7 @@ const QUESTIONS={
   midstance:["¿Está la rodilla por delante de la punta del pie?"]            // #12
 };
 
-/* ===== App state ===== */
+/* ===== Estado ===== */
 const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
 let state={
   fps:240,invert:false,curMoment:'toeoff',
@@ -286,7 +286,7 @@ function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!
 function setMoment(key){
   state.curMoment=key;
   renderTabs(); renderGuidesPanel();
-  momentDesc.textContent=DESCRIPTIONS[key]; /* <= restaurado */
+  momentDesc.textContent=DESCRIPTIONS[key];
   curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
   renderQuestions(); notesEl.value=state.moments[key].notes||''; refreshScores(); draw();
 }
@@ -354,7 +354,7 @@ function refreshScores(){
   momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total);
 }
 
-/* ===== Video y dibujo ===== */
+/* ===== Video / Dibujo ===== */
 function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; mag.width=r.width; mag.height=r.height; }
 function draw(){ if(!vid.videoWidth) return; sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height); ctx.drawImage(vid,0,0,cvs.width,cvs.height); drawGuides(); drawMagnifier(); }
 function stepFrames(n){ const fps=Number(state.fps)||240; vid.pause(); const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t; }
@@ -389,16 +389,15 @@ scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.to
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
 
-/* ===== Overlay + lupa ===== */
+/* ===== Overlay + Lupa ===== */
 let dragging=null, dragKey=null; let placingActive=false;
-const HANDLE_R_BASE=4, HANDLE_R_ACTIVE=10;
+const MAG_RADIUS=70, MAG_SCALE=2.5, MAG_OFFSET={x:90,y:-90};
+let magVisible=false, magSrc={x:0,y:0}, magPos={x:0,y:0};
 function toCanvasCoords(ev){ const r=cvs.getBoundingClientRect(); const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left; const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top; return {x,y}; }
 function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
 function cm(){ return state.moments[state.curMoment]; }
 function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
-const MAG_RADIUS=70, MAG_SCALE=2.5, MAG_OFFSET={x:90,y:-90};
-let magVisible=false, magSrc={x:0,y:0}, magPos={x:0,y:0};
-function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAGADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
+function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function moveMag(cx,cy,px,py){ if(!magVisible) return; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function hideMag(){ magVisible=false; mag.style.display='none'; }
 function drawMagnifier(){
@@ -406,7 +405,7 @@ function drawMagnifier(){
   const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE), sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
   const sw = (MAG_RADIUS*2)/MAG_SCALE, sh = (MAG_RADIUS*2)/MAG_SCALE;
   mctx.save(); mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.closePath(); mctx.clip();
-  mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAGADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
+  mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
   mctx.imageSmoothingEnabled=true; mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
   mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5; mctx.beginPath();
   mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y); mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y);
@@ -463,7 +462,7 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* ===== Draw helpers ===== */
+/* ===== Dibujo de guías ===== */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
 function dot(x,y){ ctx.save(); const rr=(placingActive?10:4); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
@@ -541,9 +540,8 @@ document.getElementById('snap').onclick=()=>{
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
-/* ===== Reporte (máx. 3 hojas) ===== */
+/* ===== Reporte ===== */
 function computeNeeds(){
-  // Mapa global por orden 1..12 (coincide con definición de QUESTIONS)
   const answers=[];
   function pushMoment(key){ const arr=state.moments[key].checks; for(let i=0;i<arr.length;i++){ answers.push(arr[i]); } }
   pushMoment('toeoff'); pushMoment('mvp'); pushMoment('lateswing'); pushMoment('touchdown'); pushMoment('midstance');
@@ -567,7 +565,6 @@ document.getElementById('printReport').onclick=()=>{
   const grade=GRADE(total);
   const needs=computeNeeds();
 
-  // ==== PÁGINA 1: Portada + Primer Momento ====
   const page1=document.createElement('div'); page1.className='page';
   const coverHTML=`
     <div style="display:flex;align-items:center;gap:10px">
@@ -594,7 +591,6 @@ document.getElementById('printReport').onclick=()=>{
   `;
   const coverDiv=document.createElement('div'); coverDiv.innerHTML=coverHTML; page1.appendChild(coverDiv);
 
-  // Momentos
   const blocks=[];
   MOMENTS.forEach(m=>{
     const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
@@ -618,13 +614,11 @@ document.getElementById('printReport').onclick=()=>{
   if(blocks.length){ page1.appendChild(blocks[0]); }
   container.appendChild(page1);
 
-  // ==== PÁGINA 2 ====
   const page2=document.createElement('div'); page2.className='page';
   if(blocks[1]) page2.appendChild(blocks[1]);
   if(blocks[2]) page2.appendChild(blocks[2]);
   container.appendChild(page2);
 
-  // ==== PÁGINA 3 ====
   const page3=document.createElement('div'); page3.className='page';
   if(blocks[3]) page3.appendChild(blocks[3]);
   if(blocks[4]) page3.appendChild(blocks[4]);
