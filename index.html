@@ -27,6 +27,7 @@
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
+
   /* Tabs */
   .tabsWrap{width:100%;}
   .tabs{display:flex;gap:0;width:100%;}
@@ -49,20 +50,17 @@
     border-bottom-left-radius:10px;border-bottom-right-radius:10px;
     font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
   }
-  /* iOS switch (51x31) */
+
+  /* Compact iOS switch (aplica a Preguntas y Guías) */
   .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr); margin-bottom:8px}
   .q label{flex:1}
-  .switch{position:relative;width:51px;height:31px;flex:0 0 51px}
+  .switch{position:relative;width:30px;height:18px;flex:0 0 30px}
   .switch input{opacity:0;width:0;height:0}
-  .slider{ position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease;
-    box-shadow:inset 0 0 0 1px rgba(0,0,0,.15); }
-  .slider:before{ content:""; position:absolute; height:27px; width:27px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease;
-    box-shadow:0 1px 2px rgba(0,0,0,.35); }
-  .switch input:checked + .slider{ background:#34c759; }
-  .switch input:checked + .slider:before{ transform: translateX(20px); }
-  button[disabled]{opacity:.5; cursor:not-allowed}
-  .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#d0def0; margin-left:6px; cursor:pointer}
-  .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:9999; box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .slider{ position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease; box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); }
+  .slider:before{ content:""; position:absolute; height:14px; width:14px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease; box-shadow:0 1px 2px rgba(0,0,0,.35); }
+  .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .switch input:checked + .slider:before{ transform: translateX(12px); }
+
   /* Scrubber */
   .scrubWrap{margin:8px 0 6px}
   .scrubRow{display:flex;align-items:center;gap:10px}
@@ -72,9 +70,6 @@
   .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
   .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:var(--scrub-thumb); box-shadow:0 1px 2px rgba(0,0,0,.5); }
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
-  /* Toast */
-  #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#0b2236;color:#d8e4f1;border:1px solid #2a4a6f;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s ease; z-index:99999}
-  #toast.show{opacity:1}
 </style>
 </head>
 <body>
@@ -157,8 +152,8 @@
 
         <div class="hr"></div>
 
-        <!-- Capturar arriba del reporte -->
-        <div class="grid" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <!-- Capturar + Reporte -->
+        <div class="grid" style="display:flex;flex-direction:column;gap:8px">
           <button id="snap">Capturar imagen</button>
           <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
           <span class="label" id="reportHint">Necesitás capturar los 5 momentos (ver tildes en las pestañas).</span>
@@ -181,12 +176,16 @@
   </main>
 </div>
 
-<div id="toast"></div>
+<!-- Reporte imprimible -->
+<div id="report">
+  <h1 style="font-size:18px;margin:.2em 0">Reporte S-MAS</h1>
+  <div id="reportContent"></div>
+</div>
 
 <footer>Desarrollado por Santiago Grosso · 2025</footer>
 
 <script>
-/* ======= Estado sólo en memoria ======= */
+/* ======= Estado sólo en memoria (sin localStorage) ======= */
 const MOMENTS=[
   {key:'toeoff',label:'Toe-off'},
   {key:'mvp',label:'Max Vertical Projection'},
@@ -221,8 +220,8 @@ const GUIDE_DEFS={
   touchdown:[
     {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
     {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
-    {key:'cdg', label:'Guía distancia CdG', use:'Marcá dos puntos y medí la distancia horizontal (Δx) entre ellos en píxeles.'},
-    {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
+    {key:'cdg', label:'Guía distancia CdG', use:'Marcá dos puntos y medí la distancia horizontal (Δx) entre ellos en píxeles. (La regla se fija a la altura del primer punto).'},
+    {key:'tibia', label:'Guía tibia', use:'Ubicá la línea vertical corta en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
   ],
   midstance:[
     {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'}
@@ -246,17 +245,16 @@ const fpsInput=$('#fps'),ctime=$('#ctime'),fnum=$('#fnum');
 const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),momentScoreEl=$('#momentScore'),totalScoreEl=$('#totalScore'),gradeEl=$('#grade'),curMomentLabel=$('#curMomentLabel');
 const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
-const invertBtn=$('#invert'); const snapBtn=$('#snap');
+const invertBtn=$('#invert');
 /* Scrubber refs */
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
-/* Toast */
-const toast=$('#toast');
-function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 2000); }
 
 /* ======= Helpers ======= */
 function ensureGuideState(momentKey, guideKey){
   const m=state.moments[momentKey];
-  if(!m.guides[guideKey]){ m.guides[guideKey]={on:false, data:{}}; }
+  if(!m.guides[guideKey]){
+    m.guides[guideKey]={on:false, data:{}};
+  }
   return m.guides[guideKey];
 }
 function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
@@ -308,7 +306,7 @@ function showTip(anchorEl, text){
   document.body.appendChild(tipEl);
   const r=anchorEl.getBoundingClientRect();
   const tt=tipEl.getBoundingClientRect();
-  tipEl.style.left = Math.max(8, (r.left - tt.width - 8)) + 'px';
+  tipEl.style.left = (r.left - tt.width - 8) + 'px';
   tipEl.style.top  = (r.top + window.scrollY - (tt.height/2) + (r.height/2)) + 'px';
   const close=()=>{ if(tipEl){ tipEl.remove(); tipEl=null; } window.removeEventListener('click', onWin); };
   const onWin=(e)=>{ if(!tipEl.contains(e.target) && e.target!==anchorEl) close(); };
@@ -412,6 +410,7 @@ function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([
 function startDrag(ev){
   const {x,y}=toCanvasCoords(ev);
   const list = activeGuides();
+  // Check hits
   for(const [key, g] of list){
     const d=g.data;
     if(key==='thighs'){
@@ -427,6 +426,7 @@ function startDrag(ev){
       if(hit(d.anchor,x,y)){ dragging='anchor'; dragKey=key; return ev.preventDefault(); }
     }
   }
+  // Set next needed point if none hit
   for(const [key,g] of list){
     const d=g.data;
     if(key==='thighs'){
@@ -509,7 +509,6 @@ function drawGuides(){
         const ang=angleBetween(a,v,b);
         ctx.save(); ctx.fillStyle = ang>20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
         ctx.font='bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, v.x+8, v.y-8); ctx.restore();
-        if(ang>20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(v.x,v.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
       }
     }
     if(key==='cdg'){
@@ -517,23 +516,21 @@ function drawGuides(){
       if(a) dot(a.x,a.y);
       if(b) dot(b.x,b.y);
       if(a && b){
-        // Enforce horizontal: fix b.y to a.y
-        b.y = a.y;
-        const ymid = a.y;
-        line(a.x, ymid, b.x, ymid, [6,4], 'rgba(255,255,255,.85)',2);
+        const y = a.y; // fijado al Y del primer punto
+        line(a.x, y, b.x, y, [6,4], 'rgba(255,255,255,.85)',2);
         const dx = Math.abs(Math.round(b.x - a.x));
         ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
-        ctx.fillText(`Δx: ${dx}px`, Math.min(a.x,b.x)+5, ymid-8);
+        ctx.fillText(`Δx: ${dx}px`, Math.min(a.x,b.x)+5, y-8);
         ctx.restore();
       }
     }
-    if(key==='tibia' && d.anchor){
+    if(key==='knee' && d.anchor){
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
       dot(x,y1,'white',4); dot(x,y2,'white',4);
     }
-    if(key==='knee' && d.anchor){
+    if(key==='tibia' && d.anchor){
       const h = cvs.height*0.12;
       const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
       line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
@@ -550,56 +547,50 @@ $('#fwd1').onclick=()=>stepFrames(1);
 $('#back10').onclick=()=>stepFrames(-10);
 $('#fwd10').onclick=()=>stepFrames(10);
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
-snapBtn.onclick=()=>{
+
+function advanceMoment(){
+  const idx = MOMENTS.findIndex(m=>m.key===state.curMoment);
+  if(idx < MOMENTS.length-1){
+    setMoment(MOMENTS[idx+1].key);
+  }else{
+    alert('Ya capturaste todos los momentos.');
+  }
+}
+
+$('#snap').onclick=()=>{
   const dataURL=cvs.toDataURL('image/png');
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
   m.captured=true; renderTabs();
-  const idx=MOMENTS.findIndex(mm=>mm.key===mKey);
-  if(idx>=0 && idx<MOMENTS.length-1){
-    setMoment(MOMENTS[idx+1].key);
-  } else {
-    showToast('¡Listo! Ya podés generar el reporte.');
-  }
+  advanceMoment();
 };
+
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
-/* Report in new window (white background) */
-printBtn.onclick=()=>{
-  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
-  const gradeFn = ${GRADE.toString()};
-  const win = window.open('', '_blank');
-  const css = `
-    <style>
-      html,body{background:#fff;color:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:16px}
-      h1{font-size:20px;margin:0 0 12px}
-      h2{font-size:16px;margin:10px 0 6px}
-      .page{page-break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:10px;margin:10px 0}
-      img{max-width:100%;height:auto;border:1px solid #eee;border-radius:6px}
-      small{color:#333}
-      ul{margin:6px 0 0 18px}
-      @media print{ body{padding:0} }
-    </style>`;
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Reporte S-MAS</title>${css}</head><body>`);
-  win.document.write(`<h1>Reporte S-MAS</h1>`);
-  win.document.write(`<div class="page"><h2>Resumen</h2><div><strong>Puntaje total:</strong> ${total}</div><div><strong>Clasificación:</strong> ${gradeFn(${total})}</div></div>`);
+/* Report */
+$('#printReport').onclick=()=>{
+  const container=document.getElementById('reportContent'); container.innerHTML='';
   MOMENTS.forEach(m=>{
     const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
     const checks=QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
     const ms=mm.checks.filter(Boolean).length;
-    win.document.write(`<div class="page">
+    const page=document.createElement('div'); page.className='page';
+    page.innerHTML=`
       <h2>${m.label}</h2>
       <div><small>t=${(mm.t||0).toFixed(3)}s • frame ${mm.frame||0}</small></div>
-      ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}"/></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
+      ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}" /></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
       <div style="margin-top:6px"><strong>Puntaje del momento:</strong> ${ms}</div>
       <div><strong>Checklist</strong><ul>${checks}</ul></div>
       ${mm.notes ? `<div><strong>Notas:</strong> ${mm.notes}</div>` : ``}
-    </div>`);
+    `;
+    container.appendChild(page);
   });
-  win.document.write(`<script>window.onload=function(){window.focus();window.print();};<\/script>`);
-  win.document.write(`</body></html>`);
-  win.document.close();
+  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  const sum=document.createElement('div'); sum.className='page';
+  sum.innerHTML=`<h2>Resumen</h2><div><strong>Puntaje total:</strong> ${total}</div><div><strong>Clasificación:</strong> ${GRADE(total)}</div>`;
+  container.prepend(sum);
+  window.print();
 };
 
 /* Clear session */
