@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.8.1)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.9.1)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -20,10 +20,7 @@
   #videoWrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
   video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
   canvas{position:absolute;left:0;top:0}
-  /* Magnifier canvas */
-  #magnifier{
-    position:absolute; left:0; top:0; pointer-events:none; display:none;
-  }
+  #magnifier{position:absolute; left:0; top:0; pointer-events:none; display:none;}
   .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
@@ -31,7 +28,6 @@
   .label{font-size:12px;color:var(--mut)}
   .hr{height:1px;background:#173a5d;margin:10px 0}
   .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  /* Tabs */
   .tabsWrap{width:100%;}
   .tabs{display:flex;gap:0;width:100%;}
   .tab{
@@ -53,7 +49,6 @@
     border-bottom-left-radius:10px;border-bottom-right-radius:10px;
     font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
   }
-  /* iOS switch compact */
   .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr); margin-bottom:8px}
   .q label{flex:1}
   .switch{position:relative;width:36px;height:22px;flex:0 0 36px}
@@ -65,7 +60,6 @@
   button[disabled]{opacity:.5; cursor:not-allowed}
   .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; color:#d0def0; margin-left:6px; cursor:pointer; touch-action:manipulation}
   .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:1000; box-shadow:0 6px 20px rgba(0,0,0,.35)}
-  /* Scrubber */
   .scrubWrap{margin:8px 0 6px}
   .scrubRow{display:flex;align-items:center;gap:10px}
   .time{font-variant-numeric:tabular-nums; font-size:12px; color:var(--mut); min-width:60px; text-align:center}
@@ -73,10 +67,25 @@
   .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
   .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
   .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,.5); }
-  /* Score card */
-  .score{display:flex;gap:8px;flex-wrap:wrap}
-  .score .pill{background:#0f2a44;border:1px solid var(--bdr)}
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
+  #report{ display:none; }
+  @media print {
+    @page { size: A4; margin: 14mm 12mm 16mm 12mm; }
+    body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    header, #app, footer { display: none !important; }
+    #report { display: block; background:#fff; color:#000; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    #report .page { page-break-after: always; }
+    #report h1, #report h2, #report h3 { color:#0b1b2b; }
+    #report .cover { display:flex; flex-direction:column; gap:12px; }
+    #report .legend { font-size:12px; color:#333; }
+    #report .momentBlock { break-inside: avoid; page-break-inside: avoid; margin: 8mm 0; padding-bottom: 2mm; border-bottom: 1px solid #eee; }
+    #report .momentBlock:last-child { border-bottom:none; }
+    #report img { width:100%; height:auto; border:1px solid #e5e7eb; border-radius:6px; background:#fff; }
+    #report .meta { font-size:11px; color:#444; }
+    #report ul { margin:4px 0 0 18px; }
+    #report .notes { margin-top:4px; font-size:12px; color:#222; white-space:pre-wrap; }
+    #printFooter { position: fixed; bottom: 0; left: 0; right: 0; text-align:center; font-size:10px; color:#4b5563; border-top:1px solid #e5e7eb; padding-top:6px; }
+  }
 </style>
 </head>
 <body>
@@ -101,20 +110,17 @@
           </div>
         </div>
 
-        <!-- Tabs + description -->
         <div class="tabsWrap">
           <div class="tabs" id="tabs"></div>
           <div class="momentDesc" id="momentDesc"></div>
         </div>
 
-        <!-- Video -->
         <div id="videoWrap">
           <video id="vid" playsinline muted controls preload="metadata"></video>
           <canvas id="overlay"></canvas>
           <canvas id="magnifier" width="1" height="1"></canvas>
         </div>
 
-        <!-- Scrubber -->
         <div class="scrubWrap">
           <div class="scrubRow">
             <div class="time" id="curT">0:00</div>
@@ -127,7 +133,6 @@
           </div>
         </div>
 
-        <!-- Controls -->
         <div class="controls" style="margin-top:8px;flex-wrap:wrap">
           <button id="play" class="small">▶︎ Play/Pause</button>
           <button id="back1" class="small">−1 frame</button>
@@ -142,7 +147,6 @@
       </div>
 
       <div class="card" style="flex:1 1 360px">
-        <!-- Panel Guías -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Guías</strong>
           <button id="invert" class="ghost small" title="Espejar guías izquierda/derecha">Invertir (izq/der)</button>
@@ -151,14 +155,12 @@
 
         <div class="hr"></div>
 
-        <!-- Score (restaurado) -->
         <div class="score" id="scoreCard" style="margin-bottom:6px">
           <span class="pill">Momento: <b id="momentScore">0</b></span>
           <span class="pill">Total: <b id="totalScore">0</b></span>
           <span class="pill">Clasificación: <b id="grade">Excelente (0–1)</b></span>
         </div>
 
-        <!-- Panel Preguntas -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Preguntas (on/off)</strong>
           <span class="label">toca para alternar</span>
@@ -172,7 +174,6 @@
         </div>
 
         <div class="hr"></div>
-        <!-- Capturar (panel derecho, arriba del reporte) -->
         <div class="grid">
           <button id="snap" class="small">Capturar imagen</button>
         </div>
@@ -186,16 +187,14 @@
   </main>
 </div>
 
-<!-- Reporte imprimible -->
 <div id="report">
-  <h1 style="font-size:18px;margin:.2em 0">Reporte S-MAS</h1>
   <div id="reportContent"></div>
+  <div id="printFooter">Desarrollado por Santiago Grosso · 2025</div>
 </div>
 
 <footer>Desarrollado por Santiago Grosso · 2025</footer>
 
 <script>
-/* ======= Estado sólo en memoria (sin localStorage) ======= */
 const MOMENTS=[
   {key:'toeoff',label:'Toe-off'},
   {key:'mvp',label:'Max Vertical Projection'},
@@ -203,13 +202,6 @@ const MOMENTS=[
   {key:'touchdown',label:'Touchdown'},
   {key:'midstance',label:'Mid-stance'},
 ];
-const DESCRIPTIONS={
-  toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
-  mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
-  lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",
-  touchdown:"Punto de primer contacto con el suelo.",
-  midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
-};
 const QUESTIONS={
   toeoff:["¿Demasiada extensión de cadera?"],
   mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],
@@ -217,37 +209,15 @@ const QUESTIONS={
   touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],
   midstance:["¿Está la rodilla por delante de la punta del pie?"]
 };
-const GUIDE_DEFS={
-  toeoff:[
-    {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'}
-  ],
-  mvp:[
-    {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'}
-  ],
-  lateswing:[
-    {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'}
-  ],
-  touchdown:[
-    {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
-    {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
-    {key:'cdg', label:'Guía distancia CdG', use:'Ubica el punto en el talón y compara la medida del pie con la distancia a la vertical.'},
-    {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
-  ],
-  midstance:[
-    {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'}
-  ]
-};
 const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
 
 let state={
   fps:240,invert:false,curMoment:'toeoff',
   moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
-    t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false,
-    guides: {}
+    t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false, guides: {}
   }]))
 };
 
-/* ======= DOM ======= */
 const $=s=>document.querySelector(s);
 const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
 const cvs=$('#overlay'),ctx=cvs.getContext('2d');
@@ -257,23 +227,15 @@ const tabs=$('#tabs'),momentDesc=$('#momentDesc'),questions=$('#questions'),curM
 const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
-/* Score DOM */
-const momentScoreEl=$('#momentScore'), totalScoreEl=$('#totalScore'), gradeEl=$('#grade');
-/* Scrubber refs */
+const momentScoreEl=document.getElementById('momentScore'), totalScoreEl=document.getElementById('totalScore'), gradeEl=document.getElementById('grade');
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
-/* ======= Tooltip helpers (sin cambios) ======= */
+/* Tooltips */
 let tipEl=null, tipAnchor=null;
-function toggleTip(anchor, text){
-  if(tipEl && tipAnchor===anchor){ closeTip(); return; }
-  showTip(anchor, text);
-}
+function toggleTip(anchor, text){ if(tipEl && tipAnchor===anchor){ closeTip(); return; } showTip(anchor, text); }
 function showTip(anchorEl, text){
-  closeTip();
-  tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
-  document.body.appendChild(tipEl);
-  tipAnchor=anchorEl;
-  positionTip();
+  closeTip(); tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
+  document.body.appendChild(tipEl); tipAnchor=anchorEl; positionTip();
   setTimeout(()=>{
     document.addEventListener('mousedown', onDocDown, true);
     document.addEventListener('touchstart', onDocDown, {passive:false, capture:true});
@@ -282,29 +244,16 @@ function showTip(anchorEl, text){
     window.addEventListener('resize', onResize, {passive:true});
   },0);
 }
-function positionTip(){
-  if(!tipEl || !tipAnchor) return;
-  const r=tipAnchor.getBoundingClientRect();
-  const tt=tipEl.getBoundingClientRect();
-  let left = r.left - tt.width - 8;
-  let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2);
-  if(left < 6){ left = r.right + 8; }
-  const maxTop = window.scrollY + window.innerHeight - tt.height - 6;
-  const minTop = window.scrollY + 6;
-  top = Math.max(minTop, Math.min(maxTop, top));
-  tipEl.style.left = left + 'px';
-  tipEl.style.top  = top + 'px';
+function positionTip(){ if(!tipEl || !tipAnchor) return;
+  const r=tipAnchor.getBoundingClientRect(); const tt=tipEl.getBoundingClientRect();
+  let left = r.left - tt.width - 8; let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2);
+  if(left < 6){ left = r.right + 8; } const maxTop = window.scrollY + window.innerHeight - tt.height - 6; const minTop = window.scrollY + 6;
+  top = Math.max(minTop, Math.min(maxTop, top)); tipEl.style.left = left + 'px'; tipEl.style.top  = top + 'px';
 }
-function onDocDown(e){
-  if(!tipEl) return;
-  if(tipEl.contains(e.target) || e.target===tipAnchor){ return; }
-  closeTip();
-}
+function onDocDown(e){ if(!tipEl) return; if(tipEl.contains(e.target) || e.target===tipAnchor){ return; } closeTip(); }
 function onKey(e){ if(e.key==='Escape') closeTip(); }
 function onResize(){ positionTip(); }
-function closeTip(){
-  if(!tipEl) return;
-  tipEl.remove(); tipEl=null; tipAnchor=null;
+function closeTip(){ if(!tipEl) return; tipEl.remove(); tipEl=null; tipAnchor=null;
   document.removeEventListener('mousedown', onDocDown, true);
   document.removeEventListener('touchstart', onDocDown, {capture:true});
   window.removeEventListener('keydown', onKey);
@@ -312,21 +261,18 @@ function closeTip(){
   window.removeEventListener('resize', onResize);
 }
 
-/* ======= Helpers ======= */
+/* Helpers */
 function ensureGuideState(momentKey, guideKey){
   const m=state.moments[momentKey];
-  if(!m.guides[guideKey]){
-    m.guides[guideKey]={on:false, data:{}};
-  }
+  if(!m.guides[guideKey]){ m.guides[guideKey]={on:false, data:{}}; }
   return m.guides[guideKey];
 }
 function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
 function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 function setMoment(key){
   state.curMoment=key;
-  renderTabs();
-  renderGuidesPanel();
-  momentDesc.textContent=DESCRIPTIONS[key];
+  renderTabs(); renderGuidesPanel();
+  momentDesc.textContent=""; // no mostramos descripción en esta versión
   curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
   renderQuestions(); notesEl.value=state.moments[key].notes||''; refreshScores(); draw();
 }
@@ -344,7 +290,18 @@ function renderTabs(){
 }
 function renderGuidesPanel(){
   guidesPanel.innerHTML='';
-  const defs = GUIDE_DEFS[state.curMoment]||[];
+  const defs = {
+    toeoff:[ {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'} ],
+    mvp:[ {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'} ],
+    lateswing:[ {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'} ],
+    touchdown:[
+      {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
+      {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
+      {key:'cdg', label:'Guía distancia CdG', use:'Ubica el punto en el talón y compara la medida del pie con la distancia a la vertical.'},
+      {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
+    ],
+    midstance:[ {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'} ]
+  }[state.curMoment]||[];
   defs.forEach(def=>{
     const row=document.createElement('div'); row.className='q';
     const lab=document.createElement('label'); lab.textContent=def.label;
@@ -362,11 +319,10 @@ function renderGuidesPanel(){
     guidesPanel.appendChild(row);
   });
 }
-
 function renderQuestions(){
   const m=state.moments[state.curMoment];
   questions.innerHTML='';
-  QUESTIONS[state.curMoment].forEach((q,i)=>{
+  (QUESTIONS[state.curMoment]||[]).forEach((q,i)=>{
     const row=document.createElement('div'); row.className='q';
     const lab=document.createElement('label'); lab.textContent=q;
     const sw=document.createElement('label'); sw.className='switch';
@@ -378,29 +334,16 @@ function renderQuestions(){
     questions.appendChild(row);
   });
 }
-
 function refreshScores(){
   const cur = state.moments[state.curMoment].checks.filter(Boolean).length;
   const total = Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
-  momentScoreEl.textContent = cur;
-  totalScoreEl.textContent = total;
-  gradeEl.textContent = GRADE(total);
+  momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total);
 }
 
-/* ======= Video & frames ======= */
+/* Video */
 function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; mag.width=r.width; mag.height=r.height; }
-function draw(){
-  if(!vid.videoWidth) return;
-  sizeCanvasToWrap();
-  ctx.clearRect(0,0,cvs.width,cvs.height);
-  ctx.drawImage(vid,0,0,cvs.width,cvs.height);
-  drawGuides();
-  drawMagnifier(); // dibuja lupa por encima (en su propio canvas)
-}
-function stepFrames(n){
-  const fps=Number(state.fps)||240; vid.pause();
-  const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t;
-}
+function draw(){ if(!vid.videoWidth) return; sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height); ctx.drawImage(vid,0,0,cvs.width,cvs.height); drawGuides(); drawMagnifier(); }
+function stepFrames(n){ const fps=Number(state.fps)||240; vid.pause(); const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t; }
 function updateTimeUI(){
   const t=vid.currentTime||0, d=vid.duration||0;
   ctime.textContent=t.toFixed(3);
@@ -409,36 +352,21 @@ function updateTimeUI(){
   if(d>0){
     const pct=(t/d)*100; playBar.style.width=pct+'%'; thumb.style.left=pct+'%';
     durT.textContent=formatTime(d); curT.textContent=formatTime(t);
-    try{
-      let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); }
-      bufBar.style.width=(Math.min(end,d)/d)*100+'%';
-    }catch(e){}
+    try{ let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); } bufBar.style.width=(Math.min(end,d)/d)*100+'%'; }catch(e){}
   }
 }
-function formatTime(s){
-  s=Math.max(0,Math.floor(s||0)); const m=Math.floor(s/60); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`;
-}
+function formatTime(s){ s=Math.max(0,Math.floor(s||0)); const m=Math.floor(s/60); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`; }
 vid.addEventListener('timeupdate',()=>{ updateTimeUI(); draw(); });
 vid.addEventListener('seeked',()=>{ updateTimeUI(); draw(); });
 vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); });
 vid.addEventListener('progress',()=>{ updateTimeUI(); });
 window.addEventListener('resize', draw);
 
-/* ======= Scrubber interactions ======= */
+/* Scrubber */
 let scrubbing=false;
-function posToTime(clientX){
-  const r=scrub.getBoundingClientRect();
-  const x=Math.max(0,Math.min(clientX - r.left, r.width));
-  const pct=x/r.width; return (vid.duration||0)*pct;
-}
-function beginScrub(clientX){
-  scrubbing=true; vid.pause();
-  vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
-}
-function moveScrub(clientX){
-  if(!scrubbing) return;
-  vid.currentTime=posToTime(clientX); updateTimeUI(); draw();
-}
+function posToTime(clientX){ const r=scrub.getBoundingClientRect(); const x=Math.max(0,Math.min(clientX - r.left, r.width)); const pct=x/r.width; return (vid.duration||0)*pct; }
+function beginScrub(clientX){ scrubbing=true; vid.pause(); vid.currentTime=posToTime(clientX); updateTimeUI(); draw(); }
+function moveScrub(clientX){ if(!scrubbing) return; vid.currentTime=posToTime(clientX); updateTimeUI(); draw(); }
 function endScrub(){ if(!scrubbing) return; scrubbing=false; }
 scrub.addEventListener('mousedown',(e)=>{ beginScrub(e.clientX); e.preventDefault(); });
 window.addEventListener('mousemove',(e)=>{ moveScrub(e.clientX); });
@@ -447,82 +375,32 @@ scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.to
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
 
-/* ======= Overlay interaction + Lupa/Handles ======= */
-let dragging=null, dragKey=null;
-let placingActive=false; // para handles grandes
+/* Overlay + lupa */
+let dragging=null, dragKey=null; let placingActive=false;
 const HANDLE_R_BASE=4, HANDLE_R_ACTIVE=10;
-
-function toCanvasCoords(ev){
-  const r=cvs.getBoundingClientRect();
-  const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
-  const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
-  return {x,y};
-}
+function toCanvasCoords(ev){ const r=cvs.getBoundingClientRect(); const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left; const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top; return {x,y}; }
 function hit(pt,x,y){ return pt && Math.hypot(pt.x-x,pt.y-y)<16; }
 function cm(){ return state.moments[state.curMoment]; }
 function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([k,v])=>v.on); }
-
-/* Lupa: parámetros */
-const MAG_RADIUS=70;        // radio del círculo en px
-const MAG_SCALE=2.5;        // factor de ampliación
-const MAG_OFFSET={x:90,y:-90}; // posición relativa respecto del dedo
-
-let magVisible=false;
-let magSrc={x:0,y:0};  // punto central a ampliar (coords canvas)
-let magPos={x:0,y:0};  // posición del círculo (coords canvas)
-
-function showMag(cx,cy,px,py){
-  magVisible=true; mag.style.display='block';
-  magSrc.x=cx; magSrc.y=cy;
-  magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x));
-  magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y));
-  drawMagnifier();
-}
-function moveMag(cx,cy,px,py){
-  if(!magVisible) return;
-  magSrc.x=cx; magSrc.y=cy;
-  magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x));
-  magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y));
-  drawMagnifier();
-}
+const MAG_RADIUS=70, MAG_SCALE=2.5, MAG_OFFSET={x:90,y:-90};
+let magVisible=false, magSrc={x:0,y:0}, magPos={x:0,y:0};
+function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
+function moveMag(cx,cy,px,py){ if(!magVisible) return; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function hideMag(){ magVisible=false; mag.style.display='none'; }
-
 function drawMagnifier(){
-  const mw=cvs.width, mh=cvs.height;
-  mag.width=mw; mag.height=mh;
-  mctx.clearRect(0,0,mw,mh);
-  if(!magVisible) return;
-  const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE);
-  const sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
-  const sw = (MAG_RADIUS*2)/MAG_SCALE;
-  const sh = (MAG_RADIUS*2)/MAG_SCALE;
-  mctx.save();
-  mctx.beginPath();
-  mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2);
-  mctx.closePath();
-  mctx.clip();
+  const mw=cvs.width, mh=cvs.height; mag.width=mw; mag.height=mh; mctx.clearRect(0,0,mw,mh); if(!magVisible) return;
+  const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE), sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
+  const sw = (MAG_RADIUS*2)/MAG_SCALE, sh = (MAG_RADIUS*2)/MAG_SCALE;
+  mctx.save(); mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.closePath(); mctx.clip();
   mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
-  mctx.imageSmoothingEnabled=true;
-  mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
-  // Cruceta
-  mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5;
-  mctx.beginPath();
-  mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y);
-  mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y);
-  mctx.moveTo(magPos.x, magPos.y-MAG_RADIUS);
-  mctx.lineTo(magPos.x, magPos.y+MAG_RADIUS);
-  mctx.stroke();
-  // Borde
-  mctx.strokeStyle='rgba(255,255,255,.8)'; mctx.lineWidth=2;
-  mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.stroke();
-  mctx.restore();
+  mctx.imageSmoothingEnabled=true; mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
+  mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5; mctx.beginPath();
+  mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y); mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y);
+  mctx.moveTo(magPos.x, magPos.y-MAG_RADIUS); mctx.lineTo(magPos.x, magPos.y+MAG_RADIUS); mctx.stroke();
+  mctx.strokeStyle='rgba(255,255,255,.8)'; mctx.lineWidth=2; mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.stroke(); mctx.restore();
 }
-
-/* Input handlers (mantienen flujo, sólo añaden lupa/handles) */
 function startDrag(ev){
-  placingActive=true;
-  const {x,y}=toCanvasCoords(ev);
-  showMag(x,y,x,y);
+  placingActive=true; const {x,y}=toCanvasCoords(ev); showMag(x,y,x,y);
   const list = activeGuides();
   for(const [key, g] of list){
     const d=g.data;
@@ -557,22 +435,12 @@ function startDrag(ev){
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
-  if(!placingActive) return;
-  const {x,y}=toCanvasCoords(ev);
-  moveMag(x,y,x,y);
-  if(!dragging) return;
-  const g=cm().guides[dragKey]; if(!g) return;
-  const d=g.data;
-  if(dragging==='v') d.v={x,y};
-  if(dragging==='a') d.a={x,y};
-  if(dragging==='b') d.b={x,y};
-  if(dragging==='p') d.p={x,y};
-  if(dragging==='anchor') d.anchor={x,y};
+  if(!placingActive) return; const {x,y}=toCanvasCoords(ev); moveMag(x,y,x,y);
+  if(!dragging) return; const g=cm().guides[dragKey]; if(!g) return; const d=g.data;
+  if(dragging==='v') d.v={x,y}; if(dragging==='a') d.a={x,y}; if(dragging==='b') d.b={x,y}; if(dragging==='p') d.p={x,y}; if(dragging==='anchor') d.anchor={x,y};
   draw(); ev.preventDefault();
 }
-function endDrag(){
-  placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
-}
+function endDrag(){ placingActive=false; dragging=null; dragKey=null; hideMag(); draw(); }
 cvs.addEventListener('mousedown', startDrag);
 cvs.addEventListener('mousemove', moveDrag);
 cvs.addEventListener('mouseup', endDrag);
@@ -581,16 +449,9 @@ cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
 
-/* ======= Drawing helpers for guides (handles translúcidos) ======= */
+/* Draw helpers */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
-function dot(x,y,color='white',r){
-  ctx.save();
-  const rr = r ?? (placingActive ? HANDLE_R_ACTIVE : HANDLE_R_BASE);
-  // Blanco translúcido
-  ctx.fillStyle='rgba(255,255,255,0.75)';
-  ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-}
+function dot(x,y){ ctx.save(); const rr=(placingActive?10:4); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
   const base=90-deg, theta=(invert?-1:1)*(base*Math.PI/180), len=Math.max(cvs.width,cvs.height);
@@ -608,24 +469,13 @@ function drawGuides(){
   const list = activeGuides();
   for(const [key,g] of list){
     const d=g.data;
-    if(key==='g45' && d.anchor){
-      drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 45, state.invert);
-    }
-    if(key==='heel' && d.p){
-      line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2);
-      dot(d.p.x,d.p.y);
-    }
-    if(key==='vh' && d.anchor){
-      drawVHAt(d.anchor.x, d.anchor.y);
-    }
-    if(key==='t15' && d.anchor){
-      drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 15, state.invert);
-    }
+    if(key==='g45' && d.anchor){ drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 45, state.invert); }
+    if(key==='heel' && d.p){ line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2); dot(d.p.x,d.p.y); }
+    if(key==='vh' && d.anchor){ drawVHAt(d.anchor.x, d.anchor.y); }
+    if(key==='t15' && d.anchor){ drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 15, state.invert); }
     if(key==='thighs'){
       const {v,a,b}=d;
-      if(v) dot(v.x,v.y);
-      if(a) dot(a.x,a.y);
-      if(b) dot(b.x,b.y);
+      if(v) dot(v.x,v.y); if(a) dot(a.x,a.y); if(b) dot(b.x,b.y);
       if(v && a){ line(v.x,v.y,a.x,a.y,[], '#fff',2); }
       if(v && b){ line(v.x,v.y,b.x,b.y,[], '#fff',2); }
       if(v && a && b){
@@ -636,106 +486,136 @@ function drawGuides(){
       }
     }
     if(key==='cdg'){
-      const {a,b}=d;
-      if(a) dot(a.x,a.y);
-      if(b) dot(b.x,b.y);
+      const {a,b}=d; if(a) dot(a.x,a.y); if(b) dot(b.x,b.y);
       if(a && b){
-        const y = a.y;
-        const x1 = a.x, x2 = b.x;
+        const y = a.y, x1 = a.x, x2 = b.x;
         line(x1, y, x2, y, [6,4], 'rgba(255,255,255,.85)',2);
         const dx = Math.abs(Math.round(x2 - x1));
         ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
-        ctx.fillText(`Δx: ${dx}px`, Math.min(x1,x2)+5, y-8);
-        ctx.restore();
+        ctx.fillText(`Δx: ${dx}px`, Math.min(x1,x2)+5, y-8); ctx.restore();
       }
     }
     if(key==='knee' && d.anchor){
-      const h = cvs.height*0.12;
-      const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
-      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
-      dot(x,y1); dot(x,y2);
+      const h = cvs.height*0.12; const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1); dot(x,y2);
     }
     if(key==='tibia' && d.anchor){
-      const h = cvs.height*0.12;
-      const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
-      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3);
-      dot(x,y1); dot(x,y2);
+      const h = cvs.height*0.12; const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1); dot(x,y2);
     }
   }
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
 }
 
-/* ======= Actions ======= */
-$('#play').onclick=async()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } }catch(e){} };
-$('#back1').onclick=()=>stepFrames(-1);
-$('#fwd1').onclick=()=>stepFrames(1);
-$('#back10').onclick=()=>stepFrames(-10);
-$('#fwd10').onclick=()=>stepFrames(10);
+/* Controles */
+document.getElementById('play').onclick=async()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } }catch(e){} };
+document.getElementById('back1').onclick=()=>stepFrames(-1);
+document.getElementById('fwd1').onclick=()=>stepFrames(1);
+document.getElementById('back10').onclick=()=>stepFrames(-10);
+document.getElementById('fwd10').onclick=()=>stepFrames(10);
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
-$('#snap').onclick=()=>{
+document.getElementById('snap').onclick=()=>{
   const dataURL=cvs.toDataURL('image/png');
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
   m.captured=true; renderTabs();
-  // Apagar guías del momento actual y limpiar interacción
-  const gobj = m.guides;
-  Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
+  const gobj = m.guides; Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
   placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
-  // Avance automático al siguiente momento (sin delay)
   const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
-  if(idx < MOMENTS.length - 1){
-    setMoment(MOMENTS[idx+1].key);
-  }else{
-    alert('Ya podés generar el reporte.');
-  }
+  if(idx < MOMENTS.length - 1){ setMoment(MOMENTS[idx+1].key); } else { alert('Ya podés generar el reporte.'); }
 };
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
-/* Report */
-$('#printReport').onclick=()=>{
+/* Reporte */
+document.getElementById('printReport').onclick=()=>{
   const container=document.getElementById('reportContent'); container.innerHTML='';
+  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  const grade=GRADE(total);
+  const cover=document.createElement('div'); cover.className='page cover'; cover.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
+        <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+        <path d="M16 38 L28 26 L36 34 L48 22" stroke="#ff7a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1 style="margin:0;font-size:20px">S-MAS • Sprint Mechanics Assessment</h1>
+        <div style="font-size:12px;color:#444">Reporte automático</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:16px"><strong>Puntaje total:</strong> ${total}</div>
+    <div style="font-size:16px"><strong>Clasificación:</strong> ${grade}</div>
+    <div class="legend" style="margin-top:6px">
+      <strong>Escala:</strong>
+      <div>Excelente: 0–1 · Bueno: 2 · Promedio: 3–5 · Pobre: 6 · Muy pobre: 7–11 · Extremadamente pobre: 12</div>
+    </div>
+  `;
+  container.appendChild(cover);
+
+  const blocks=[];
   MOMENTS.forEach(m=>{
     const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
-    const checks=QUESTIONS[m.key].map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
-    const ms=mm.checks.filter(Boolean).length;
-    const page=document.createElement('div'); page.className='page';
-    page.innerHTML=`
-      <h2>${m.label}</h2>
-      <div><small>t=${(mm.t||0).toFixed(3)}s • frame ${mm.frame||0}</small></div>
-      ${latest? `<div><img src="${latest.dataURL}" alt="${m.label}" /></div>` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:8px">Sin captura</div>`}
-      <div style="margin-top:6px"><strong>Puntaje del momento:</strong> ${ms}</div>
-      <div><strong>Checklist</strong><ul>${checks}</ul></div>
-      ${mm.notes ? `<div><strong>Notas:</strong> ${mm.notes}</div>` : ``}
+    const checks=(QUESTIONS[m.key]||[]).map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
+    const notes = mm.notes ? `<div class="notes"><strong>Notas:</strong> ${mm.notes.replace(/</g,'&lt;')}</div>` : '';
+    const img = latest ? `<img src="${latest.dataURL}" alt="${m.label}" />` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
+    const block=document.createElement('div'); block.className='momentBlock';
+    block.innerHTML=`
+      <h2 style="margin:2mm 0 1mm 0;">${m.label}</h2>
+      ${img}
+      <div style="display:flex; gap:10px; margin-top:3mm">
+        <div style="flex:2">
+          <strong>Checklist</strong>
+          <ul>${checks}</ul>
+        </div>
+        <div style="flex:3">${notes}</div>
+      </div>
     `;
-    container.appendChild(page);
+    blocks.push(block);
   });
-  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
-  const sum=document.createElement('div'); sum.className='page';
-  sum.innerHTML=`<h2>Resumen</h2><div><strong>Puntaje total:</strong> ${total}</div><div><strong>Clasificación:</strong> ${GRADE(total)}</div>`;
-  container.prepend(sum);
+
+  if(blocks.length){
+    const p1=document.createElement('div'); p1.className='page'; p1.appendChild(blocks[0]); container.appendChild(p1);
+  }
+  for(let i=1;i<blocks.length;i+=2){
+    const pg=document.createElement('div'); pg.className='page';
+    pg.appendChild(blocks[i]);
+    if(blocks[i+1]) pg.appendChild(blocks[i+1]);
+    container.appendChild(pg);
+  }
   window.print();
 };
 
-/* Clear session */
-$('#clearState').onclick=()=>{
+/* Init */
+document.getElementById('clearState').onclick=()=>{
   if(confirm('¿Borrar progreso de esta sesión?')){
     state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
-      t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false, guides:{}
+      t:0,frame:0,notes:'',checks:(QUESTIONS[m.key]||[]).map(()=>false), snapshots:[], captured:false, guides:{}
     }]))};
     renderTabs(); setMoment('toeoff'); fpsInput.value=state.fps;
   }
 };
-
-/* Video load */
 file.onchange=()=>{
   const f=file.files[0]; if(!f) return;
   const url=URL.createObjectURL(f); vid.src=url; vid.load();
-  vid.onloadedmetadata=()=>{ sizeCanvasToWrap(); vid.currentTime=0.001; momentDesc.textContent=DESCRIPTIONS[state.curMoment]; updateTimeUI(); };
+  vid.onloadedmetadata=()=>{ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; vid.currentTime=0.001; updateTimeUI(); };
 };
-
-/* Init */
-(function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); refreshScores(); })();
-</script>
+(function init(){
+  const tabsEl=document.getElementById('tabs');
+  function renderTabsLocal(){
+    tabsEl.innerHTML='';
+    MOMENTS.forEach(m=>{
+      const b=document.createElement('button');
+      b.className='tab'+(state.curMoment===m.key?' active':'');
+      if(state.moments[m.key].captured) b.classList.add('captured');
+      b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
+      b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`;
+      tabsEl.appendChild(b);
+    });
+    updateReportAvailability();
+  }
+  window.renderTabs = renderTabsLocal; // expone para otras funciones
+  renderTabsLocal(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability();
+})();</script>
 </body>
 </html>
