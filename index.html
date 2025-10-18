@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.7.2)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.7.5)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -157,7 +157,7 @@
         </div>
 
         <div class="hr"></div>
-        <!-- Capturar (movido aquí) -->
+        <!-- Capturar (panel derecho, arriba del reporte) -->
         <div class="grid">
           <button id="snap" class="small">Capturar imagen</button>
         </div>
@@ -242,7 +242,7 @@ const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
 /* Scrubber refs */
-const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
+const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT'];
 
 /* ======= Tooltip helpers (mejorados) ======= */
 let tipEl=null, tipAnchor=null;
@@ -306,6 +306,7 @@ function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); 
 function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 function setMoment(key){
   state.curMoment=key;
+  // YA NO apagamos guías aquí: se mantiene estado 'on/off' por momento
   renderTabs();
   renderGuidesPanel();
   momentDesc.textContent=DESCRIPTIONS[key];
@@ -462,7 +463,7 @@ function startDrag(ev){
     if(key==='thighs'){
       if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
       else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
-      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+      else if(!d	b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
     } else if(key==='cdg'){
       if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
       else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
@@ -584,6 +585,10 @@ $('#snap').onclick=()=>{
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
   m.captured=true; renderTabs();
+  // Apagar guías del momento actual y limpiar interacción
+  const gobj = m.guides;
+  Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
+  dragging=null; dragKey=null; draw();
   // Avance automático al siguiente momento (sin delay)
   const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
   if(idx < MOMENTS.length - 1){
