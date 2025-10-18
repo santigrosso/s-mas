@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.7.1 • Tooltips fix)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.7.2)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -126,7 +126,6 @@
           <button id="fwd1" class="small">+1 frame</button>
           <button id="back10" class="small">−10</button>
           <button id="fwd10" class="small">+10</button>
-          <button id="snap" class="small">Capturar imagen</button>
           <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
           <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
         </div>
@@ -153,19 +152,17 @@
 
         <div class="hr"></div>
         <div class="grid">
-          <div><span class="label">Puntaje del momento</span><div class="score" id="momentScore">0</div></div>
-          <div><span class="label">Puntaje total</span><div class="score" id="totalScore">0</div></div>
-          <div><span class="label">Clasificación</span><div class="score" id="grade">—</div></div>
-        </div>
-
-        <div class="hr"></div>
-        <div class="grid">
           <label class="label">Notas del momento</label>
           <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px"></textarea>
         </div>
 
         <div class="hr"></div>
+        <!-- Capturar (movido aquí) -->
         <div class="grid">
+          <button id="snap" class="small">Capturar imagen</button>
+        </div>
+
+        <div class="grid" style="margin-top:8px">
           <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
           <span class="label" id="reportHint">Necesitás capturar los 5 momentos (ver tildes en las pestañas).</span>
         </div>
@@ -247,7 +244,7 @@ const invertBtn=$('#invert');
 /* Scrubber refs */
 const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
-/* ======= Tooltip helpers (improved only) ======= */
+/* ======= Tooltip helpers (mejorados) ======= */
 let tipEl=null, tipAnchor=null;
 function toggleTip(anchor, text){
   if(tipEl && tipAnchor===anchor){ closeTip(); return; }
@@ -587,6 +584,13 @@ $('#snap').onclick=()=>{
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
   m.captured=true; renderTabs();
+  // Avance automático al siguiente momento (sin delay)
+  const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
+  if(idx < MOMENTS.length - 1){
+    setMoment(MOMENTS[idx+1].key);
+  }else{
+    alert('Ya podés generar el reporte.');
+  }
 };
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
