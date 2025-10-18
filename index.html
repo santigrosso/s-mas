@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.7 • Tooltips mejorados)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.7.1 • Tooltips fix)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -245,8 +245,59 @@ const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
 /* Scrubber refs */
-const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT']);
+const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
 
+/* ======= Tooltip helpers (improved only) ======= */
+let tipEl=null, tipAnchor=null;
+function toggleTip(anchor, text){
+  if(tipEl && tipAnchor===anchor){ closeTip(); return; }
+  showTip(anchor, text);
+}
+function showTip(anchorEl, text){
+  closeTip();
+  tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
+  document.body.appendChild(tipEl);
+  tipAnchor=anchorEl;
+  positionTip();
+  setTimeout(()=>{
+    document.addEventListener('mousedown', onDocDown, true);
+    document.addEventListener('touchstart', onDocDown, {passive:false, capture:true});
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', closeTip, {passive:true});
+    window.addEventListener('resize', onResize, {passive:true});
+  },0);
+}
+function positionTip(){
+  if(!tipEl || !tipAnchor) return;
+  const r=tipAnchor.getBoundingClientRect();
+  const tt=tipEl.getBoundingClientRect();
+  let left = r.left - tt.width - 8;
+  let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2);
+  if(left < 6){ left = r.right + 8; }
+  const maxTop = window.scrollY + window.innerHeight - tt.height - 6;
+  const minTop = window.scrollY + 6;
+  top = Math.max(minTop, Math.min(maxTop, top));
+  tipEl.style.left = left + 'px';
+  tipEl.style.top  = top + 'px';
+}
+function onDocDown(e){
+  if(!tipEl) return;
+  if(tipEl.contains(e.target) || e.target===tipAnchor){ return; }
+  closeTip();
+}
+function onKey(e){ if(e.key==='Escape') closeTip(); }
+function onResize(){ positionTip(); }
+function closeTip(){
+  if(!tipEl) return;
+  tipEl.remove(); tipEl=null; tipAnchor=null;
+  document.removeEventListener('mousedown', onDocDown, true);
+  document.removeEventListener('touchstart', onDocDown, {capture:true});
+  window.removeEventListener('keydown', onKey);
+  window.removeEventListener('scroll', closeTip);
+  window.removeEventListener('resize', onResize);
+}
+
+/* ======= Helpers ======= */
 function ensureGuideState(momentKey, guideKey){
   const m=state.moments[momentKey];
   if(!m.guides[guideKey]){
@@ -295,56 +346,6 @@ function renderGuidesPanel(){
     row.appendChild(lab); row.appendChild(sw);
     guidesPanel.appendChild(row);
   });
-}
-
-let tipEl=null, tipAnchor=null;
-function toggleTip(anchor, text){
-  if(tipEl && tipAnchor===anchor){ closeTip(); return; }
-  showTip(anchor, text);
-}
-function showTip(anchorEl, text){
-  closeTip();
-  tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
-  document.body.appendChild(tipEl);
-  tipAnchor=anchorEl;
-  positionTip();
-
-  setTimeout(()=>{
-    document.addEventListener('mousedown', onDocDown, true);
-    document.addEventListener('touchstart', onDocDown, {passive:false, capture:true});
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('scroll', closeTip, {passive:true});
-    window.addEventListener('resize', onResize, {passive:true});
-  },0);
-}
-function positionTip(){
-  if(!tipEl || !tipAnchor) return;
-  const r=tipAnchor.getBoundingClientRect();
-  const tt=tipEl.getBoundingClientRect();
-  let left = r.left - tt.width - 8;
-  let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2);
-  if(left < 6){ left = r.right + 8; }
-  const maxTop = window.scrollY + window.innerHeight - tt.height - 6;
-  const minTop = window.scrollY + 6;
-  top = Math.max(minTop, Math.min(maxTop, top));
-  tipEl.style.left = left + 'px';
-  tipEl.style.top  = top + 'px';
-}
-function onDocDown(e){
-  if(!tipEl) return;
-  if(tipEl.contains(e.target) || e.target===tipAnchor){ return; }
-  closeTip();
-}
-function onKey(e){ if(e.key==='Escape') closeTip(); }
-function onResize(){ positionTip(); }
-function closeTip(){
-  if(!tipEl) return;
-  tipEl.remove(); tipEl=null; tipAnchor=null;
-  document.removeEventListener('mousedown', onDocDown, true);
-  document.removeEventListener('touchstart', onDocDown, {capture:true});
-  window.removeEventListener('keydown', onKey);
-  window.removeEventListener('scroll', closeTip);
-  window.removeEventListener('resize', onResize);
 }
 
 function renderQuestions(){
