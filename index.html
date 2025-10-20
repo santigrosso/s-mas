@@ -527,6 +527,50 @@ document.getElementById('back1').onclick=()=>stepFrames(-1);
 document.getElementById('fwd1').onclick=()=>stepFrames(1);
 document.getElementById('back10').onclick=()=>stepFrames(-10);
 document.getElementById('fwd10').onclick=()=>stepFrames(10);
+  const fsBtn = document.getElementById('fs');
+
+function isFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+async function enterFullscreen(el){
+  try{
+    if(el.requestFullscreen){
+      await el.requestFullscreen();
+    } else if(el.webkitRequestFullscreen){
+      el.webkitRequestFullscreen(); // Safari antiguo
+    } else if(vid && vid.webkitEnterFullscreen){
+      // Fallback extremo en iOS muy viejo: fullscreen nativo del <video>
+      vid.webkitEnterFullscreen();
+    }
+  }catch(e){}
+}
+
+async function exitFullscreen(){
+  try{
+    if(document.exitFullscreen){
+      await document.exitFullscreen();
+    } else if(document.webkitExitFullscreen){
+      document.webkitExitFullscreen();
+    }
+  }catch(e){}
+}
+
+fsBtn.onclick = async () => {
+  if(!isFullscreen()){
+    await enterFullscreen(wrap); // wrap = #videoWrap (ya existe en tu código)
+  } else {
+    await exitFullscreen();
+  }
+};
+
+// Actualiza la etiqueta del botón al entrar/salir
+function refreshFsLabel(){
+  fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom';
+}
+document.addEventListener('fullscreenchange', refreshFsLabel);
+document.addEventListener('webkitfullscreenchange', refreshFsLabel);
+refreshFsLabel();
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
 document.getElementById('snap').onclick=()=>{
   const dataURL=cvs.toDataURL('image/png');
