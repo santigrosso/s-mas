@@ -106,10 +106,13 @@
     <div class="row">
       <div class="card" style="flex:2 1 520px">
         <div class="controls" style="justify-content:space-between;margin-bottom:8px">
-          <div class="controls">
-            <input id="file" type="file" accept="video/*" />
-            <button class="ghost small" id="clearState">Limpiar</button>
-          </div>
+         <div class="controls">
+  <input id="file" type="file" accept="video/*" />
+  <label class="label" for="athleteName" style="margin-left:8px">Nombre:</label>
+  <input id="athleteName" type="text" placeholder="Nombre y apellido" 
+         style="width:200px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
+  <button class="ghost small" id="clearState">Limpiar</button>
+</div>
           <div class="controls">
             <span class="label">fps objetivo</span>
             <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
