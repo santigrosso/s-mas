@@ -117,23 +117,26 @@
           <div class="momentDesc" id="momentDesc"></div>
         </div>
 
-        <div id="videoWrap">
-          <video id="vid" playsinline muted controls preload="metadata"></video>
-          <canvas id="overlay"></canvas>
-          <canvas id="magnifier" width="1" height="1"></canvas>
-        </div>
+        <!-- NUEVO contenedor general del video + barra -->
+<div id="viewArea">
+  <div id="videoWrap">
+    <video id="vid" playsinline muted controls preload="metadata"></video>
+    <canvas id="overlay"></canvas>
+    <canvas id="magnifier" width="1" height="1"></canvas>
+  </div>
 
-        <div class="scrubWrap">
-          <div class="scrubRow">
-            <div class="time" id="curT">0:00</div>
-            <div class="scrubber" id="scrubber">
-              <div class="buffer" id="bufBar"></div>
-              <div class="played" id="playBar"></div>
-              <div class="thumb" id="thumb" style="left:0%"></div>
-            </div>
-            <div class="time" id="durT">0:00</div>
-          </div>
-        </div>
+  <div class="scrubWrap">
+    <div class="scrubRow">
+      <div class="time" id="curT">0:00</div>
+      <div class="scrubber" id="scrubber">
+        <div class="buffer" id="bufBar"></div>
+        <div class="played" id="playBar"></div>
+        <div class="thumb" id="thumb" style="left:0%"></div>
+      </div>
+      <div class="time" id="durT">0:00</div>
+    </div>
+  </div>
+</div>
 
         <div class="controls" style="margin-top:8px;flex-wrap:wrap">
           <button id="play" class="small">▶︎ Play/Pause</button>
@@ -671,6 +674,42 @@ document.getElementById('printReport').onclick=()=>{
 
   window.print();
 };
+/* ===== Pantalla completa (Zoom) ===== */
+const fsBtn = document.getElementById('fs');
+const viewArea = document.getElementById('viewArea');
+
+function isFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+async function enterFullscreen(el){
+  try{
+    if(el.requestFullscreen){ await el.requestFullscreen(); }
+    else if(el.webkitRequestFullscreen){ el.webkitRequestFullscreen(); }
+  }catch(e){}
+}
+
+async function exitFullscreen(){
+  try{
+    if(document.exitFullscreen){ await document.exitFullscreen(); }
+    else if(document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
+  }catch(e){}
+}
+
+fsBtn.onclick = async () => {
+  if(!isFullscreen()){
+    await enterFullscreen(viewArea); // entra en fullscreen el contenedor completo (video + barra)
+  } else {
+    await exitFullscreen();
+  }
+};
+
+function refreshFsLabel(){
+  fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom';
+}
+document.addEventListener('fullscreenchange', refreshFsLabel);
+document.addEventListener('webkitfullscreenchange', refreshFsLabel);
+refreshFsLabel();
 
 /* ===== Init ===== */
 function updateReportAvailability(){ const ok=Object.values(state.moments).every(mm=>mm.captured); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
