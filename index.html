@@ -1,205 +1,3 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.9.3)</title>
-<style>
-  :root{
-    --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
-    --tab-active:#0f2a44; --tab-inactive:#c9d1dc; --tab-inactive-text:#0f1720;
-    --scrub-bg:#1a324c; --scrub-buffer:#2b5178; --scrub-played:#ff7a00; --scrub-thumb:#ffffff;
-  }
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
-  header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
-  header .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  main{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .card{background:var(--panel);border:1px solid #163551;border-radius:12px;padding:10px}
-  #videoWrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
-  video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
-  canvas{position:absolute;left:0;top:0}
-  #magnifier{position:absolute; left:0; top:0; pointer-events:none; display:none;}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  button{background:var(--acc);color:#000;border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
-  button.ghost{background:transparent;color:var(--fg);border:1px solid #335b87}
-  button.small{padding:6px 8px;border-radius:8px;font-weight:600}
-  .label{font-size:12px;color:var(--mut)}
-  .hr{height:1px;background:#173a5d;margin:10px 0}
-  .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
-  .tabsWrap{width:100%;}
-  .tabs{display:flex;gap:0;width:100%;}
-  .tab{
-    flex:1 1 0; text-align:center; padding:7px 4px;
-    background:var(--tab-inactive); color:var(--tab-inactive-text);
-    border:1px solid #b8c4d2; border-right:none; border-bottom:1px solid #b8c4d2;
-    cursor:pointer; font-size:12.5px; user-select:none; line-height:1;
-    border-top-left-radius:10px; border-top-right-radius:10px;
-    border-bottom-left-radius:0; border-bottom-right-radius:0;
-    display:flex; align-items:center; justify-content:center; gap:6px;
-  }
-  .tab:last-child{border-right:1px solid #b8c4d2}
-  .tab.active{ background:var(--tab-active); color:#fff; border-color:var(--tab-active); border-bottom-color:transparent; }
-  .tab .tick{display:none; font-weight:900}
-  .tab.captured .tick{display:inline}
-  .momentDesc{
-    width:100%; background:var(--tab-active); border:1px solid var(--tab-active); border-top:none;
-    margin-top:-1px; padding:6px 10px; color:#d8e4f1;
-    border-bottom-left-radius:10px;border-bottom-right-radius:10px;
-    font-size:13px; min-height:34px; display:flex; align-items:center; box-sizing:border-box;
-  }
-  .q{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#0f2a44;border-radius:10px;border:1px solid var(--bdr); margin-bottom:8px}
-  .q label{flex:1}
-  .switch{position:relative;width:36px;height:22px;flex:0 0 36px}
-  .switch input{opacity:0;width:0;height:0}
-  .slider{ position:absolute;cursor:pointer;inset:0;background:#6b7280;border-radius:999px;transition:background .2s ease, box-shadow .2s ease; box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); }
-  .slider:before{ content:""; position:absolute; height:18px; width:18px; left:2px; top:2px; background:white; border-radius:50%; transition:transform .2s ease; box-shadow:0 1px 2px rgba(0,0,0,.35); }
-  .switch input:checked + .slider{ background:var(--ok); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
-  .switch input:checked + .slider:before{ transform: translateX(14px); }
-  button[disabled]{opacity:.5; cursor:not-allowed}
-  .help{font-weight:900; border:1px solid var(--bdr); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; color:#d0def0; margin-left:6px; cursor:pointer; touch-action:manipulation}
-  .helpTip{position:absolute; background:#0b2236; border:1px solid #2a4a6f; padding:8px 10px; border-radius:8px; color:#d8e4f1; font-size:12px; max-width:260px; z-index:1000; box-shadow:0 6px 20px rgba(0,0,0,.35)}
-  .scrubWrap{margin:8px 0 6px}
-  .scrubRow{display:flex;align-items:center;gap:10px}
-  .time{font-variant-numeric:tabular-nums; font-size:12px; color:var(--mut); min-width:60px; text-align:center}
-  .scrubber{ position:relative; height:10px; flex:1 1 auto; border-radius:999px; background:var(--scrub-bg); cursor:pointer; touch-action:none; }
-  .scrubber .buffer{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-buffer);width:0%}
-  .scrubber .played{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--scrub-played);width:0%}
-  .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,.5); }
-  footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
-  #report{ display:none; }
-  @media print {
-    @page { size: A4; margin: 12mm 10mm 14mm 10mm; }
-    body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    header, #app, footer { display: none !important; }
-    #report { display: block; background:#fff; color:#000; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    #report .page { page-break-after: always; }
-    #report h1, #report h2, #report h3 { color:#0b1b2b; }
-    #report .legend { font-size:12px; color:#333; }
-    #report .momentBlock { break-inside: avoid; page-break-inside: avoid; margin: 5mm 0; padding-bottom: 1.5mm; border-bottom: 1px solid #eee; }
-    #report .momentBlock:last-child { border-bottom:none; }
-    #report img { width:60%; height:auto; border:1px solid #e5e7eb; border-radius:6px; background:#fff; }
-    #report .row { display:flex; gap:8px; align-items:flex-start; }
-    #report .col { flex:1; }
-    #report .meta { font-size:11px; color:#444; }
-    #report ul { margin:2px 0 0 16px; font-size:11px; }
-    #report .notes { margin-top:2mm; font-size:11px; color:#222; white-space:pre-wrap; }
-    #report .needBox { border:1px solid #a6c8ff; background:#e9f2ff; padding:6px 8px; border-radius:6px; font-size:12px; color:#0b1b2b; }
-    #printFooter { position: fixed; bottom: 0; left: 0; right: 0; text-align:center; font-size:10px; color:#4b5563; border-top:1px solid #e5e7eb; padding-top:6px; }
-  }
-</style>
-</head>
-<body>
-<header>
-  <h1>S-MAS • Sprint Mechanics Assessment</h1>
-  <span class="pill">Local • Offline</span>
-  <span class="pill">HEVC / 240 fps</span>
-</header>
-
-<div id="app">
-  <main>
-    <div class="row">
-      <div class="card" style="flex:2 1 520px">
-        <div class="controls" style="justify-content:space-between;margin-bottom:8px">
-          <div class="controls">
-            <input id="file" type="file" accept="video/*" />
-            <button class="ghost small" id="clearState">Limpiar</button>
-          </div>
-          <div class="controls">
-            <span class="label">fps objetivo</span>
-            <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
-          </div>
-        </div>
-
-        <div class="tabsWrap">
-          <div class="tabs" id="tabs"></div>
-          <div class="momentDesc" id="momentDesc"></div>
-        </div>
-
-        <!-- NUEVO contenedor general del video + barra -->
-<div id="viewArea">
-  <div id="videoWrap">
-    <video id="vid" playsinline muted controls preload="metadata"></video>
-    <canvas id="overlay"></canvas>
-    <canvas id="magnifier" width="1" height="1"></canvas>
-  </div>
-
-  <div class="scrubWrap">
-    <div class="scrubRow">
-      <div class="time" id="curT">0:00</div>
-      <div class="scrubber" id="scrubber">
-        <div class="buffer" id="bufBar"></div>
-        <div class="played" id="playBar"></div>
-        <div class="thumb" id="thumb" style="left:0%"></div>
-      </div>
-      <div class="time" id="durT">0:00</div>
-    </div>
-  </div>
-</div>
-
-        <div class="controls" style="margin-top:8px;flex-wrap:wrap">
-          <button id="play" class="small">▶︎ Play/Pause</button>
-          <button id="back1" class="small">−1 frame</button>
-          <button id="fwd1" class="small">+1 frame</button>
-          <button id="back10" class="small">−10</button>
-          <button id="fwd10" class="small">+10</button>
-          <button id="fs" class="small" title="Ver en pantalla completa">Zoom</button>
-          <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
-          <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
-        </div>
-
-        <div class="hr"></div>
-      </div>
-
-      <div class="card" style="flex:1 1 360px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <strong>Guías</strong>
-          <button id="invert" class="ghost small" title="Espejar guías izquierda/derecha">Invertir (izq/der)</button>
-        </div>
-        <div id="guidesPanel"></div>
-
-        <div class="hr"></div>
-
-        <div class="score" id="scoreCard" style="margin-bottom:6px">
-          <span class="pill">Momento: <b id="momentScore">0</b></span>
-          <span class="pill">Total: <b id="totalScore">0</b></span>
-          <span class="pill">Clasificación: <b id="grade">Excelente (0–1)</b></span>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <strong>Preguntas (on/off)</strong>
-          <span class="label">toca para alternar</span>
-        </div>
-        <div id="questions"></div>
-
-        <div class="hr"></div>
-        <div class="grid">
-          <label class="label">Notas del momento</label>
-          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px"></textarea>
-        </div>
-
-        <div class="hr"></div>
-        <div class="grid">
-          <button id="snap" class="small">Capturar imagen</button>
-        </div>
-
-        <div class="grid" style="margin-top:8px">
-          <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
-          <span class="label" id="reportHint">Necesitás capturar los 5 momentos (ver tildes en las pestañas).</span>
-        </div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<div id="report">
-  <div id="reportContent"></div>
-  <div id="printFooter">Desarrollado por Santiago Grosso – S-MAS Project · 2025</div>
-</div>
-
-<footer>Desarrollado por Santiago Grosso – S-MAS Project · 2025</footer>
-
 <script>
 /* ===== Descripciones ===== */
 const DESCRIPTIONS={
@@ -530,50 +328,6 @@ document.getElementById('back1').onclick=()=>stepFrames(-1);
 document.getElementById('fwd1').onclick=()=>stepFrames(1);
 document.getElementById('back10').onclick=()=>stepFrames(-10);
 document.getElementById('fwd10').onclick=()=>stepFrames(10);
-  const fsBtn = document.getElementById('fs');
-
-function isFullscreen(){
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
-}
-
-async function enterFullscreen(el){
-  try{
-    if(el.requestFullscreen){
-      await el.requestFullscreen();
-    } else if(el.webkitRequestFullscreen){
-      el.webkitRequestFullscreen(); // Safari antiguo
-    } else if(vid && vid.webkitEnterFullscreen){
-      // Fallback extremo en iOS muy viejo: fullscreen nativo del <video>
-      vid.webkitEnterFullscreen();
-    }
-  }catch(e){}
-}
-
-async function exitFullscreen(){
-  try{
-    if(document.exitFullscreen){
-      await document.exitFullscreen();
-    } else if(document.webkitExitFullscreen){
-      document.webkitExitFullscreen();
-    }
-  }catch(e){}
-}
-
-fsBtn.onclick = async () => {
-  if(!isFullscreen()){
-    await enterFullscreen(wrap); // wrap = #videoWrap (ya existe en tu código)
-  } else {
-    await exitFullscreen();
-  }
-};
-
-// Actualiza la etiqueta del botón al entrar/salir
-function refreshFsLabel(){
-  fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom';
-}
-document.addEventListener('fullscreenchange', refreshFsLabel);
-document.addEventListener('webkitfullscreenchange', refreshFsLabel);
-refreshFsLabel();
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
 document.getElementById('snap').onclick=()=>{
   const dataURL=cvs.toDataURL('image/png');
@@ -674,45 +428,38 @@ document.getElementById('printReport').onclick=()=>{
 
   window.print();
 };
-/* ===== Pantalla completa (Zoom) ===== */
+
+/* ===== Pantalla completa (Zoom) — único bloque ===== */
 const fsBtn = document.getElementById('fs');
 const viewArea = document.getElementById('viewArea');
 
 function isFullscreen(){
   return !!(document.fullscreenElement || document.webkitFullscreenElement);
 }
-
 async function enterFullscreen(el){
   try{
-    if(el.requestFullscreen){ await el.requestFullscreen(); }
-    else if(el.webkitRequestFullscreen){ el.webkitRequestFullscreen(); }
+    if(el && el.requestFullscreen){ await el.requestFullscreen(); }
+    else if(el && el.webkitRequestFullscreen){ el.webkitRequestFullscreen(); }
   }catch(e){}
 }
-
 async function exitFullscreen(){
   try{
     if(document.exitFullscreen){ await document.exitFullscreen(); }
     else if(document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
   }catch(e){}
 }
-
-fsBtn.onclick = async () => {
-  if(!isFullscreen()){
-    await enterFullscreen(viewArea); // entra en fullscreen el contenedor completo (video + barra)
-  } else {
-    await exitFullscreen();
-  }
-};
-
-function refreshFsLabel(){
-  fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom';
+if (fsBtn){
+  fsBtn.onclick = async () => {
+    if(!isFullscreen()){ await enterFullscreen(viewArea || wrap); }
+    else { await exitFullscreen(); }
+  };
+  function refreshFsLabel(){ fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom'; }
+  document.addEventListener('fullscreenchange', refreshFsLabel);
+  document.addEventListener('webkitfullscreenchange', refreshFsLabel);
+  refreshFsLabel();
 }
-document.addEventListener('fullscreenchange', refreshFsLabel);
-document.addEventListener('webkitfullscreenchange', refreshFsLabel);
-refreshFsLabel();
 
 /* ===== Init ===== */
-function updateReportAvailability(){ const ok=Object.values(state.moments).every(mm=>mm.captured); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 document.getElementById('clearState').onclick=()=>{
   if(confirm('¿Borrar progreso de esta sesión?')){
     state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
@@ -728,5 +475,3 @@ file.onchange=()=>{
 };
 (function init(){ renderTabs(); setMoment(state.curMoment); fpsInput.value=state.fps; updateReportAvailability(); })();
 </script>
-</body>
-</html>
