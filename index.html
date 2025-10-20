@@ -502,21 +502,32 @@ function drawGuides(){
 if (key === 'thighs') {
   const { v, a, b } = d;
 
-  // 1) Dibuja los puntos existentes
+  // Puntos existentes
   if (v) dot(v.x, v.y);
   if (a) dot(a.x, a.y);
   if (b) dot(b.x, b.y);
 
-  // 2) Referencia vertical + 15° si falta a o b
-  if (v && (!a || !b)) {
-    drawVerticalPlusAngleFromVertical(v.x, v.y, 15, state.invert);
+  // === Referencia SIEMPRE visible: vertical + línea a 15° SOLO hacia arriba ===
+  if (v) {
+    // 1) Vertical completa por el vértice
+    line(v.x, 0, v.x, cvs.height, [], 'rgba(255,255,255,.85)', 2);
+
+    // 2) Línea a 15° respecto de la vertical, solo hacia ARRIBA desde el punto
+    //    (hacia la derecha si !invert, hacia la izquierda si invert)
+    const deg = 15;
+    const phi = (state.invert ? -deg : deg) * Math.PI / 180; // ángulo desde la vertical
+    const L = Math.max(cvs.width, cvs.height);               // largo suficiente para salir de pantalla hacia arriba
+    const x2 = v.x + Math.sin(phi) * L;
+    const y2 = v.y - Math.cos(phi) * L; // hacia arriba
+
+    line(v.x, v.y, x2, y2, [6,4], 'rgba(255,255,255,.85)', 2);
   }
 
-  // 3) Lados del ángulo
+  // Lados del ángulo
   if (v && a) { line(v.x, v.y, a.x, a.y, [], '#fff', 2); }
   if (v && b) { line(v.x, v.y, b.x, b.y, [], '#fff', 2); }
 
-  // 4) Cálculo y rotulación del ángulo
+  // Cálculo y rótulo del ángulo
   if (v && a && b) {
     const ang = angleBetween(a, v, b);
     ctx.save();
@@ -536,6 +547,7 @@ if (key === 'thighs') {
     }
   }
 }
+
 
 if(key==='cdg'){
   const {a,b}=d; if(a) dot(a.x,a.y); if(b) dot(b.x,b.y);
