@@ -574,30 +574,112 @@ document.getElementById('printReport').onclick=()=>{
   const needs=computeNeeds();
 
   const page1=document.createElement('div'); page1.className='page';
-  const coverHTML=`
-    <div style="display:flex;align-items:center;gap:10px">
-      <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
-        <circle cx="32" cy="32" r="30" fill="url(#g)"/>
-        <path d="M16 38 L28 26 L36 34 L48 22" stroke="#ff7a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div>
-        <h1 style="margin:0;font-size:20px">S-MAS • Sprint Mechanics Assessment</h1>
-        <div style="font-size:12px;color:#444"><strong>Desarrollado por Santiago Grosso – S-MAS Project</strong></div>
-        <div style="font-size:11px;color:#666"><em>Reporte automatizado desarrollado por Santiago Grosso</em></div>
+// --- NUEVA portada con "calificación" en círculos tipo la imagen ---
+const activeBucket = (()=>{
+  if(total <= 1) return 'ex';        // 0–1  → Excellent
+  if(total === 2) return 'good';     // 2    → Good
+  if(total >= 3 && total <= 5) return 'avg';   // 3–5 → Average
+  if(total === 6) return 'poor';     // 6    → Poor
+  if(total >= 7 && total <= 11) return 'vpoor';// 7–11→ Very Poor
+  return 'xpoor';                    // 12   → Extremely Poor
+})();
+
+// Definición visual de cada círculo (colores aproximados a la imagen)
+const buckets = [
+  {key:'ex',    range:'0–1', label:'Excellent',       color:'#E0F255'}, // lima
+  {key:'good',  range:'2',   label:'Good',            color:'#F0F77A'}, // amarillo claro
+  {key:'avg',   range:'3–5', label:'Average',         color:'#F3F8A8'}, // vainilla
+  {key:'poor',  range:'6',   label:'Poor',            color:'#F3B7A8'}, // durazno
+  {key:'vpoor', range:'7–11',label:'Very Poor',       color:'#DE6B58'}, // coral
+  {key:'xpoor', range:'12',  label:'Extremely Poor',  color:'#D64A3E'}  // rojo
+];
+
+// Paleta "apagado"
+const OFF_BG   = '#f6f7fb';
+const OFF_BDR  = '#e5e7eb';
+const OFF_TXT  = '#9aa3ad';
+
+// Utilidad: arma el HTML de cada círculo según esté activo o no
+function circleHTML(item){
+  const on = item.key === activeBucket;
+  const bg   = on ? item.color : OFF_BG;
+  const bdr  = on ? 'transparent' : OFF_BDR;
+  const txt  = on ? (['vpoor','xpoor'].includes(item.key) ? '#ffffff' : '#0b1b2b') : OFF_TXT;
+  const weight = on ? 800 : 700;
+  const shadow = on ? '0 8px 18px rgba(0,0,0,0.08) inset' : '0 0 0 rgba(0,0,0,0)';
+  const opacity= on ? 1 : 0.85;
+
+  return `
+    <div class="gc-item" style="
+      display:flex;flex-direction:column;align-items:center;gap:6px;
+      width:96px">
+      <div class="gc-dot" style="
+        width:72px;height:72px;border-radius:50%;
+        background:${bg};border:1px solid ${bdr};
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:${shadow};opacity:${opacity};
+        font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+        font-weight:${weight};color:${txt};font-size:20px;letter-spacing:.2px;">
+        ${item.range}
       </div>
-    </div>
-    <div style="margin-top:10px;font-size:15px"><strong>Puntaje total:</strong> ${total}</div>
-    <div style="font-size:15px"><strong>Clasificación:</strong> ${grade}</div>
-    <div class="needBox" style="margin-top:8px">
-      <div><strong>Área de mayor necesidad:</strong> ${needs.winners.length? needs.winners.join(' · ') : '—'}</div>
-      <div style="margin-top:4px; font-size:11px">
-        <strong>Criterios:</strong>
-        Control lumbopélvico → 2,4,7 · Back-side mechanics → 1,3,5,8 · Overstriding → 6,9,10,11,12
+      <div class="gc-cap" style="font-size:11px;color:#374151;">
+        ${item.label}
       </div>
+    </div>`;
+}
+
+// CSS puntual de la grilla (embebido para no tocar <style>)
+const gradeCSS = `
+  <style>
+    #report .grade-circles{
+      display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;
+      margin:10px 0 4px 0;
+    }
+    #report .kpis{
+      display:flex;gap:12px;align-items:center;margin-top:6px;
+      color:#0b1b2b;font-size:14px;
+    }
+    #report .kpis .pill{
+      background:#f3f4f6;border:1px solid #e5e7eb;color:#111827;
+      padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;
+    }
+  </style>
+`;
+
+// Bloque HTML de la portada
+const coverHTML = `
+  ${gradeCSS}
+  <div style="display:flex;align-items:center;gap:10px">
+    <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
+      <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+      <path d="M16 38 L28 26 L36 34 L48 22" stroke="#ff7a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <h1 style="margin:0;font-size:20px">S-MAS • Sprint Mechanics Assessment</h1>
+      <div style="font-size:12px;color:#444"><strong>Desarrollado por Santiago Grosso – S-MAS Project</strong></div>
+      <div style="font-size:11px;color:#666"><em>Reporte automatizado desarrollado por Santiago Grosso</em></div>
     </div>
-  `;
-  const coverDiv=document.createElement('div'); coverDiv.innerHTML=coverHTML; page1.appendChild(coverDiv);
+  </div>
+
+  <div class="grade-circles">
+    ${buckets.map(circleHTML).join('')}
+  </div>
+
+  <div class="kpis">
+    <span class="pill">Puntaje total: <strong>${total}</strong></span>
+    <span class="pill">Clasificación: <strong>${grade}</strong></span>
+  </div>
+
+  <div class="needBox" style="margin-top:10px">
+    <div><strong>Área de mayor necesidad:</strong> ${needs.winners.length? needs.winners.join(' · ') : '—'}</div>
+    <div style="margin-top:4px; font-size:11px">
+      <strong>Criterios:</strong>
+      Control lumbopélvico → 2,4,7 · Back-side mechanics → 1,3,5,8 · Overstriding → 6,9,10,11,12
+    </div>
+  </div>
+`;
+
 
   const blocks=[];
   MOMENTS.forEach(m=>{
