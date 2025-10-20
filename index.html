@@ -493,7 +493,23 @@ function drawGuides(){
   const list = activeGuides();
   for(const [key,g] of list){
     const d=g.data;
-    if(key==='g45' && d.anchor){ drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 45, state.invert); }
+    if (key === 'g45' && d.anchor) {
+  const x = d.anchor.x, y = d.anchor.y;
+
+  // Vertical completa
+  line(x, 0, x, cvs.height, [], 'rgba(255,255,255,.85)', 2);
+
+  // Diagonal a 45° SOLO hacia abajo desde el punto (respeta Invertir)
+  const deg = 45;
+  const phi = (state.invert ? -deg : deg) * Math.PI / 180; // respecto de la vertical
+  const L = Math.max(cvs.width, cvs.height) * 1.5;
+  const x2 = x + Math.sin(phi) * L;
+  const y2 = y + Math.cos(phi) * L; // hacia abajo
+
+  line(x, y, x2, y2, [6, 4], 'rgba(255,255,255,.85)', 2);
+  dot(x, y);
+}
+
     if(key==='heel' && d.p){ line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2); dot(d.p.x,d.p.y); }
     if(key==='vh' && d.anchor){ drawVHAt(d.anchor.x, d.anchor.y); }
    if(key==='t15' && d.anchor){ drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 15, state.invert); }
@@ -548,25 +564,54 @@ if (key === 'thighs') {
 }
 
 
-if(key==='cdg'){
-  const {a,b}=d; if(a) dot(a.x,a.y); if(b) dot(b.x,b.y);
-  if(a && b){
-    const y = a.y, x1 = a.x, x2 = b.x;
-    line(x1, y, x2, y, [6,4], 'rgba(255,255,255,.85)',2);
+if (key === 'cdg') {
+  const { a, b } = d;
+  if (a) dot(a.x, a.y);
+  if (b) dot(b.x, b.y);
+
+  // Intentar usar la vertical de "Guía muslos/tronco" (thighs)
+  const thighs = cm().guides['thighs'];
+  const v = thighs && thighs.data && thighs.data.v ? thighs.data.v : null;
+
+  if (a && v) {
+    // Horizontal desde el punto a la vertical x = v.x
+    const y = a.y, x1 = a.x, x2 = v.x;
+    line(Math.min(x1, x2), y, Math.max(x1, x2), y, [6, 4], 'rgba(255,255,255,.85)', 2);
     const dx = Math.abs(Math.round(x2 - x1));
-    ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
-    ctx.fillText(`Δx: ${dx}px`, Math.min(x1,x2)+5, y-8); ctx.restore();
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.font = 'bold 13px system-ui';
+    ctx.fillText(`Δx: ${dx}px`, Math.min(x1, x2) + 5, y - 8);
+    ctx.restore();
+
+  } else if (a && b) {
+    // Fallback: medición manual entre dos puntos como antes
+    const y = a.y, x1 = a.x, x2 = b.x;
+    line(Math.min(x1, x2), y, Math.max(x1, x2), y, [6, 4], 'rgba(255,255,255,.85)', 2);
+    const dx = Math.abs(Math.round(x2 - x1));
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.font = 'bold 13px system-ui';
+    ctx.fillText(`Δx: ${dx}px`, Math.min(x1, x2) + 5, y - 8);
+    ctx.restore();
   }
 }
 
-    if(key==='knee' && d.anchor){
-      const h = cvs.height*0.12; const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
-      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1); dot(x,y2);
-    }
-    if(key==='tibia' && d.anchor){
-      const h = cvs.height*0.12; const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
-      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1); dot(x,y2);
-    }
+
+   if (key === 'knee' && d.anchor) {
+  // Vertical completa en x del punto + punto visible
+  const x = d.anchor.x, y = d.anchor.y;
+  line(x, 0, x, cvs.height, [], 'rgba(255,255,255,.95)', 3);
+  dot(x, y);
+}
+
+   if (key === 'tibia' && d.anchor) {
+  // Vertical completa en x del punto + punto visible
+  const x = d.anchor.x, y = d.anchor.y;
+  line(x, 0, x, cvs.height, [], 'rgba(255,255,255,.95)', 3);
+  dot(x, y);
+}
+
   }
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
 }
