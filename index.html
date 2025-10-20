@@ -320,12 +320,11 @@ function renderGuidesPanel(){
     toeoff:[ {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'} ],
     mvp:[ {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'} ],
     lateswing:[ {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'} ],
-    touchdown:[
-      {key:'t15', label:'Guía 15° tronco', use:'Ubica el punto en el trocánter y comprueba si el tronco excede los 15° de flexión respecto de la vertical.'},
-      {key:'thighs', label:'Ángulo muslos', use:'Tocá primero el vértice del ángulo y luego los otros dos puntos. Comprobá que no sea superior a 20°.'},
-      {key:'cdg', label:'Guía distancia CdG', use:'Ubica el punto en el talón y compara la medida del pie con la distancia a la vertical.'},
-      {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
-    ],
+   touchdown:[
+  {key:'thighs', label:'Guía muslos/tronco', use:'Ubica el punto en el trocánter y luego en la proyección de ambos muslos. Comprueba que el tronco no exceda los 15° de flexión y que el ángulo entre muslos no sea superior a 20°.'},
+  {key:'cdg', label:'Guía distancia CdG', use:'Ubica el punto en el talón y compara la medida del pie con la distancia a la vertical.'},
+  {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
+ ],
     midstance:[ {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'} ]
   }[state.curMoment]||[];
   GUIDE_DEFS.forEach(def=>{
