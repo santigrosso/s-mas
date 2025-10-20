@@ -573,70 +573,69 @@ document.getElementById('printReport').onclick=()=>{
   const grade=GRADE(total);
   const needs=computeNeeds();
 
-  const page1=document.createElement('div'); page1.className='page';
-// --- NUEVA portada con "calificación" en círculos tipo la imagen ---
+// === REEMPLAZAR DESDE AQUÍ ===
+const page1 = document.createElement('div');
+page1.className = 'page';
+
+// Bucket activo según "total"
 const activeBucket = (()=>{
-  if(total <= 1) return 'ex';        // 0–1  → Excellent
-  if(total === 2) return 'good';     // 2    → Good
-  if(total >= 3 && total <= 5) return 'avg';   // 3–5 → Average
-  if(total === 6) return 'poor';     // 6    → Poor
-  if(total >= 7 && total <= 11) return 'vpoor';// 7–11→ Very Poor
-  return 'xpoor';                    // 12   → Extremely Poor
+  if(total <= 1) return 'ex';           // 0–1
+  if(total === 2) return 'good';        // 2
+  if(total >= 3 && total <= 5) return 'avg';   // 3–5
+  if(total === 6) return 'poor';        // 6
+  if(total >= 7 && total <= 11) return 'vpoor';// 7–11
+  return 'xpoor';                       // 12
 })();
 
-// Definición visual de cada círculo (colores aproximados a la imagen)
+// Configuración de los 6 círculos (paleta como la imagen)
 const buckets = [
-  {key:'ex',    range:'0–1', label:'Excellent',       color:'#E0F255'}, // lima
-  {key:'good',  range:'2',   label:'Good',            color:'#F0F77A'}, // amarillo claro
-  {key:'avg',   range:'3–5', label:'Average',         color:'#F3F8A8'}, // vainilla
-  {key:'poor',  range:'6',   label:'Poor',            color:'#F3B7A8'}, // durazno
-  {key:'vpoor', range:'7–11',label:'Very Poor',       color:'#DE6B58'}, // coral
-  {key:'xpoor', range:'12',  label:'Extremely Poor',  color:'#D64A3E'}  // rojo
+  {key:'ex',    range:'0–1',  label:'Excellent',      color:'#E0F255'},
+  {key:'good',  range:'2',    label:'Good',           color:'#F0F77A'},
+  {key:'avg',   range:'3–5',  label:'Average',        color:'#F3F8A8'},
+  {key:'poor',  range:'6',    label:'Poor',           color:'#F3B7A8'},
+  {key:'vpoor', range:'7–11', label:'Very Poor',      color:'#DE6B58'},
+  {key:'xpoor', range:'12',   label:'Extremely Poor', color:'#D64A3E'}
 ];
 
-// Paleta "apagado"
-const OFF_BG   = '#f6f7fb';
-const OFF_BDR  = '#e5e7eb';
-const OFF_TXT  = '#9aa3ad';
+// Estilos “apagado”
+const OFF_BG  = '#f6f7fb';
+const OFF_BDR = '#e5e7eb';
+const OFF_TXT = '#9aa3ad';
 
-// Utilidad: arma el HTML de cada círculo según esté activo o no
+// Render de un círculo
 function circleHTML(item){
   const on = item.key === activeBucket;
   const bg   = on ? item.color : OFF_BG;
   const bdr  = on ? 'transparent' : OFF_BDR;
   const txt  = on ? (['vpoor','xpoor'].includes(item.key) ? '#ffffff' : '#0b1b2b') : OFF_TXT;
   const weight = on ? 800 : 700;
-  const shadow = on ? '0 8px 18px rgba(0,0,0,0.08) inset' : '0 0 0 rgba(0,0,0,0)';
+  const shadow = on ? 'inset 0 8px 18px rgba(0,0,0,0.08)' : 'none';
   const opacity= on ? 1 : 0.85;
 
   return `
-    <div class="gc-item" style="
-      display:flex;flex-direction:column;align-items:center;gap:6px;
-      width:96px">
-      <div class="gc-dot" style="
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:96px">
+      <div style="
         width:72px;height:72px;border-radius:50%;
         background:${bg};border:1px solid ${bdr};
         display:flex;align-items:center;justify-content:center;
         box-shadow:${shadow};opacity:${opacity};
-        font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-        font-weight:${weight};color:${txt};font-size:20px;letter-spacing:.2px;">
+        font:${weight} 20px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+        color:${txt};letter-spacing:.2px;">
         ${item.range}
       </div>
-      <div class="gc-cap" style="font-size:11px;color:#374151;">
-        ${item.label}
-      </div>
+      <div style="font-size:11px;color:#374151;">${item.label}</div>
     </div>`;
 }
 
-// CSS puntual de la grilla (embebido para no tocar <style>)
+// CSS embebido solo para la portada
 const gradeCSS = `
   <style>
     #report .grade-circles{
       display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;
-      margin:10px 0 4px 0;
+      margin:12px 0 4px 0;
     }
     #report .kpis{
-      display:flex;gap:12px;align-items:center;margin-top:6px;
+      display:flex;gap:12px;align-items:center;margin-top:8px;
       color:#0b1b2b;font-size:14px;
     }
     #report .kpis .pill{
@@ -646,12 +645,13 @@ const gradeCSS = `
   </style>
 `;
 
-// Bloque HTML de la portada
+// Portada (logo + círculos + KPIs + necesidad)
 const coverHTML = `
   ${gradeCSS}
   <div style="display:flex;align-items:center;gap:10px">
     <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
       <circle cx="32" cy="32" r="30" fill="url(#g)"/>
       <path d="M16 38 L28 26 L36 34 L48 22" stroke="#ff7a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
@@ -680,29 +680,16 @@ const coverHTML = `
   </div>
 `;
 
+const coverDiv = document.createElement('div');
+coverDiv.innerHTML = coverHTML;
+page1.appendChild(coverDiv);
 
-  const blocks=[];
-  MOMENTS.forEach(m=>{
-    const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
-    const checks=(QUESTIONS[m.key]||[]).map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
-    const notes = mm.notes ? `<div class="notes"><strong>Notas:</strong> ${mm.notes.replace(/</g,'&lt;')}</div>` : '';
-    const img = latest ? `<img src="${latest.dataURL}" alt="${m.label}" />` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
-    const block=document.createElement('div'); block.className='momentBlock';
-    block.innerHTML=`
-      <h2 style="margin:3mm 0 1mm 0;">${m.label}</h2>
-      <div class="row">
-        ${img}
-        <div class="col">
-          <strong>Checklist</strong>
-          <ul>${checks}</ul>
-          ${notes}
-        </div>
-      </div>
-    `;
-    blocks.push(block);
-  });
-  if(blocks.length){ page1.appendChild(blocks[0]); }
-  container.appendChild(page1);
+// Conserva tu lógica de añadir el primer bloque de momento:
+if(blocks.length){ page1.appendChild(blocks[0]); }
+
+container.appendChild(page1);
+// === HASTA AQUÍ ===
+
 
   const page2=document.createElement('div'); page2.className='page';
   if(blocks[1]) page2.appendChild(blocks[1]);
