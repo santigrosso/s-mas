@@ -488,7 +488,38 @@ if (dragKey !== 'cdg') {
 
   draw(); ev.preventDefault();
 }
-function endDrag(){ placingActive=false; dragging=null; dragKey=null; hideMag(); draw(); }
+function endDrag(){
+  if(!placingActive) return;
+
+  // Guardamos el contexto del arrastre actual ANTES de limpiar
+  const prevDragKey = dragKey;
+  const prevDragging = dragging;
+  const g = prevDragKey ? cm().guides[prevDragKey] : null;
+
+  // Caso especial: CdG
+  // - Si acabo de soltar el primer punto 'a' y NO existe 'b',
+  //   creo 'b' automáticamente (misma y) y paso a arrastrarlo de inmediato.
+  if (prevDragKey === 'cdg' && prevDragging === 'a' && g && g.data && g.data.a && !g.data.b) {
+    const a = g.data.a;
+    const offset = Math.min(60, cvs.width * 0.08); // desplazamiento inicial visible
+    g.data.b = { x: a.x + offset, y: a.y };
+
+    // Mantengo el modo "colocando" y empiezo a arrastrar 'b'
+    dragging = 'b';
+    // NO apago la lupa: la reposiciono sobre 'b' para seguir ajustando fino
+    showMag(g.data.b.x, g.data.b.y, g.data.b.x, g.data.b.y);
+    draw();
+    return; // Importante: NO salir del modo placing
+  }
+
+  // Comportamiento normal para cualquier otro caso
+  placingActive = false;
+  dragging = null;
+  dragKey = null;
+  hideMag();
+  draw();
+}
+
 cvs.addEventListener('mousedown', startDrag);
 cvs.addEventListener('mousemove', moveDrag);
 cvs.addEventListener('mouseup', endDrag);
