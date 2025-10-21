@@ -465,8 +465,27 @@ function startDrag(ev){
 }
 function moveDrag(ev){
   if(!placingActive) return; const {x,y}=toCanvasCoords(ev); moveMag(x,y,x,y);
-  if(!dragging) return; const g=cm().guides[dragKey]; if(!g) return; const d=g.data;
-  if(dragging==='v') d.v={x,y}; if(dragging==='a') d.a={x,y}; if(dragging==='b') d.b={x,y}; if(dragging==='p') d.p={x,y}; if(dragging==='anchor') d.anchor={x,y};
+  if (!dragging) return;
+const g = cm().guides[dragKey]; if (!g) return; const d = g.data;
+
+// Comportamiento general por defecto
+if (dragKey !== 'cdg') {
+  if (dragging === 'v') d.v = { x, y };
+  if (dragging === 'a') d.a = { x, y };
+  if (dragging === 'b') d.b = { x, y };
+  if (dragging === 'p') d.p = { x, y };
+  if (dragging === 'anchor') d.anchor = { x, y };
+} else {
+  // CDG: 'b' SIEMPRE en la misma y que 'a'
+  if (dragging === 'a') {
+    d.a = { x, y };
+    if (d.b) d.b = { x: d.b.x, y: y }; // mantener b alineado si ya existe
+  } else if (dragging === 'b') {
+    const lockedY = d.a ? d.a.y : y;
+    d.b = { x, y: lockedY };
+  }
+}
+
   draw(); ev.preventDefault();
 }
 function endDrag(){ placingActive=false; dragging=null; dragKey=null; hideMag(); draw(); }
