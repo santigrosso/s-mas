@@ -1074,20 +1074,21 @@ async function buildStrip(){
     blocks.push(block);
   });
 
-  if(blocks.length) page1.appendChild(blocks[0]);
   container.appendChild(page1);
 
-  // ——— página 2
-  const page2=document.createElement('div'); page2.className='page';
-  if(blocks[1]) page2.appendChild(blocks[1]);
-  if(blocks[2]) page2.appendChild(blocks[2]);
-  container.appendChild(page2);
+// ——— página 2
+const page2=document.createElement('div'); page2.className='page';
+if(blocks[0]) page2.appendChild(blocks[0]);
+if(blocks[1]) page2.appendChild(blocks[1]);
+if(blocks[2]) page2.appendChild(blocks[2]);
+container.appendChild(page2);
 
-  // ——— página 3
-  const page3=document.createElement('div'); page3.className='page';
-  if(blocks[3]) page3.appendChild(blocks[3]);
-  if(blocks[4]) page3.appendChild(blocks[4]);
-  container.appendChild(page3);
+// ——— página 3
+const page3=document.createElement('div'); page3.className='page';
+if(blocks[3]) page3.appendChild(blocks[3]);
+if(blocks[4]) page3.appendChild(blocks[4]);
+container.appendChild(page3);
+
 
   await (async ()=>{ try{ await buildStrip(); }catch(e){} })();
 window.print();
