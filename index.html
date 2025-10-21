@@ -1002,54 +1002,53 @@ const cropStripHTML = cropImgs.some(Boolean)
       </div>
     </div>
 
-    <!-- Bloque PUNTAJE -->
-    <div class="scoreBox">
-      <div class="title">PUNTAJE</div>
-      <div class="total">Puntaje total: <strong>${total}</strong></div>
-      <div class="grade-circles">
-        ${buckets.map(circleHTML).join('')}
-      </div>
+    const coverHTML = `
+  <!-- Bloque PUNTAJE -->
+  <div class="scoreBox">
+    <div class="title">PUNTAJE</div>
+    <div class="total">Puntaje total: <strong>${total}</strong></div>
+    <div class="grade-circles">
+      ${buckets.map(circleHTML).join('')}
     </div>
+  </div>
 
- 
-    <!-- Bloque ÁREA DE MAYOR NECESIDAD -->
-    <div class="needBox">
-      <div class="title">ÁREA DE MAYOR NECESIDAD</div>
-      <div class="row">
-        <div class="col" style="flex:0 0 160px;display:flex;align-items:center;justify-content:center;">
-          ${donutSVG(needs.tally)}
+  <!-- Bloque ÁREA DE MAYOR NECESIDAD -->
+  <div class="needBox">
+    <div class="title">ÁREA DE MAYOR NECESIDAD</div>
+    <div class="row">
+      <div class="col" style="flex:0 0 160px;display:flex;align-items:center;justify-content:center;">
+        ${donutSVG(needs.tally)}
+      </div>
+      <div class="col">
+        <div>
+          <div class="groupTitle"><span class="dot" style="background:#2563eb"></span>Control lumbopélvico</div>
+          ${(() => {
+            const act = activeCriteriaFor('Control lumbopélvico');
+            return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
+          })()}
         </div>
-        <div class="col">
-          <!-- Cada título de grupo AHORA lleva el puntito del color correspondiente -->
-          <div>
-            <div class="groupTitle"><span class="dot" style="background:#2563eb"></span>Control lumbopélvico</div>
-            ${(() => {
-              const act = activeCriteriaFor('Control lumbopélvico');
-              return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
-            })()}
-          </div>
 
-          <div>
-            <div class="groupTitle"><span class="dot" style="background:#f59e0b"></span>Back-side mechanics</div>
-            ${(() => {
-              const act = activeCriteriaFor('Back-side mechanics');
-              return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
-            })()}
-          </div>
+        <div>
+          <div class="groupTitle"><span class="dot" style="background:#f59e0b"></span>Back-side mechanics</div>
+          ${(() => {
+            const act = activeCriteriaFor('Back-side mechanics');
+            return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
+          })()}
+        </div>
 
-          <div>
-            <div class="groupTitle"><span class="dot" style="background:#ef4444"></span>Overstriding</div>
-            ${(() => {
-              const act = activeCriteriaFor('Overstriding');
-              return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
-            })()}
-          </div>
+        <div>
+          <div class="groupTitle"><span class="dot" style="background:#ef4444"></span>Overstriding</div>
+          ${(() => {
+            const act = activeCriteriaFor('Overstriding');
+            return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
+          })()}
         </div>
       </div>
     </div>
-    
+  </div>
+
   ${cropStripHTML}
-  `;
+`;
 
       
   const page1Inner = document.createElement('div');
