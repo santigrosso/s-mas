@@ -1089,6 +1089,9 @@ async function buildStrip(){
   if(blocks[4]) page3.appendChild(blocks[4]);
   container.appendChild(page3);
 
+  await (async ()=>{ try{ await buildStrip(); }catch(e){} })();
+window.print();
+
   // ——— imprimir
   window.print();
 };
