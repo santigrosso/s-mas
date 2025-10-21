@@ -426,22 +426,26 @@ function drawMagnifier(){
 function startDrag(ev){
   placingActive=true; const {x,y}=toCanvasCoords(ev); showMag(x,y,x,y);
   const list = activeGuides();
-  for(const [key, g] of list){
-    const d=g.data;
-    if(key==='thighs'){
-      if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
-      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
-      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+ for (const [key, g] of list) {
+  const d = g.data;
+
+  if (key === 'thighs') {
+    if (hit(d.v, x, y)) { dragging = 'v'; dragKey = key; return ev.preventDefault(); }
+    if (hit(d.a, x, y)) { dragging = 'a'; dragKey = key; return ev.preventDefault(); }
+    if (hit(d.b, x, y)) { dragging = 'b'; dragKey = key; return ev.preventDefault(); }
+
   } else if (key === 'cdg') {
-  if (hit(d.a, x, y)) { dragging = 'a'; dragKey = key; return ev.preventDefault(); }
-  if (hit(d.b, x, y)) { dragging = 'b'; dragKey = key; return ev.preventDefault(); }
-}
-    } else if(key==='heel'){
-      if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
-    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
-      if(hit(d.anchor,x,y)){ dragging='anchor'; dragKey=key; return ev.preventDefault(); }
-    }
+    if (hit(d.a, x, y)) { dragging = 'a'; dragKey = key; return ev.preventDefault(); }
+    if (hit(d.b, x, y)) { dragging = 'b'; dragKey = key; return ev.preventDefault(); }
+
+  } else if (key === 'heel') {
+    if (hit(d.p, x, y)) { dragging = 'p'; dragKey = key; return ev.preventDefault(); }
+
+  } else if (['vh', 't15', 'g45', 'knee', 'tibia'].includes(key)) {
+    if (hit(d.anchor, x, y)) { dragging = 'anchor'; dragKey = key; return ev.preventDefault(); }
   }
+}
+
   for(const [key,g] of list){
     const d=g.data;
     if(key==='thighs'){
