@@ -708,7 +708,45 @@ document.getElementById('fwd1').onclick=()=>stepFrames(1);
 document.getElementById('back10').onclick=()=>stepFrames(-10);
 document.getElementById('fwd10').onclick=()=>stepFrames(10);
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
-document.getElementById('snap').onclick=()=>{
+/* ===== Helpers de recorte ===== */
+function getCropCenterForMoment(mKey){
+  const g = (state.moments[mKey]?.guides) || {};
+  const centerDefault = { x: cvs.width/2, y: cvs.height/2 };
+
+  if(mKey==='toeoff'   && g.g45   && g.g45.data?.anchor) return g.g45.data.anchor;     // 45° → anchor
+  if(mKey==='mvp'      && g.heel  && g.heel.data?.p)     return g.heel.data.p;         // talón → p
+  if(mKey==='touchdown'&& g.thighs&& g.thighs.data?.v)   return g.thighs.data.v;       // muslos/tronco → vértice v
+  if(mKey==='midstance'&& g.knee  && g.knee.data?.anchor)return g.knee.data.anchor;    // rodilla → anchor
+  if(mKey==='lateswing'&& g.vh    && g.vh.data?.anchor)  return g.vh.data.anchor;      // (fallback)
+  return centerDefault;
+}
+
+function captureCroppedRect(center){
+  // Alto = alto del canvas (frame actual)
+  let H = cvs.height;
+  // Ancho = 3/4 del alto
+  let W = Math.round(H * 0.75);
+
+  // Si el ancho supera el canvas, escalamos ambos para que quepa
+  if (W > cvs.width) {
+    const f = cvs.width / W;
+    W = Math.round(W * f);
+    H = Math.round(H * f);
+  }
+
+  // Top-left clamp para que el rectángulo quede dentro del canvas
+  const x = Math.max(0, Math.min(Math.round(center.x - W/2), cvs.width  - W));
+  const y = Math.max(0, Math.min(Math.round(center.y - H/2), cvs.height - H));
+
+  // Recorte desde el canvas (que ya tiene video + guías dibujadas)
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const octx = off.getContext('2d');
+  octx.drawImage(cvs, x, y, W, H, 0, 0, W, H);
+  return off.toDataURL('image/png');
+}
+
+  document.getElementById('snap').onclick=()=>{
   const dataURL=cvs.toDataURL('image/png');
   const mKey=state.curMoment, m=state.moments[mKey];
   m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
