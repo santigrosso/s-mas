@@ -747,15 +747,33 @@ function captureCroppedRect(center){
 }
 
   document.getElementById('snap').onclick=()=>{
-  const dataURL=cvs.toDataURL('image/png');
-  const mKey=state.curMoment, m=state.moments[mKey];
-  m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
-  m.captured=true; renderTabs();
+  // Asegurá que el canvas esté con el frame y las guías más recientes
+  draw();
+
+  const mKey = state.curMoment, m = state.moments[mKey];
+
+  // Imagen completa (con guías)
+  const fullURL = cvs.toDataURL('image/png');
+
+  // Centro según el momento + recorte (con guías)
+  const center = getCropCenterForMoment(mKey);
+  const cropURL = captureCroppedRect(center);
+
+  // Guardamos ambos (full y recorte)
+  m.snapshots.push({ dataURL: fullURL, cropURL, when: new Date().toISOString(), frame: m.frame, t: m.t });
+  m.captured = true; 
+  renderTabs();
+
+  // Apagamos guías activas de ese momento (como antes)
   const gobj = m.guides; Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
+
   placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
+
+  // Avance automático al siguiente momento
   const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
   if(idx < MOMENTS.length - 1){ setMoment(MOMENTS[idx+1].key); } else { alert('Ya podés generar el reporte.'); }
 };
+
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
