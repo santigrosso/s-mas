@@ -432,9 +432,14 @@ function startDrag(ev){
       if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
       if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
       if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
-    } else if(key==='cdg'){
-      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
-      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if (key === 'cdg') {
+  // Primero se coloca 'a'; luego 'b' se fuerza a la MISMA y que 'a' (para medir "pie")
+  if (!d.a) {
+    d.a = { x, y };
+    dragging = 'a'; dragKey = key; break;
+  } else if (!d.b) {
+    d.b = { x, y: d.a.y }; // b en misma y que a
+    dragging = 'b'; dragKey = key; break;  }
     } else if(key==='heel'){
       if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
     } else if(['vh','t15','g45','knee','tibia'].includes(key)){
