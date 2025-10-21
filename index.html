@@ -1012,6 +1012,48 @@ document.getElementById('printReport').onclick = async () => {
   const page1Inner = document.createElement('div');
   page1Inner.innerHTML = coverHTML;
   page1.appendChild(page1Inner);
+  // === NUEVO PANEL: Tira de recortes (último panel de la primera hoja) ===
+const stripPanel = document.createElement('div');
+stripPanel.className = 'stripPanel';
+stripPanel.innerHTML = `
+  <div class="title">Tira de recortes</div>
+  <div class="thumbStrip" id="thumbStrip"></div>
+`;
+page1.appendChild(stripPanel);
+
+const stripEl = stripPanel.querySelector('#thumbStrip');
+
+async function buildStrip(){
+  for (const m of MOMENTS){
+    const mm = state.moments[m.key];
+    const latest = mm.snapshots[mm.snapshots.length - 1];
+
+    const item = document.createElement('div');
+    item.className = 'thumbItem';
+
+    if (latest?.dataURL){
+      const cropped = await cropStripDataURL(latest.dataURL, m.key);
+      item.innerHTML = `
+        <img src="${cropped}" alt="${m.label}" />
+        <div class="cap"><strong>${m.label}</strong></div>
+        <div class="meta">frame ${latest.frame} • t=${(latest.t ?? 0).toFixed(3)}s</div>
+      `;
+    } else {
+      item.innerHTML = `
+        <div style="
+          height:26mm;width:calc(26mm * .75);
+          display:flex;align-items:center;justify-content:center;
+          border:1px dashed #ccc;border-radius:6px;background:#fafafa;color:#666;font-size:10px;">
+          Sin captura
+        </div>
+        <div class="cap"><strong>${m.label}</strong></div>
+        <div class="meta">—</div>
+      `;
+    }
+    stripEl.appendChild(item);
+  }
+}
+
 
   // ——— bloques de momentos (iguales que antes)
   const blocks=[];
