@@ -566,6 +566,8 @@ if (key === 'thighs') {
 
 if (key === 'cdg') {
   const { a, b } = d;
+
+  // Pintar puntos si existen
   if (a) dot(a.x, a.y);
   if (b) dot(b.x, b.y);
 
@@ -573,29 +575,44 @@ if (key === 'cdg') {
   const thighs = cm().guides['thighs'];
   const v = thighs && thighs.data && thighs.data.v ? thighs.data.v : null;
 
+  // 1) Medición automática: desde 'a' a la vertical (si hay vértice en 'thighs')
   if (a && v) {
-    // Horizontal desde el punto a la vertical x = v.x
     const y = a.y, x1 = a.x, x2 = v.x;
-    line(Math.min(x1, x2), y, Math.max(x1, x2), y, [6, 4], 'rgba(255,255,255,.85)', 2);
+    const xMin = Math.min(x1, x2), xMax = Math.max(x1, x2);
+
+    // Línea punteada a la vertical
+    line(xMin, y, xMax, y, [6, 4], 'rgba(255,255,255,.85)', 2);
+
+    // Rótulo Δx a la vertical
     const dx = Math.abs(Math.round(x2 - x1));
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.font = 'bold 13px system-ui';
-    ctx.fillText(`Δx: ${dx}px`, Math.min(x1, x2) + 5, y - 8);
+    ctx.fillText(`Δx a vertical: ${dx}px`, xMin + 5, y - 10);
     ctx.restore();
 
-  } else if (a && b) {
-    // Fallback: medición manual entre dos puntos como antes
-    const y = a.y, x1 = a.x, x2 = b.x;
-    line(Math.min(x1, x2), y, Math.max(x1, x2), y, [6, 4], 'rgba(255,255,255,.85)', 2);
-    const dx = Math.abs(Math.round(x2 - x1));
+    // Dibujar la propia vertical de referencia (suave)
+    line(v.x, 0, v.x, cvs.height, [], 'rgba(255,255,255,.25)', 1);
+  }
+
+  // 2) Medición de "largo de pie": entre 'a' y 'b' (misma y)
+  if (a && b) {
+    const y = a.y;
+    const xMin = Math.min(a.x, b.x), xMax = Math.max(a.x, b.x);
+
+    // Línea sólida para "pie"
+    line(xMin, y, xMax, y, [], 'rgba(255,255,255,1)', 2);
+
+    // Rótulo pie
+    const footLen = Math.abs(Math.round(b.x - a.x));
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.font = 'bold 13px system-ui';
-    ctx.fillText(`Δx: ${dx}px`, Math.min(x1, x2) + 5, y - 8);
+    ctx.fillText(`pie: ${footLen}px`, xMin + 5, y + 16);
     ctx.restore();
   }
 }
+
 
 
    if (key === 'knee' && d.anchor) {
