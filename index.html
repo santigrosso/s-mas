@@ -737,6 +737,46 @@ notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
 /* ===== Reporte ===== */
+  /* ===== Helpers para recortar en la tira (sin tocar la captura original) ===== */
+// Centro X por momento a partir de las guías (fallback: centro del frame)
+function centerXFromGuides(mKey, imgW){
+  const g = (state.moments[mKey]?.guides) || {};
+  const pick = {
+    toeoff:    () => g.g45?.data?.anchor,
+    mvp:       () => g.heel?.data?.p,
+    lateswing: () => g.vh?.data?.anchor,
+    touchdown: () => g.thighs?.data?.v,
+    midstance: () => g.knee?.data?.anchor
+  }[mKey];
+  const p = pick ? pick() : null;
+  return (p && Number.isFinite(p.x)) ? p.x : (imgW / 2);
+}
+
+// Recorta del dataURL original un rectángulo vertical (alto = imgH, ancho = 0.75*imgH) centrado en centerX
+function cropStripDataURL(dataURL, mKey){
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const imgW = img.naturalWidth, imgH = img.naturalHeight;
+      const desiredW = Math.round(imgH * 0.75);  // ancho = 3/4 del alto
+      let cx = centerXFromGuides(mKey, imgW);
+
+      // rectángulo: y=0, alto completo; centrado en cx (clamp lateral)
+      let x0 = Math.round(cx - desiredW/2);
+      x0 = Math.max(0, Math.min(x0, imgW - desiredW));
+
+      const tmp = document.createElement('canvas');
+      tmp.width = desiredW; tmp.height = imgH;
+      const tctx = tmp.getContext('2d');
+      tctx.imageSmoothingEnabled = true;
+      tctx.drawImage(img, x0, 0, desiredW, imgH, 0, 0, desiredW, imgH);
+
+      resolve(tmp.toDataURL('image/png'));
+    };
+    img.src = dataURL;
+  });
+}
+
 function computeNeeds(){
   const answers=[];
   function pushMoment(key){ const arr=state.moments[key].checks; for(let i=0;i<arr.length;i++){ answers.push(arr[i]); } }
