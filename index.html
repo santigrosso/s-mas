@@ -903,33 +903,38 @@ document.getElementById('printReport').onclick = () => {
 
   // ====== CSS portada ======
   const coverCSS = `
-    <style>
-      /* Bloque DATOS (nuevo) */
-      #report .infoBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
-      #report .infoBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
-      #report .infoBox .row{display:flex;gap:16px;flex-wrap:wrap;}
-      #report .infoBox .pill{background:#f3f4f6;border:1px solid #e5e7eb;color:#111827;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;}
+  <style>
+    /* Bloque DATOS (nuevo) */
+    #report .infoBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
+    #report .infoBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
+    #report .infoBox .row{display:flex;gap:16px;flex-wrap:wrap;}
+    #report .infoBox .pill{background:#f3f4f6;border:1px solid #e5e7eb;color:#111827;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;}
 
-      /* Bloque PUNTAJE */
-      #report .scoreBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
-      #report .scoreBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
-      #report .scoreBox .total{font-size:12px;color:#111827;margin:0 0 8px 0;}
-      #report .grade-circles{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:flex-start;gap:8px;width:100%;}
-      #report .grade-circles .gc-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
-      #report .grade-circles .gc-dot{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:.2px;}
-      #report .grade-circles .gc-cap{font-size:10px;color:#374151;text-align:center;line-height:1.1;max-width:80px;}
+    /* Bloque PUNTAJE */
+    #report .scoreBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
+    #report .scoreBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
+    #report .scoreBox .total{font-size:12px;color:#111827;margin:0 0 8px 0;}
+    #report .grade-circles{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:flex-start;gap:8px;width:100%;}
+    #report .grade-circles .gc-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
+    #report .grade-circles .gc-dot{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:.2px;}
+    #report .grade-circles .gc-cap{font-size:10px;color:#374151;text-align:center;line-height:1.1;max-width:80px;}
 
-      /* Bloque ÁREA DE MAYOR NECESIDAD */
-      #report .needBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
-      #report .needBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
-      #report .needBox .row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
-      #report .needBox .col{flex:1 1 240px;min-width:220px;}
-      #report .needBox .groupTitle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0b1b2b;margin:8px 0 4px 0;}
-      #report .needBox .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
-      #report .needBox ul{margin:4px 0 0 16px;font-size:11px;}
-      #report .needBox .empty{color:#6b7280;font-size:11px;}
-    </style>
-  `;
+    /* Bloque ÁREA DE MAYOR NECESIDAD */
+    #report .needBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
+    #report .needBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
+    #report .needBox .row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+    #report .needBox .col{flex:1 1 240px;min-width:220px;}
+    #report .needBox .groupTitle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0b1b2b;margin:8px 0 4px 0;}
+    #report .needBox .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+    #report .needBox ul{margin:4px 0 0 16px;font-size:11px;}
+    #report .needBox .empty{color:#6b7280;font-size:11px;}
+
+    /* Tira de recortes */
+    #report .cropStrip{display:flex;gap:6px;margin:10px 0 6px 0;}
+    #report .cropStrip img{flex:1 1 0;width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px;background:#fff;}
+  </style>
+`;
+
 
   // ====== Portada ======
   const page1 = document.createElement('div');
