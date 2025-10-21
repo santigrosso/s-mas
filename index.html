@@ -812,6 +812,17 @@ const cropImgs = MOMENTS.map(m=>{
   return latest?.cropURL || '';
 });
 
+// Panel "RECORTES" con las 5 imágenes en una fila
+const cropStripHTML = cropImgs.some(Boolean)
+  ? `<div class="cropBox">
+       <div class="title">RECORTES</div>
+       <div class="cropStrip">
+         ${cropImgs.map(u => u ? `<img src="${u}" alt="recorte"/>` : `<div style="flex:0 0 calc((100% - 24px)/5)"></div>`).join('')}
+       </div>
+     </div>`
+  : '';
+
+
 const cropStripHTML = cropImgs.some(Boolean)
   ? `<div class="cropStrip">
        ${cropImgs.map(u => u ? `<img src="${u}" alt="recorte"/>` : `<div style="flex:1 1 0"></div>`).join('')}
