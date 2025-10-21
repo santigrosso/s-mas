@@ -446,31 +446,36 @@ function startDrag(ev){
   }
 }
 
-  for(const [key,g] of list){
-    const d=g.data;
-    if(key==='thighs'){
-      if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
-      else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
-      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
-   } else if (key === 'cdg') {
-  // Tocar → empezar a ARRASTRAR 'a' (no queda fijo al tocar).
-  if (!d.a) {
-    d.a = { x, y };
-    dragging = 'a';
-    dragKey = key;
-    break;
-  } else if (!d.b) {
-    // (fallback manual: normalmente B se crea en endDrag al soltar A)
-    d.b = { x, y: d.a.y }; // b en misma y que a
-    dragging = 'b';
-    dragKey = key;
-    break;
+ for (const [key, g] of list) {
+  const d = g.data;
+
+  if (key === 'thighs') {
+    if (!d.v) { d.v = { x, y }; dragging = 'v'; dragKey = key; break; }
+    else if (!d.a) { d.a = { x, y }; dragging = 'a'; dragKey = key; break; }
+    else if (!d.b) { d.b = { x, y }; dragging = 'b'; dragKey = key; break; }
+
+  } else if (key === 'cdg') {
+    // Primer toque: arrastrar 'a'. Al soltar se genera 'b'.
+    if (!d.a) {
+      d.a = { x, y };
+      dragging = 'a';
+      dragKey = key;
+      break;
+    } else if (!d.b) {
+      d.b = { x, y: d.a.y }; // fallback manual, normalmente se crea en endDrag
+      dragging = 'b';
+      dragKey = key;
+      break;
+    }
+
   } else if (key === 'heel') {
-  if (hit(d.p, x, y)) { dragging = 'p'; dragKey = key; return ev.preventDefault(); }
-} else if (['vh','t15','g45','knee','tibia'].includes(key)) {
-  if (hit(d.anchor, x, y)) { dragging = 'anchor'; dragKey = key; return ev.preventDefault(); }
-}
+    if (!d.p) { d.p = { x, y }; dragging = 'p'; dragKey = key; break; }
+
+  } else if (['vh', 't15', 'g45', 'knee', 'tibia'].includes(key)) {
+    if (!d.anchor) { d.anchor = { x, y }; dragging = 'anchor'; dragKey = key; break; }
   }
+}
+
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
