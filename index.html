@@ -432,14 +432,10 @@ function startDrag(ev){
       if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
       if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
       if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
-    } else if (key === 'cdg') {
-  // Primero se coloca 'a'; luego 'b' se fuerza a la MISMA y que 'a' (para medir "pie")
-  if (!d.a) {
-    d.a = { x, y };
-    dragging = 'a'; dragKey = key; break;
-  } else if (!d.b) {
-    d.b = { x, y: d.a.y }; // b en misma y que a
-    dragging = 'b'; dragKey = key; break;  }
+  } else if (key === 'cdg') {
+  if (hit(d.a, x, y)) { dragging = 'a'; dragKey = key; return ev.preventDefault(); }
+  if (hit(d.b, x, y)) { dragging = 'b'; dragKey = key; return ev.preventDefault(); }
+}
     } else if(key==='heel'){
       if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
     } else if(['vh','t15','g45','knee','tibia'].includes(key)){
@@ -452,38 +448,34 @@ function startDrag(ev){
       if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
       else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
       else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
-    } else if (key === 'cdg') {
-  // Queremos: tocar → empezar a ARRASTRAR 'a' (no queda fijo al tocar)
+   } else if (key === 'cdg') {
+  // Tocar → empezar a ARRASTRAR 'a' (no queda fijo al tocar).
   if (!d.a) {
-    // Creamos 'a' y lo dejamos en modo arrastre inmediatamente
     d.a = { x, y };
     dragging = 'a';
     dragKey = key;
     break;
   } else if (!d.b) {
-    // (Fallback manual si alguna vez quisieras crear B directamente con otro toque;
-    // normalmente B se crea en endDrag al soltar A)
-    d.b = { x, y: d.a.y };
+    // (fallback manual: normalmente B se crea en endDrag al soltar A)
+    d.b = { x, y: d.a.y }; // b en misma y que a
     dragging = 'b';
     dragKey = key;
     break;
   }
+} else if (key === 'heel') {
+  if (hit(d.p, x, y)) { dragging = 'p'; dragKey = key; return ev.preventDefault(); }
+} else if (['vh','t15','g45','knee','tibia'].includes(key)) {
+  if (hit(d.anchor, x, y)) { dragging = 'anchor'; dragKey = key; return ev.preventDefault(); }
 }
-
-    } else if(key==='heel'){
-      if(!d.p){ d.p={x,y}; dragging='p'; dragKey=key; break; }
-    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
-      if(!d.anchor){ d.anchor={x,y}; dragging='anchor'; dragKey=key; break; }
-    }
   }
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
   if(!placingActive) return; const {x,y}=toCanvasCoords(ev); moveMag(x,y,x,y);
-  if (!dragging) return;
+ if (!dragging) return;
 const g = cm().guides[dragKey]; if (!g) return; const d = g.data;
 
-// Comportamiento general por defecto
+// Comportamiento general
 if (dragKey !== 'cdg') {
   if (dragging === 'v') d.v = { x, y };
   if (dragging === 'a') d.a = { x, y };
@@ -491,49 +483,47 @@ if (dragKey !== 'cdg') {
   if (dragging === 'p') d.p = { x, y };
   if (dragging === 'anchor') d.anchor = { x, y };
 } else {
-  // CDG: 'b' SIEMPRE en la misma y que 'a'
+  // CDG: 'b' SIEMPRE comparte la misma y de 'a'
   if (dragging === 'a') {
     d.a = { x, y };
-    if (d.b) d.b = { x: d.b.x, y: y }; // mantener b alineado si ya existe
+    if (d.b) d.b = { x: d.b.x, y: y }; // si ya existe b, acompaña la y de a
   } else if (dragging === 'b') {
     const lockedY = d.a ? d.a.y : y;
     d.b = { x, y: lockedY };
   }
 }
 
+
   draw(); ev.preventDefault();
 }
 function endDrag(){
   if(!placingActive) return;
 
-  // Guardamos el contexto del arrastre actual ANTES de limpiar
   const prevDragKey = dragKey;
   const prevDragging = dragging;
   const g = prevDragKey ? cm().guides[prevDragKey] : null;
 
-  // Caso especial: CdG
-  // - Si acabo de soltar el primer punto 'a' y NO existe 'b',
-  //   creo 'b' automáticamente (misma y) y paso a arrastrarlo de inmediato.
+  // Caso especial: CdG → soltar 'a' crea 'b' y seguimos arrastrando 'b'
   if (prevDragKey === 'cdg' && prevDragging === 'a' && g && g.data && g.data.a && !g.data.b) {
     const a = g.data.a;
     const offset = Math.min(60, cvs.width * 0.08); // desplazamiento inicial visible
     g.data.b = { x: a.x + offset, y: a.y };
 
-    // Mantengo el modo "colocando" y empiezo a arrastrar 'b'
+    // Seguimos en modo "placing" arrastrando B con la lupa activa
     dragging = 'b';
-    // NO apago la lupa: la reposiciono sobre 'b' para seguir ajustando fino
     showMag(g.data.b.x, g.data.b.y, g.data.b.x, g.data.b.y);
     draw();
-    return; // Importante: NO salir del modo placing
+    return; // NO salimos de placing
   }
 
-  // Comportamiento normal para cualquier otro caso
+  // Resto de casos: terminar normalmente
   placingActive = false;
   dragging = null;
   dragKey = null;
   hideMag();
   draw();
 }
+
 
 cvs.addEventListener('mousedown', startDrag);
 cvs.addEventListener('mousemove', moveDrag);
