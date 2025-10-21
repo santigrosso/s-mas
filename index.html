@@ -1012,13 +1012,14 @@ document.getElementById('printReport').onclick = async () => {
   const page1Inner = document.createElement('div');
   page1Inner.innerHTML = coverHTML;
   page1.appendChild(page1Inner);
-  // === NUEVO PANEL: Tira de recortes (último panel de la primera hoja) ===
+  // === NUEVO PANEL: Kinograma (último panel de la primera hoja) ===
 const stripPanel = document.createElement('div');
 stripPanel.className = 'stripPanel';
 stripPanel.innerHTML = `
-  <div class="title">Tira de recortes</div>
+  <div class="title">Kinograma</div>
   <div class="thumbStrip" id="thumbStrip"></div>
 `;
+
 page1.appendChild(stripPanel);
 
 const stripEl = stripPanel.querySelector('#thumbStrip');
