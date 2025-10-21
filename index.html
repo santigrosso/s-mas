@@ -452,9 +452,24 @@ function startDrag(ev){
       if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
       else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
       else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
-    } else if(key==='cdg'){
-      if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
-      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+    } else if (key === 'cdg') {
+  // Queremos: tocar → empezar a ARRASTRAR 'a' (no queda fijo al tocar)
+  if (!d.a) {
+    // Creamos 'a' y lo dejamos en modo arrastre inmediatamente
+    d.a = { x, y };
+    dragging = 'a';
+    dragKey = key;
+    break;
+  } else if (!d.b) {
+    // (Fallback manual si alguna vez quisieras crear B directamente con otro toque;
+    // normalmente B se crea en endDrag al soltar A)
+    d.b = { x, y: d.a.y };
+    dragging = 'b';
+    dragKey = key;
+    break;
+  }
+}
+
     } else if(key==='heel'){
       if(!d.p){ d.p={x,y}; dragging='p'; dragKey=key; break; }
     } else if(['vh','t15','g45','knee','tibia'].includes(key)){
