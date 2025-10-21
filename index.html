@@ -708,72 +708,16 @@ document.getElementById('fwd1').onclick=()=>stepFrames(1);
 document.getElementById('back10').onclick=()=>stepFrames(-10);
 document.getElementById('fwd10').onclick=()=>stepFrames(10);
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
-/* ===== Helpers de recorte ===== */
-function getCropCenterForMoment(mKey){
-  const g = (state.moments[mKey]?.guides) || {};
-  const centerDefault = { x: cvs.width/2, y: cvs.height/2 };
-
-  if(mKey==='toeoff'   && g.g45   && g.g45.data?.anchor) return g.g45.data.anchor;     // 45° → anchor
-  if(mKey==='mvp'      && g.heel  && g.heel.data?.p)     return g.heel.data.p;         // talón → p
-  if(mKey==='touchdown'&& g.thighs&& g.thighs.data?.v)   return g.thighs.data.v;       // muslos/tronco → vértice v
-  if(mKey==='midstance'&& g.knee  && g.knee.data?.anchor)return g.knee.data.anchor;    // rodilla → anchor
-  if(mKey==='lateswing'&& g.vh    && g.vh.data?.anchor)  return g.vh.data.anchor;      // (fallback)
-  return centerDefault;
-}
-
-function captureCroppedRect(center){
-  // Alto = alto del canvas (frame actual)
-  let H = cvs.height;
-  // Ancho = 3/4 del alto
-  let W = Math.round(H * 0.75);
-
-  // Si el ancho supera el canvas, escalamos ambos para que quepa
-  if (W > cvs.width) {
-    const f = cvs.width / W;
-    W = Math.round(W * f);
-    H = Math.round(H * f);
-  }
-
-  // Top-left clamp para que el rectángulo quede dentro del canvas
-  const x = Math.max(0, Math.min(Math.round(center.x - W/2), cvs.width  - W));
-  const y = Math.max(0, Math.min(Math.round(center.y - H/2), cvs.height - H));
-
-  // Recorte desde el canvas (que ya tiene video + guías dibujadas)
-  const off = document.createElement('canvas');
-  off.width = W; off.height = H;
-  const octx = off.getContext('2d');
-  octx.drawImage(cvs, x, y, W, H, 0, 0, W, H);
-  return off.toDataURL('image/png');
-}
-
-  document.getElementById('snap').onclick=()=>{
-  // Asegurá que el canvas esté con el frame y las guías más recientes
-  draw();
-
-  const mKey = state.curMoment, m = state.moments[mKey];
-
-  // Imagen completa (con guías)
-  const fullURL = cvs.toDataURL('image/png');
-
-  // Centro según el momento + recorte (con guías)
-  const center = getCropCenterForMoment(mKey);
-  const cropURL = captureCroppedRect(center);
-
-  // Guardamos ambos (full y recorte)
-  m.snapshots.push({ dataURL: fullURL, cropURL, when: new Date().toISOString(), frame: m.frame, t: m.t });
-  m.captured = true; 
-  renderTabs();
-
-  // Apagamos guías activas de ese momento (como antes)
+document.getElementById('snap').onclick=()=>{
+  const dataURL=cvs.toDataURL('image/png');
+  const mKey=state.curMoment, m=state.moments[mKey];
+  m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
+  m.captured=true; renderTabs();
   const gobj = m.guides; Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
-
   placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
-
-  // Avance automático al siguiente momento
   const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
   if(idx < MOMENTS.length - 1){ setMoment(MOMENTS[idx+1].key); } else { alert('Ya podés generar el reporte.'); }
 };
-
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
 
@@ -800,80 +744,170 @@ function computeNeeds(){
 document.getElementById('printReport').onclick = () => {
   const container = document.getElementById('reportContent');
   container.innerHTML = '';
-  const total = Object.values(state.moments).reduce(
-    (acc, mm) => acc + mm.checks.filter(Boolean).length,
-    0
-  );
-  const grade = GRADE(total);
-  const needs = computeNeeds();
 
-  // ====== Tira de recortes (uno por momento) ======
-  const cropImgs = MOMENTS.map((m) => {
-    const mm = state.moments[m.key];
-    const latest = mm.snapshots[mm.snapshots.length - 1];
-    return latest?.cropURL || '';
-  });
+  // ——— datos base
+  const total = Object.values(state.moments)
+    .reduce((acc, mm) => acc + mm.checks.filter(Boolean).length, 0);
+  const needs = computeNeeds(); // {tally:{...}, winners:[...], max:number}
 
-  // Panel "RECORTES" con las 5 imágenes en una fila
-  const cropStripHTML = cropImgs.some(Boolean)
-    ? `<div class="cropBox">
-         <div class="title">RECORTES</div>
-         <div class="cropStrip">
-           ${cropImgs
-             .map((u) =>
-               u
-                 ? `<img src="${u}" alt="recorte"/>`
-                 : `<div style="flex:0 0 calc((100% - 24px)/5)"></div>`
-             )
-             .join('')}
-         </div>
-       </div>`
-    : '';
+  // ====== criterios en texto ======
+  const CRITERIA_TEXT = {
+    1:'Extensión de cadera excesiva',
+    2:'Rotación excesiva de tronco',
+    3:'Talón trasero por encima de la pantorrilla',
+    4:'Anteversión pélvica / extensión lumbar en swing',
+    5:'Rodilla por detrás de los glúteos',
+    6:'Inclinación del tronco hacia delante',
+    7:'Anteversión pélvica / extensión lumbar en apoyo',
+    8:'Ángulo entre muslos > 20°',
+    9:'Pie adelantado respecto al CdG (overstriding)',
+    10:'Tibia inclinada en contacto',
+    11:'Primer apoyo marcado (talón/punta)',
+    12:'Rodilla por delante de la punta del pie'
+  };
 
+  // grupos e índices
+  const GROUPS = {
+    'Control lumbopélvico':[2,4,7],
+    'Back-side mechanics':[1,3,5,8],
+    'Overstriding':[6,9,10,11,12]
+  };
+
+  // respuestas aplanadas (true/false por criterio 1..12)
+  const answers = (() => {
+    const a=[]; const push=(k)=>{ for(const v of state.moments[k].checks) a.push(v); };
+    push('toeoff'); push('mvp'); push('lateswing'); push('touchdown'); push('midstance');
+    return a;
+  })();
+
+  // criterios activos (texto) por grupo
+  function activeCriteriaFor(groupName){
+    const idxs = GROUPS[groupName]||[]; const out=[];
+    for(const idx of idxs){ if(answers[idx-1]) out.push(CRITERIA_TEXT[idx]); }
+    return out;
+  }
+
+  // ====== Donut (SVG) ======
+  function donutSVG(tally){
+    const DATA = [
+      {name:'Control lumbopélvico', value: tally['Control lumbopélvico']||0, color:'#2563eb'},
+      {name:'Back-side mechanics',  value: tally['Back-side mechanics'] ||0, color:'#f59e0b'},
+      {name:'Overstriding',         value: tally['Overstriding']        ||0, color:'#ef4444'}
+    ];
+    const sum = DATA.reduce((s,d)=>s+d.value,0) || 1;
+    const R=54, IR=32, CX=70, CY=70; let a0=-Math.PI/2;
+    const arc=(cx,cy,r,a0,a1)=>`M ${cx+r*Math.cos(a0)} ${cy+r*Math.sin(a0)} A ${r} ${r} 0 ${((a1-a0)>Math.PI)?1:0} 1 ${cx+r*Math.cos(a1)} ${cy+r*Math.sin(a1)}`;
+    let paths='';
+    DATA.forEach(d=>{
+      const a1=a0+(d.value/sum)*Math.PI*2;
+      const outer=arc(CX,CY,R,a0,a1), inner=arc(CX,CY,IR,a1,a0);
+      paths += `<path d="${outer} L ${CX+IR*Math.cos(a1)} ${CY+IR*Math.sin(a1)} ${inner} Z" fill="${d.color}" opacity="${d.value?1:0.18}"></path>`;
+      a0=a1;
+    });
+    return `
+      <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+        <g>
+          ${paths}
+          <circle cx="${CX}" cy="${CY}" r="${IR}" fill="#fff"></circle>
+          <text x="${CX}" y="${CY-2}" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="20" font-weight="800" fill="#0b1b2b">${needs.max}</text>
+          <text x="${CX}" y="${CY+14}" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="10" fill="#6b7280">máx. checks</text>
+        </g>
+      </svg>`;
+  }
+
+  // ====== Círculos PUNTAJE ======
+  const activeBucket = (() => {
+    if (total <= 1) return 'ex';
+    if (total === 2) return 'good';
+    if (total <= 5) return 'avg';
+    if (total === 6) return 'poor';
+    if (total <= 11) return 'vpoor';
+    return 'xpoor';
+  })();
+  const buckets = [
+    {key:'ex',range:'0–1',label:'Excelente',color:'#E0F255'},
+    {key:'good',range:'2',label:'Bueno',color:'#F0F77A'},
+    {key:'avg',range:'3–5',label:'Promedio',color:'#F3F8A8'},
+    {key:'poor',range:'6',label:'Pobre',color:'#F3B7A8'},
+    {key:'vpoor',range:'7–11',label:'Muy pobre',color:'#DE6B58'},
+    {key:'xpoor',range:'12',label:'Extremadamente pobre',color:'#D64A3E'}
+  ];
+  const OFF_BG='#f6f7fb', OFF_BDR='#e5e7eb', OFF_TXT='#9aa3ad';
+  function circleHTML(item){
+    const on=item.key===activeBucket;
+    const bg=on?item.color:OFF_BG, bdr=on?'transparent':OFF_BDR;
+    const txt=on?( ['vpoor','xpoor'].includes(item.key)?'#fff':'#0b1b2b' ):OFF_TXT;
+    const weight=on?800:700, shadow=on?'inset 0 6px 14px rgba(0,0,0,.08)':'none', opacity=on?1:.9;
+    return `
+      <div class="gc-item">
+        <div class="gc-dot" style="background:${bg};border:1px solid ${bdr};color:${txt};box-shadow:${shadow};opacity:${opacity};font-weight:${weight};">${item.range}</div>
+        <div class="gc-cap">${item.label}</div>
+      </div>`;
+  }
+
+  // ====== CSS portada ======
   const coverCSS = `
-  <style>
-    /* Bloque DATOS (nuevo) */
-    #report .infoBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
-    #report .infoBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
-    #report .infoBox .row{display:flex;gap:16px;flex-wrap:wrap;}
-    #report .infoBox .pill{background:#f3f4f6;border:1px solid #e5e7eb;color:#111827;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;}
+    <style>
+      /* Bloque DATOS (nuevo) */
+      #report .infoBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
+      #report .infoBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
+      #report .infoBox .row{display:flex;gap:16px;flex-wrap:wrap;}
+      #report .infoBox .pill{background:#f3f4f6;border:1px solid #e5e7eb;color:#111827;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;}
 
-    /* Bloque PUNTAJE */
-    #report .scoreBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
-    #report .scoreBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
-    #report .scoreBox .total{font-size:12px;color:#111827;margin:0 0 8px 0;}
-    #report .grade-circles{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:flex-start;gap:8px;width:100%;}
-    #report .grade-circles .gc-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
-    #report .grade-circles .gc-dot{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:.2px;}
-    #report .grade-circles .gc-cap{font-size:10px;color:#374151;text-align:center;line-height:1.1;max-width:80px;}
+      /* Bloque PUNTAJE */
+      #report .scoreBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
+      #report .scoreBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
+      #report .scoreBox .total{font-size:12px;color:#111827;margin:0 0 8px 0;}
+      #report .grade-circles{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:flex-start;gap:8px;width:100%;}
+      #report .grade-circles .gc-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
+      #report .grade-circles .gc-dot{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:.2px;}
+      #report .grade-circles .gc-cap{font-size:10px;color:#374151;text-align:center;line-height:1.1;max-width:80px;}
 
-    /* Bloque ÁREA DE MAYOR NECESIDAD */
-    #report .needBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
-    #report .needBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
-    #report .needBox .row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
-    #report .needBox .col{flex:1 1 240px;min-width:220px;}
-    #report .needBox .groupTitle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0b1b2b;margin:8px 0 4px 0;}
-    #report .needBox .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
-    #report .needBox ul{margin:4px 0 0 16px;font-size:11px;}
-    #report .needBox .empty{color:#6b7280;font-size:11px;}
-
-    /* Tira de recortes (panel) */
-    #report .cropBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
-    #report .cropBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
-    #report .cropStrip{display:flex;gap:6px;}
-    #report .cropStrip img{
-      flex:0 0 calc((100% - 24px)/5);
-      width:calc((100% - 24px)/5);
-      height:auto;
-      border:1px solid #e5e7eb;
-      border-radius:6px;
-      background:#fff;
-    }
-  </style>
+      /* Bloque ÁREA DE MAYOR NECESIDAD */
+      #report .needBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
+      #report .needBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
+      #report .needBox .row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+      #report .needBox .col{flex:1 1 240px;min-width:220px;}
+      #report .needBox .groupTitle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0b1b2b;margin:8px 0 4px 0;}
+      #report .needBox .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+      #report .needBox ul{margin:4px 0 0 16px;font-size:11px;}
+      #report .needBox .empty{color:#6b7280;font-size:11px;}
+    </style>
   `;
+
+  // ====== Portada ======
+  const page1 = document.createElement('div');
+  page1.className = 'page';
+
+  // DATOS (nombre + fecha)
+  const athleteName = (document.getElementById('athleteName')?.value || '').trim() || '—';
+  const now = new Date();
+  // Formato dd/mm/yyyy hh:mm (24h)
+  const fecha = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
   const coverHTML = `
     ${coverCSS}
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
+        <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+        <path d="M16 38 L28 26 L36 34 L48 22" stroke="#ff7a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1 style="margin:0;font-size:20px">S-MAS Project • Sprint Mechanics Assessment</h1>
+        <div style="font-size:12px;color:#444"><strong>Reporte automatizado desarrollado por Santiago Grosso</strong></div>
+        </div>
+    </div>
+
+    <!-- Bloque DATOS -->
+    <div class="infoBox">
+      <div class="title">DATOS</div>
+      <div class="row">
+        <span class="pill">Nombre: <strong>${athleteName}</strong></span>
+        <span class="pill">Fecha: <strong>${fecha}</strong></span>
+      </div>
+    </div>
+
     <!-- Bloque PUNTAJE -->
     <div class="scoreBox">
       <div class="title">PUNTAJE</div>
@@ -891,13 +925,12 @@ document.getElementById('printReport').onclick = () => {
           ${donutSVG(needs.tally)}
         </div>
         <div class="col">
+          <!-- Cada título de grupo AHORA lleva el puntito del color correspondiente -->
           <div>
             <div class="groupTitle"><span class="dot" style="background:#2563eb"></span>Control lumbopélvico</div>
             ${(() => {
               const act = activeCriteriaFor('Control lumbopélvico');
-              return act.length
-                ? `<ul>${act.map((t) => `<li>${t}</li>`).join('')}</ul>`
-                : `<div class="empty">Sin ítems activados</div>`;
+              return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
             })()}
           </div>
 
@@ -905,9 +938,7 @@ document.getElementById('printReport').onclick = () => {
             <div class="groupTitle"><span class="dot" style="background:#f59e0b"></span>Back-side mechanics</div>
             ${(() => {
               const act = activeCriteriaFor('Back-side mechanics');
-              return act.length
-                ? `<ul>${act.map((t) => `<li>${t}</li>`).join('')}</ul>`
-                : `<div class="empty">Sin ítems activados</div>`;
+              return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
             })()}
           </div>
 
@@ -915,72 +946,53 @@ document.getElementById('printReport').onclick = () => {
             <div class="groupTitle"><span class="dot" style="background:#ef4444"></span>Overstriding</div>
             ${(() => {
               const act = activeCriteriaFor('Overstriding');
-              return act.length
-                ? `<ul>${act.map((t) => `<li>${t}</li>`).join('')}</ul>`
-                : `<div class="empty">Sin ítems activados</div>`;
+              return act.length ? `<ul>${act.map(t=>`<li>${t}</li>`).join('')}</ul>` : `<div class="empty">Sin ítems activados</div>`;
             })()}
           </div>
         </div>
       </div>
     </div>
-
-    ${cropStripHTML}
   `;
 
-  const page1 = document.createElement('div');
-  page1.className = 'page';
   const page1Inner = document.createElement('div');
   page1Inner.innerHTML = coverHTML;
   page1.appendChild(page1Inner);
-  container.appendChild(page1);
 
-  const blocks = [];
-  MOMENTS.forEach((m) => {
-    const mm = state.moments[m.key];
-    const latest = mm.snapshots[mm.snapshots.length - 1];
-    const checks = (QUESTIONS[m.key] || [])
-      .map(
-        (q, i) => `<li>${mm.checks[i] ? '✅' : '⬜️'} ${q}</li>`
-      )
-      .join('');
-    const notes = mm.notes
-      ? `<div class="notes"><strong>Notas:</strong> ${mm.notes.replace(
-          /</g,
-          '&lt;'
-        )}</div>`
-      : '';
-    const img = latest
-      ? `<img src="${latest.dataURL}" alt="${m.label}" />`
-      : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
-    const block = document.createElement('div');
-    block.className = 'momentBlock';
+  // ——— bloques de momentos (iguales que antes)
+  const blocks=[];
+  MOMENTS.forEach(m=>{
+    const mm=state.moments[m.key];
+    const latest=mm.snapshots[mm.snapshots.length-1];
+    const checks=(QUESTIONS[m.key]||[]).map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
+    const notes = mm.notes ? `<div class="notes"><strong>Notas:</strong> ${mm.notes.replace(/</g,'&lt;')}</div>` : '';
+    const img = latest ? `<img src="${latest.dataURL}" alt="${m.label}" />`
+                       : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
+    const block=document.createElement('div'); block.className='momentBlock';
     block.innerHTML = `
       <h2 style="margin:3mm 0 1mm 0;">${m.label}</h2>
       <div class="row">
         ${img}
-        <div class="col">
-          <strong>Checklist</strong>
-          <ul>${checks}</ul>
-          ${notes}
-        </div>
-      </div>
-    `;
+        <div class="col"><strong>Checklist</strong><ul>${checks}</ul>${notes}</div>
+      </div>`;
     blocks.push(block);
   });
 
-  const page2 = document.createElement('div');
-  page2.className = 'page';
-  if (blocks[0]) page2.appendChild(blocks[0]);
-  if (blocks[1]) page2.appendChild(blocks[1]);
+  if(blocks.length) page1.appendChild(blocks[0]);
+  container.appendChild(page1);
+
+  // ——— página 2
+  const page2=document.createElement('div'); page2.className='page';
+  if(blocks[1]) page2.appendChild(blocks[1]);
+  if(blocks[2]) page2.appendChild(blocks[2]);
   container.appendChild(page2);
 
-  const page3 = document.createElement('div');
-  page3.className = 'page';
-  if (blocks[2]) page3.appendChild(blocks[2]);
-  if (blocks[3]) page3.appendChild(blocks[3]);
-  if (blocks[4]) page3.appendChild(blocks[4]);
+  // ——— página 3
+  const page3=document.createElement('div'); page3.className='page';
+  if(blocks[3]) page3.appendChild(blocks[3]);
+  if(blocks[4]) page3.appendChild(blocks[4]);
   container.appendChild(page3);
 
+  // ——— imprimir
   window.print();
 };
 
