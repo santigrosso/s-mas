@@ -465,8 +465,7 @@ function startDrag(ev){
     dragging = 'b';
     dragKey = key;
     break;
-  }
-} else if (key === 'heel') {
+  } else if (key === 'heel') {
   if (hit(d.p, x, y)) { dragging = 'p'; dragKey = key; return ev.preventDefault(); }
 } else if (['vh','t15','g45','knee','tibia'].includes(key)) {
   if (hit(d.anchor, x, y)) { dragging = 'anchor'; dragKey = key; return ev.preventDefault(); }
