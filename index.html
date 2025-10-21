@@ -805,6 +805,18 @@ document.getElementById('printReport').onclick = () => {
   const total = Object.values(state.moments)
     .reduce((acc, mm) => acc + mm.checks.filter(Boolean).length, 0);
   const needs = computeNeeds(); // {tally:{...}, winners:[...], max:number}
+// ====== Tira de recortes (uno por momento) ======
+const cropImgs = MOMENTS.map(m=>{
+  const mm = state.moments[m.key];
+  const latest = mm.snapshots[mm.snapshots.length-1];
+  return latest?.cropURL || '';
+});
+
+const cropStripHTML = cropImgs.some(Boolean)
+  ? `<div class="cropStrip">
+       ${cropImgs.map(u => u ? `<img src="${u}" alt="recorte"/>` : `<div style="flex:1 1 0"></div>`).join('')}
+     </div>`
+  : '';
 
   // ====== criterios en texto ======
   const CRITERIA_TEXT = {
