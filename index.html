@@ -941,10 +941,20 @@ const cropStripHTML = cropImgs.some(Boolean)
     #report .needBox ul{margin:4px 0 0 16px;font-size:11px;}
     #report .needBox .empty{color:#6b7280;font-size:11px;}
 
-    /* Tira de recortes */
-    #report .cropStrip{display:flex;gap:6px;margin:10px 0 6px 0;}
-    #report .cropStrip img{flex:1 1 0;width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px;background:#fff;}
-  </style>
+    /* Tira de recortes (panel) */
+#report .cropBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
+#report .cropBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
+#report .cropStrip{display:flex;gap:6px;}
+/* 5 imágenes en una fila: 4 gaps × 6px = 24px; cada img ocupa 1/5 del ancho restante */
+#report .cropStrip img{
+  flex:0 0 calc((100% - 24px)/5);
+  width:calc((100% - 24px)/5);
+  height:auto;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  background:#fff;
+}
+
 `;
 
 
