@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>S-MAS • Sprint Mechanics Assessment (v3.9.4)</title>
+<title>S-MAS • Sprint Mechanics Assessment (v3.9.3)</title>
 <style>
   :root{
     --bg:#0b1b2b; --fg:#ffffff; --acc:#ff7a00; --mut:#b8c3cf; --panel:#11263b; --ok:#19b36a; --bad:#e74c3c; --bdr:#204667;
@@ -11,7 +11,7 @@
     --scrub-bg:#1a324c; --scrub-buffer:#2b5178; --scrub-played:#ff7a00; --scrub-thumb:#ffffff;
   }
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center}
+  header{padding:12px 16px;border-bottom:1px solid #163551;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
   header .pill{background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12px}
   main{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
@@ -69,12 +69,8 @@
   .scrubber .thumb{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,.5); }
   footer{padding:16px;text-align:center;color:#9fb1c7;font-size:12px}
   #report{ display:none; }
-
-  /* Nuevo contenedor que envuelve video + scrubber */
-  #viewArea{ position:relative; }
-
   @media print {
-    @page { size: A4; margin: 6mm 10mm 8mm 10mm; }
+    @page { size: A4; margin: 8mm 8mm 10mm 8mm; }
     body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     header, #app, footer { display: none !important; }
     #report { display: block; background:#fff; color:#000; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
@@ -100,38 +96,32 @@
   <span class="pill">Local • Offline</span>
   <span class="pill">HEVC / 240 fps</span>
 </header>
-
 <div id="app">
   <main>
     <div class="row">
       <div class="card" style="flex:2 1 520px">
         <div class="controls" style="justify-content:space-between;margin-bottom:8px">
-         <div class="controls">
-  <input id="file" type="file" accept="video/*" />
-  <label class="label" for="athleteName" style="margin-left:8px">Nombre:</label>
-  <input id="athleteName" type="text" placeholder="Nombre y apellido" 
-         style="width:200px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
-  <button class="ghost small" id="clearState">Limpiar</button>
-</div>
+          <div class="controls">
+            <input id="file" type="file" accept="video/*" />
+            <label class="label" for="athleteName" style="margin-left:8px">Nombre:</label>
+            <input id="athleteName" type="text" placeholder="Atleta / Cliente" style="width:180px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
+            <button class="ghost small" id="clearState">Limpiar</button>
+          </div>
           <div class="controls">
             <span class="label">fps objetivo</span>
             <input id="fps" type="number" value="240" min="1" max="480" style="width:80px;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:6px"/>
           </div>
         </div>
-
         <div class="tabsWrap">
           <div class="tabs" id="tabs"></div>
           <div class="momentDesc" id="momentDesc"></div>
         </div>
-
-        <!-- Contenedor general del video + barra -->
         <div id="viewArea">
           <div id="videoWrap">
             <video id="vid" playsinline muted controls preload="metadata"></video>
             <canvas id="overlay"></canvas>
             <canvas id="magnifier" width="1" height="1"></canvas>
           </div>
-
           <div class="scrubWrap">
             <div class="scrubRow">
               <div class="time" id="curT">0:00</div>
@@ -144,7 +134,6 @@
             </div>
           </div>
         </div>
-
         <div class="controls" style="margin-top:8px;flex-wrap:wrap">
           <button id="play" class="small">▶︎ Play/Pause</button>
           <button id="back1" class="small">−1 frame</button>
@@ -155,42 +144,34 @@
           <span class="pill">t=<span id="ctime">0.000</span>s • frame <b id="fnum">0</b></span>
           <span class="pill">momento: <b id="curMomentLabel">Toe-off</b></span>
         </div>
-
         <div class="hr"></div>
       </div>
-
       <div class="card" style="flex:1 1 360px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Guías</strong>
           <button id="invert" class="ghost small" title="Espejar guías izquierda/derecha">Invertir (izq/der)</button>
         </div>
         <div id="guidesPanel"></div>
-
         <div class="hr"></div>
-
         <div class="score" id="scoreCard" style="margin-bottom:6px">
           <span class="pill">Momento: <b id="momentScore">0</b></span>
           <span class="pill">Total: <b id="totalScore">0</b></span>
           <span class="pill">Clasificación: <b id="grade">Excelente (0–1)</b></span>
         </div>
-
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Preguntas (on/off)</strong>
           <span class="label">toca para alternar</span>
         </div>
         <div id="questions"></div>
-
         <div class="hr"></div>
         <div class="grid">
           <label class="label">Notas del momento</label>
-          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px"></textarea>
+          <textarea id="notes" rows="4" style="width:100%;background:#0f2a44;color:#fff;border:1px solid #bdr;border-radius:8px;padding:8px"></textarea>
         </div>
-
         <div class="hr"></div>
         <div class="grid">
           <button id="snap" class="small">Capturar imagen</button>
         </div>
-
         <div class="grid" style="margin-top:8px">
           <button id="printReport" disabled>Generar reporte (Imprimir → PDF)</button>
           <span class="label" id="reportHint">Necesitás capturar los 5 momentos (ver tildes en las pestañas).</span>
@@ -199,53 +180,16 @@
     </div>
   </main>
 </div>
-
-<div id="report">
-  <div id="reportContent"></div>
-  <div id="printFooter">Desarrollado por Santiago Grosso – S-MAS Project · 2025</div>
-</div>
-
+<div id="report"><div id="reportContent"></div><div id="printFooter">Desarrollado por Santiago Grosso – S-MAS Project · 2025</div></div>
 <footer>Desarrollado por Santiago Grosso – S-MAS Project · 2025</footer>
-
 <script>
-/* ===== Descripciones ===== */
-const DESCRIPTIONS={
-  toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",
-  mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",
-  lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",
-  touchdown:"Punto de primer contacto con el suelo.",
-  midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."
-};
-
-/* ===== Momentos/Preguntas ===== */
-const MOMENTS=[
-  {key:'toeoff',label:'Toe-off'},
-  {key:'mvp',label:'Max Vertical Projection'},
-  {key:'lateswing',label:'Late Swing'},
-  {key:'touchdown',label:'Touchdown'},
-  {key:'midstance',label:'Mid-stance'},
-];
-const QUESTIONS={
-  toeoff:["¿Demasiada extensión de cadera?"],                               // #1
-  mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"], // #2 #3
-  lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"], // #4 #5
-  touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"], // #6..#11
-  midstance:["¿Está la rodilla por delante de la punta del pie?"]            // #12
-};
-
-/* ===== Estado ===== */
+const DESCRIPTIONS={toeoff:"Punto inmediatamente anterior a que el pie contralateral deje el suelo.",mvp:"Punto intermedio entre el toe-off y el touch-down; la pelvis se encuentra en su punto más alto de la fase de swing.",lateswing:"Punto de máxima extensión de rodilla durante la fase de swing.",touchdown:"Punto de primer contacto con el suelo.",midstance:"Punto donde la pelvis está posicionada directamente sobre la articulación del tobillo."};
+const MOMENTS=[{key:'toeoff',label:'Toe-off'},{key:'mvp',label:'Max Vertical Projection'},{key:'lateswing',label:'Late Swing'},{key:'touchdown',label:'Touchdown'},{key:'midstance',label:'Mid-stance'},];
+const QUESTIONS={toeoff:["¿Demasiada extensión de cadera?"],mvp:["¿Rotación excesiva de tronco?","¿Está el talón de la pierna trasera por encima de la pantorrilla?"],lateswing:["¿Anteversión pélvica o extensión lumbar entre MVP y Late swing?","¿Está la rodilla por detrás de los glúteos?"],touchdown:["¿Está el tronco inclinado hacia delante?","¿Hay anteversión pélvica o extensión lumbar?","¿Hay más de 20° entre ambos muslos?","¿Está el pie muy adelantado en relación al CdG?","¿La tibia está inclinada?","¿El primer apoyo es muy marcado con talón o punta?"],midstance:["¿Está la rodilla por delante de la punta del pie?"]};
 const GRADE=(s)=> s<=1?"Excelente (0–1)": s===2?"Bueno (2)": s<=5?"Promedio (3–5)": s===6?"Pobre (6)": s<=11?"Muy pobre (7–11)":"Extremadamente pobre (12)";
-let state={
-  fps:240,invert:false,curMoment:'toeoff',
-  moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
-    t:0,frame:0,notes:'',checks:QUESTIONS[m.key].map(()=>false), snapshots:[], captured:false, guides: {}
-  }]))
-};
-
-/* ===== DOM ===== */
+let state={fps:240,invert:false,curMoment:'toeoff', name:'',moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{t:0,frame:0,notes:'',checks:(QUESTIONS[m.key]||[]).map(()=>false), snapshots:[], captured:false, guides: {}}]))};
 const $=s=>document.querySelector(s);
 const file=$('#file'),vid=$('#vid'),wrap=$('#videoWrap');
-const nameInput = document.getElementById('athleteName');
 const cvs=$('#overlay'),ctx=cvs.getContext('2d');
 const mag=$('#magnifier'), mctx=mag.getContext('2d');
 const fpsInput=$('#fps'),ctime=$('#ctime'),fnum=$('#fnum');
@@ -254,78 +198,31 @@ const notesEl=$('#notes'), guidesPanel=$('#guidesPanel');
 const printBtn=$('#printReport'),reportHint=$('#reportHint');
 const invertBtn=$('#invert');
 const momentScoreEl=document.getElementById('momentScore'), totalScoreEl=document.getElementById('totalScore'), gradeEl=document.getElementById('grade');
-const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT');
-
-/* ===== Tooltips ===== */
+const scrub=$('#scrubber'), playBar=$('#playBar'), bufBar=$('#bufBar'), thumb=$('#thumb'), curT=$('#curT'), durT=$('#durT'); const nameInput=$('#athleteName');
 let tipEl=null, tipAnchor=null;
-function toggleTip(anchor, text){ if(tipEl && tipAnchor===anchor){ closeTip(); return; } showTip(anchor, text); }
-function showTip(anchorEl, text){
-  closeTip(); tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text;
-  document.body.appendChild(tipEl); tipAnchor=anchorEl; positionTip();
-  setTimeout(()=>{
-    document.addEventListener('mousedown', onDocDown, true);
-    document.addEventListener('touchstart', onDocDown, {passive:false, capture:true});
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('scroll', closeTip, {passive:true});
-    window.addEventListener('resize', onResize, {passive:true});
-  },0);
-}
-function positionTip(){ if(!tipEl || !tipAnchor) return;
-  const r=tipAnchor.getBoundingClientRect(); const tt=tipEl.getBoundingClientRect();
-  let left = r.left - tt.width - 8; let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2);
-  if(left < 6){ left = r.right + 8; } const maxTop = window.scrollY + window.innerHeight - tt.height - 6; const minTop = window.scrollY + 6;
-  top = Math.max(minTop, Math.min(maxTop, top)); tipEl.style.left = left + 'px'; tipEl.style.top  = top + 'px';
-}
+function toggleTip(a,t){ if(tipEl && tipAnchor===a){ closeTip(); return; } showTip(a,t); }
+function showTip(anchorEl,text){ closeTip(); tipEl=document.createElement('div'); tipEl.className='helpTip'; tipEl.textContent=text; document.body.appendChild(tipEl); tipAnchor=anchorEl; positionTip(); setTimeout(()=>{document.addEventListener('mousedown', onDocDown, true);document.addEventListener('touchstart', onDocDown, {passive:false, capture:true});window.addEventListener('keydown', onKey);window.addEventListener('scroll', closeTip, {passive:true});window.addEventListener('resize', onResize, {passive:true});},0); }
+function positionTip(){ if(!tipEl||!tipAnchor) return; const r=tipAnchor.getBoundingClientRect(); const tt=tipEl.getBoundingClientRect(); let left = r.left - tt.width - 8; let top  = r.top + window.scrollY - (tt.height/2) + (r.height/2); if(left < 6){ left = r.right + 8; } const maxTop = window.scrollY + window.innerHeight - tt.height - 6; const minTop = window.scrollY + 6; top = Math.max(minTop, Math.min(maxTop, top)); tipEl.style.left = left + 'px'; tipEl.style.top  = top + 'px'; }
 function onDocDown(e){ if(!tipEl) return; if(tipEl.contains(e.target) || e.target===tipAnchor){ return; } closeTip(); }
 function onKey(e){ if(e.key==='Escape') closeTip(); }
 function onResize(){ positionTip(); }
-function closeTip(){ if(!tipEl) return; tipEl.remove(); tipEl=null; tipAnchor=null;
-  document.removeEventListener('mousedown', onDocDown, true);
-  document.removeEventListener('touchstart', onDocDown, {capture:true});
-  window.removeEventListener('keydown', onKey);
-  window.removeEventListener('scroll', closeTip);
-  window.removeEventListener('resize', onResize);
-}
-
-/* ===== Helpers ===== */
-function ensureGuideState(momentKey, guideKey){
-  const m=state.moments[momentKey];
-  if(!m.guides[guideKey]){ m.guides[guideKey]={on:false, data:{}}; }
-  return m.guides[guideKey];
-}
+function closeTip(){ if(!tipEl) return; tipEl.remove(); tipEl=null; tipAnchor=null; document.removeEventListener('mousedown', onDocDown, true); document.removeEventListener('touchstart', onDocDown, {capture:true}); window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', closeTip); window.removeEventListener('resize', onResize); }
+function ensureGuideState(mk,gk){ const m=state.moments[mk]; if(!m.guides[gk]){ m.guides[gk]={on:false, data:{}}; } return m.guides[gk]; }
 function allCaptured(){ return MOMENTS.every(m=>state.moments[m.key].captured); }
 function updateReportAvailability(){ const ok=allCaptured(); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
-function setMoment(key){
-  state.curMoment=key;
-  renderTabs(); renderGuidesPanel();
-  momentDesc.textContent=DESCRIPTIONS[key];
-  curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label;
-  renderQuestions(); notesEl.value=state.moments[key].notes||''; refreshScores(); draw();
-}
-function renderTabs(){
-  tabs.innerHTML='';
-  MOMENTS.forEach(m=>{
-    const b=document.createElement('button');
-    b.className='tab'+(state.curMoment===m.key?' active':'');
-    if(state.moments[m.key].captured) b.classList.add('captured');
-    b.dataset.key=m.key; b.onclick=()=>setMoment(m.key);
-    b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`;
-    tabs.appendChild(b);
-  });
-  updateReportAvailability();
-}
+function setMoment(key){ state.curMoment=key; renderTabs(); renderGuidesPanel(); momentDesc.textContent=DESCRIPTIONS[key]; curMomentLabel.textContent=MOMENTS.find(m=>m.key===key).label; renderQuestions(); notesEl.value=state.moments[key].notes||''; refreshScores(); draw(); }
+function renderTabs(){ tabs.innerHTML=''; MOMENTS.forEach(m=>{ const b=document.createElement('button'); b.className='tab'+(state.curMoment===m.key?' active':''); if(state.moments[m.key].captured) b.classList.add('captured'); b.dataset.key=m.key; b.onclick=()=>setMoment(m.key); b.innerHTML=`<span class="text">${m.label}</span><span class="tick">✓</span>`; tabs.appendChild(b); }); updateReportAvailability(); }
 function renderGuidesPanel(){
   guidesPanel.innerHTML='';
   const GUIDE_DEFS={
-    toeoff:[ {key:'g45', label:'Guía 45° extensión', use:'Ubica el punto en el centro de la cadera y comprueba si la extensión de cadera supera los 45°.'} ],
-    mvp:[ {key:'heel', label:'Guía talón', use:'Ubica el punto en el talón y comprueba si la pantorrilla está por encima.'} ],
-    lateswing:[ {key:'vh', label:'Guía rodilla', use:'Ubica el cruce en la zona glútea y comprueba si la rodilla queda por detrás y si se observa anteversión pélvica.'} ],
-   touchdown:[
-  {key:'thighs', label:'Guía muslos/tronco', use:'Ubica el punto en el trocánter y luego en la proyección de ambos muslos. Comprueba que el tronco no exceda los 15° de flexión y que el ángulo entre muslos no sea superior a 20°.'},
-  {key:'cdg', label:'Guía distancia CdG', use:'Ubica el punto en el talón y compara la medida del pie con la distancia a la vertical.'},
-  {key:'tibia', label:'Guía tibia', use:'Ubicá el punto en el centro de la articulación del tobillo y comprobá que la rodilla no esté por detrás.'}
- ],
-    midstance:[ {key:'knee', label:'Guía rodilla', use:'Ubicá la línea vertical (puntos en extremos) con el punto superior en la rodilla y verificá que no esté por delante de la punta del pie.'} ]
+    toeoff:[ {key:'g45', label:'Guía 45° extensión', use:'Ubicá el punto en la cadera y comprobá si la extensión supera 45° (vertical + diagonal solo hacia abajo).'} ],
+    mvp:[ {key:'heel', label:'Guía talón', use:'Ubicá el punto en el talón y comprobá si la pantorrilla está por encima.'} ],
+    lateswing:[ {key:'vh', label:'Guía rodilla', use:'Ubicá el cruce en la zona glútea y comprobá si la rodilla queda por detrás y si se observa anteversión pélvica.'} ],
+    touchdown:[
+      {key:'thighs', label:'Guía muslos/tronco', use:'Ubicá el punto en el trocánter y luego en la proyección de ambos muslos. Verificá que el tronco no exceda 15° de flexión y que el ángulo entre muslos no supere 20°.'},
+      {key:'cdg', label:'Guía CdG / Distancia', use:'Poné el punto en el talón: mide auto la distancia a la vertical de muslos/tronco. Luego ajustá el segundo punto (mismo eje) para el largo del pie y comparar.'}
+    ],
+    midstance:[ {key:'knee', label:'Guía rodilla', use:'Vertical en la rodilla para verificar que no esté por delante de la punta del pie.'}, {key:'tibia', label:'Guía tibia', use:'Vertical en el tobillo para verificar alineación tibial.'} ]
   }[state.curMoment]||[];
   GUIDE_DEFS.forEach(def=>{
     const row=document.createElement('div'); row.className='q';
@@ -344,50 +241,18 @@ function renderGuidesPanel(){
     guidesPanel.appendChild(row);
   });
 }
-function renderQuestions(){
-  const m=state.moments[state.curMoment];
-  questions.innerHTML='';
-  (QUESTIONS[state.curMoment]||[]).forEach((q,i)=>{
-    const row=document.createElement('div'); row.className='q';
-    const lab=document.createElement('label'); lab.textContent=q;
-    const sw=document.createElement('label'); sw.className='switch';
-    const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i];
-    input.onchange=()=>{ m.checks[i]=input.checked; refreshScores(); draw(); };
-    const slid=document.createElement('span'); slid.className='slider';
-    sw.appendChild(input); sw.appendChild(slid);
-    row.appendChild(lab); row.appendChild(sw);
-    questions.appendChild(row);
-  });
-}
-function refreshScores(){
-  const cur = state.moments[state.curMoment].checks.filter(Boolean).length;
-  const total = Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
-  momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total);
-}
-
-/* ===== Video / Dibujo ===== */
+function renderQuestions(){ const m=state.moments[state.curMoment]; questions.innerHTML=''; (QUESTIONS[state.curMoment]||[]).forEach((q,i)=>{ const row=document.createElement('div'); row.className='q'; const lab=document.createElement('label'); lab.textContent=q; const sw=document.createElement('label'); sw.className='switch'; const input=document.createElement('input'); input.type='checkbox'; input.checked=!!m.checks[i]; input.onchange=()=>{ m.checks[i]=input.checked; refreshScores(); draw(); }; const slid=document.createElement('span'); slid.className='slider'; sw.appendChild(input); sw.appendChild(slid); row.appendChild(lab); row.appendChild(sw); questions.appendChild(row); }); }
+function refreshScores(){ const cur = state.moments[state.curMoment].checks.filter(Boolean).length; const total = Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0); momentScoreEl.textContent = cur; totalScoreEl.textContent = total; gradeEl.textContent = GRADE(total); }
 function sizeCanvasToWrap(){ const r=wrap.getBoundingClientRect(); cvs.width=r.width; cvs.height=r.height; mag.width=r.width; mag.height=r.height; }
 function draw(){ if(!vid.videoWidth) return; sizeCanvasToWrap(); ctx.clearRect(0,0,cvs.width,cvs.height); ctx.drawImage(vid,0,0,cvs.width,cvs.height); drawGuides(); drawMagnifier(); }
 function stepFrames(n){ const fps=Number(state.fps)||240; vid.pause(); const dt=n/fps; const t=Math.max(0,Math.min(vid.duration||0,(vid.currentTime||0)+dt)); vid.currentTime=t; }
-function updateTimeUI(){
-  const t=vid.currentTime||0, d=vid.duration||0;
-  ctime.textContent=t.toFixed(3);
-  const fps=Number(state.fps)||240; fnum.textContent=Math.round(t*fps);
-  const m=state.moments[state.curMoment]; m.t=t; m.frame=Math.round(t*fps);
-  if(d>0){
-    const pct=(t/d)*100; playBar.style.width=pct+'%'; thumb.style.left=pct+'%';
-    durT.textContent=formatTime(d); curT.textContent=formatTime(t);
-    try{ let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); } bufBar.style.width=(Math.min(end,d)/d)*100+'%'; }catch(e){}
-  }
-}
+function updateTimeUI(){ const t=vid.currentTime||0, d=vid.duration||0; ctime.textContent=t.toFixed(3); const fps=Number(state.fps)||240; fnum.textContent=Math.round(t*fps); const m=state.moments[state.curMoment]; m.t=t; m.frame=Math.round(t*fps); if(d>0){ const pct=(t/d)*100; playBar.style.width=pct+'%'; thumb.style.left=pct+'%'; durT.textContent=formatTime(d); curT.textContent=formatTime(t); try{ let end=0; if(vid.buffered && vid.buffered.length){ end=vid.buffered.end(vid.buffered.length-1); } bufBar.style.width=(Math.min(end,d)/d)*100+'%'; }catch(e){} } }
 function formatTime(s){ s=Math.max(0,Math.floor(s||0)); const m=Math.floor(s/60); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`; }
 vid.addEventListener('timeupdate',()=>{ updateTimeUI(); draw(); });
 vid.addEventListener('seeked',()=>{ updateTimeUI(); draw(); });
-vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); });
+vid.addEventListener('loadedmetadata',()=>{ updateTimeUI(); draw(); });
 vid.addEventListener('progress',()=>{ updateTimeUI(); });
 window.addEventListener('resize', draw);
-
-/* ===== Scrubber ===== */
 let scrubbing=false;
 function posToTime(clientX){ const r=scrub.getBoundingClientRect(); const x=Math.max(0,Math.min(clientX - r.left, r.width)); const pct=x/r.width; return (vid.duration||0)*pct; }
 function beginScrub(clientX){ scrubbing=true; vid.pause(); vid.currentTime=posToTime(clientX); updateTimeUI(); draw(); }
@@ -399,8 +264,6 @@ window.addEventListener('mouseup',()=>{ endScrub(); });
 scrub.addEventListener('touchstart',(e)=>{ if(e.touches.length){ beginScrub(e.touches[0].clientX); } e.preventDefault(); }, {passive:false});
 window.addEventListener('touchmove',(e)=>{ if(scrubbing && e.touches.length){ moveScrub(e.touches[0].clientX); } }, {passive:false});
 window.addEventListener('touchend',()=>{ endScrub(); });
-
-/* ===== Overlay + Lupa ===== */
 let dragging=null, dragKey=null; let placingActive=false;
 const MAG_RADIUS=70, MAG_SCALE=2.5, MAG_OFFSET={x:90,y:-90};
 let magVisible=false, magSrc={x:0,y:0}, magPos={x:0,y:0};
@@ -411,128 +274,49 @@ function activeGuides(){ const g=cm().guides; return Object.entries(g).filter(([
 function showMag(cx,cy,px,py){ magVisible=true; mag.style.display='block'; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function moveMag(cx,cy,px,py){ if(!magVisible) return; magSrc.x=cx; magSrc.y=cy; magPos.x=Math.max(MAG_RADIUS, Math.min(cvs.width-MAG_RADIUS, px+MAG_OFFSET.x)); magPos.y=Math.max(MAG_RADIUS, Math.min(cvs.height-MAG_RADIUS, py+MAG_OFFSET.y)); drawMagnifier(); }
 function hideMag(){ magVisible=false; mag.style.display='none'; }
-function drawMagnifier(){
-  const mw=cvs.width, mh=cvs.height; mag.width=mw; mag.height=mh; mctx.clearRect(0,0,mw,mh); if(!magVisible) return;
-  const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE), sy = magSrc.y - (MAG_RADIUS/MAG_SCALE);
-  const sw = (MAG_RADIUS*2)/MAG_SCALE, sh = (MAG_RADIUS*2)/MAG_SCALE;
-  mctx.save(); mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.closePath(); mctx.clip();
-  mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
-  mctx.imageSmoothingEnabled=true; mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2);
-  mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5; mctx.beginPath();
-  mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y); mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y);
-  mctx.moveTo(magPos.x, magPos.y-MAG_RADIUS); mctx.lineTo(magPos.x, magPos.y+MAG_RADIUS); mctx.stroke();
-  mctx.strokeStyle='rgba(255,255,255,.8)'; mctx.lineWidth=2; mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.stroke(); mctx.restore();
-}
+function drawMagnifier(){ const mw=cvs.width, mh=cvs.height; mag.width=mw; mag.height=mh; mctx.clearRect(0,0,mw,mh); if(!magVisible) return; const sx = magSrc.x - (MAG_RADIUS/MAG_SCALE), sy = magSrc.y - (MAG_RADIUS/MAG_SCALE); const sw = (MAG_RADIUS*2)/MAG_SCALE, sh = (MAG_RADIUS*2)/MAG_SCALE; mctx.save(); mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.closePath(); mctx.clip(); mctx.fillStyle='rgba(0,0,0,1)'; mctx.fillRect(magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2); mctx.imageSmoothingEnabled=true; mctx.drawImage(cvs, sx, sy, sw, sh, magPos.x-MAG_RADIUS, magPos.y-MAG_RADIUS, MAG_RADIUS*2, MAG_RADIUS*2); mctx.strokeStyle='rgba(255,255,255,.9)'; mctx.lineWidth=1.5; mctx.beginPath(); mctx.moveTo(magPos.x-MAG_RADIUS, magPos.y); mctx.lineTo(magPos.x+MAG_RADIUS, magPos.y); mctx.moveTo(magPos.x, magPos.y-MAG_RADIUS); mctx.lineTo(magPos.x, magPos.y+MAG_RADIUS); mctx.stroke(); mctx.strokeStyle='rgba(255,255,255,.8)'; mctx.lineWidth=2; mctx.beginPath(); mctx.arc(magPos.x, magPos.y, MAG_RADIUS, 0, Math.PI*2); mctx.stroke(); mctx.restore(); }
 function startDrag(ev){
   placingActive=true; const {x,y}=toCanvasCoords(ev); showMag(x,y,x,y);
   const list = activeGuides();
- for (const [key, g] of list) {
-  const d = g.data;
-
-  if (key === 'thighs') {
-    if (hit(d.v, x, y)) { dragging = 'v'; dragKey = key; return ev.preventDefault(); }
-    if (hit(d.a, x, y)) { dragging = 'a'; dragKey = key; return ev.preventDefault(); }
-    if (hit(d.b, x, y)) { dragging = 'b'; dragKey = key; return ev.preventDefault(); }
-
-  } else if (key === 'cdg') {
-    if (hit(d.a, x, y)) { dragging = 'a'; dragKey = key; return ev.preventDefault(); }
-    if (hit(d.b, x, y)) { dragging = 'b'; dragKey = key; return ev.preventDefault(); }
-
-  } else if (key === 'heel') {
-    if (hit(d.p, x, y)) { dragging = 'p'; dragKey = key; return ev.preventDefault(); }
-
-  } else if (['vh', 't15', 'g45', 'knee', 'tibia'].includes(key)) {
-    if (hit(d.anchor, x, y)) { dragging = 'anchor'; dragKey = key; return ev.preventDefault(); }
-  }
-}
-
- for (const [key, g] of list) {
-  const d = g.data;
-
-  if (key === 'thighs') {
-    if (!d.v) { d.v = { x, y }; dragging = 'v'; dragKey = key; break; }
-    else if (!d.a) { d.a = { x, y }; dragging = 'a'; dragKey = key; break; }
-    else if (!d.b) { d.b = { x, y }; dragging = 'b'; dragKey = key; break; }
-
-  } else if (key === 'cdg') {
-    // Primer toque: arrastrar 'a'. Al soltar se genera 'b'.
-    if (!d.a) {
-      d.a = { x, y };
-      dragging = 'a';
-      dragKey = key;
-      break;
-    } else if (!d.b) {
-      d.b = { x, y: d.a.y }; // fallback manual, normalmente se crea en endDrag
-      dragging = 'b';
-      dragKey = key;
-      break;
+  for(const [key, g] of list){
+    const d=g.data;
+    if(key==='thighs'){
+      if(hit(d.v,x,y)){ dragging='v'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if(key==='cdg'){
+      if(hit(d.a,x,y)){ dragging='a'; dragKey=key; return ev.preventDefault(); }
+      if(hit(d.b,x,y)){ dragging='b'; dragKey=key; return ev.preventDefault(); }
+    } else if(key==='heel'){
+      if(hit(d.p,x,y)){ dragging='p'; dragKey=key; return ev.preventDefault(); }
+    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
+      if(hit(d.anchor,x,y)){ dragging='anchor'; dragKey=key; return ev.preventDefault(); }
     }
-
-  } else if (key === 'heel') {
-    if (!d.p) { d.p = { x, y }; dragging = 'p'; dragKey = key; break; }
-
-  } else if (['vh', 't15', 'g45', 'knee', 'tibia'].includes(key)) {
-    if (!d.anchor) { d.anchor = { x, y }; dragging = 'anchor'; dragKey = key; break; }
   }
-}
-
+  for(const [key,g] of list){
+    const d=g.data;
+    if(key==='thighs'){
+      if(!d.v){ d.v={x,y}; dragging='v'; dragKey=key; break; }
+      else if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
+      else if(!d.b){ d.b={x,y}; dragging='b'; dragKey=key; break; }
+    } else if(key==='cdg'){
+      if(!d.a){ d.a={x,y}; dragging='a'; dragKey=key; break; }
+      else if(!d.b){ d.b={x,y: d.a.y}; dragging='b'; dragKey=key; break; }
+    } else if(key==='heel'){
+      if(!d.p){ d.p={x,y}; dragging='p'; dragKey=key; break; }
+    } else if(['vh','t15','g45','knee','tibia'].includes(key)){
+      if(!d.anchor){ d.anchor={x,y}; dragging='anchor'; dragKey=key; break; }
+    }
+  }
   draw(); ev.preventDefault();
 }
 function moveDrag(ev){
   if(!placingActive) return; const {x,y}=toCanvasCoords(ev); moveMag(x,y,x,y);
- if (!dragging) return;
-const g = cm().guides[dragKey]; if (!g) return; const d = g.data;
-
-// Comportamiento general
-if (dragKey !== 'cdg') {
-  if (dragging === 'v') d.v = { x, y };
-  if (dragging === 'a') d.a = { x, y };
-  if (dragging === 'b') d.b = { x, y };
-  if (dragging === 'p') d.p = { x, y };
-  if (dragging === 'anchor') d.anchor = { x, y };
-} else {
-  // CDG: 'b' SIEMPRE comparte la misma y de 'a'
-  if (dragging === 'a') {
-    d.a = { x, y };
-    if (d.b) d.b = { x: d.b.x, y: y }; // si ya existe b, acompaña la y de a
-  } else if (dragging === 'b') {
-    const lockedY = d.a ? d.a.y : y;
-    d.b = { x, y: lockedY };
-  }
-}
-
-
+  if(!dragging) return; const g=cm().guides[dragKey]; if(!g) return; const d=g.data;
+  if(dragging==='v') d.v={x,y}; if(dragging==='a') d.a={x,y}; if(dragging==='b'){ d.b={x, y: (dragKey==='cdg' && d.a)? d.a.y : y}; } if(dragging==='p') d.p={x,y}; if(dragging==='anchor') d.anchor={x,y};
   draw(); ev.preventDefault();
 }
-function endDrag(){
-  if(!placingActive) return;
-
-  const prevDragKey = dragKey;
-  const prevDragging = dragging;
-  const g = prevDragKey ? cm().guides[prevDragKey] : null;
-
-  // Caso especial: CdG → soltar 'a' crea 'b' y seguimos arrastrando 'b'
-  if (prevDragKey === 'cdg' && prevDragging === 'a' && g && g.data && g.data.a && !g.data.b) {
-    const a = g.data.a;
-    const offset = Math.min(60, cvs.width * 0.08); // desplazamiento inicial visible
-    g.data.b = { x: a.x + offset, y: a.y };
-
-    // Seguimos en modo "placing" arrastrando B con la lupa activa
-    dragging = 'b';
-    showMag(g.data.b.x, g.data.b.y, g.data.b.x, g.data.b.y);
-    draw();
-    return; // NO salimos de placing
-  }
-
-  // Resto de casos: terminar normalmente
-  placingActive = false;
-  dragging = null;
-  dragKey = null;
-  hideMag();
-  draw();
-}
-
-
+function endDrag(){ placingActive=false; dragging=null; dragKey=null; hideMag(); draw(); }
 cvs.addEventListener('mousedown', startDrag);
 cvs.addEventListener('mousemove', moveDrag);
 cvs.addEventListener('mouseup', endDrag);
@@ -540,15 +324,14 @@ cvs.addEventListener('mouseleave', endDrag);
 cvs.addEventListener('touchstart', startDrag,{passive:false});
 cvs.addEventListener('touchmove', moveDrag,{passive:false});
 cvs.addEventListener('touchend', endDrag);
-
-/* ===== Dibujo de guías ===== */
 function line(x1,y1,x2,y2,dash=[],color='white',width=2){ ctx.save(); ctx.setLineDash(dash); ctx.lineWidth=width; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
 function dot(x,y){ ctx.save(); const rr=(placingActive?10:4); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 function drawVerticalPlusAngleFromVertical(x,y,deg,invert=false){
   line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)');
   const base=90-deg, theta=(invert?-1:1)*(base*Math.PI/180), len=Math.max(cvs.width,cvs.height);
   const dx=Math.cos(theta)*len, dy=-Math.sin(theta)*len;
-  line(x-dx, y+dy, x+dx, y-dy, [6,4], 'rgba(255,255,255,.85)'); dot(x,y);
+  const x1 = x, y1 = y, x2 = x + dx, y2 = y - dy; // diagonal solo hacia ARRIBA desde el punto
+  line(x1,y1,x2,y2,[6,4],'rgba(255,255,255,.85)'); dot(x,y);
 }
 function drawVHAt(x,y){ line(x,0,x,cvs.height,[], 'rgba(255,255,255,.85)'); line(0,y,cvs.width,y,[], 'rgba(255,255,255,.85)'); dot(x,y); }
 function angleBetween(p0,p1,p2){
@@ -561,400 +344,230 @@ function drawGuides(){
   const list = activeGuides();
   for(const [key,g] of list){
     const d=g.data;
-    if (key === 'g45' && d.anchor) {
-  const x = d.anchor.x, y = d.anchor.y;
-
-  // Vertical completa
-  line(x, 0, x, cvs.height, [], 'rgba(255,255,255,.85)', 2);
-
-  // Diagonal a 45° SOLO hacia abajo desde el punto (respeta Invertir)
-  const deg = 45;
-  const phi = (state.invert ? -deg : deg) * Math.PI / 180; // respecto de la vertical
-  const L = Math.max(cvs.width, cvs.height) * 1.5;
-  const x2 = x + Math.sin(phi) * L;
-  const y2 = y + Math.cos(phi) * L; // hacia abajo
-
-  line(x, y, x2, y2, [6, 4], 'rgba(255,255,255,.85)', 2);
-  dot(x, y);
-}
-
+    if(key==='g45' && d.anchor){ 
+      // vertical + diagonal solo hacia abajo
+      line(d.anchor.x,0,d.anchor.x,cvs.height,[], 'rgba(255,255,255,.85)');
+      const base=90-45, theta=(state.invert?-1:1)*(base*Math.PI/180), len=Math.max(cvs.width,cvs.height);
+      const dx=Math.cos(theta)*len, dy=Math.sin(theta)*len; // hacia abajo
+      line(d.anchor.x, d.anchor.y, d.anchor.x - dx, d.anchor.y + dy, [6,4], 'rgba(255,255,255,.85)');
+      dot(d.anchor.x,d.anchor.y);
+    }
     if(key==='heel' && d.p){ line(0,d.p.y,cvs.width,d.p.y,[], 'rgba(255,255,255,.85)',2); dot(d.p.x,d.p.y); }
     if(key==='vh' && d.anchor){ drawVHAt(d.anchor.x, d.anchor.y); }
-   if(key==='t15' && d.anchor){ drawVerticalPlusAngleFromVertical(d.anchor.x, d.anchor.y, 15, state.invert); }
-
-if (key === 'thighs') {
-  const { v, a, b } = d;
-
-  // Puntos existentes
-  if (v) dot(v.x, v.y);
-  if (a) dot(a.x, a.y);
-  if (b) dot(b.x, b.y);
-
-  // === Referencia SIEMPRE visible: vertical + línea a 15° SOLO hacia arriba ===
-  if (v) {
-    // 1) Vertical completa por el vértice
-    line(v.x, 0, v.x, cvs.height, [], 'rgba(255,255,255,.85)', 2);
-
-    // 2) Línea a 15° respecto de la vertical, solo hacia ARRIBA desde el punto
-    //    (hacia la derecha si !invert, hacia la izquierda si invert)
-    const deg = 15;
-    const phi = (state.invert ? -deg : deg) * Math.PI / 180; // ángulo desde la vertical
-    const L = Math.max(cvs.width, cvs.height);               // largo suficiente para salir de pantalla hacia arriba
-    const x2 = v.x + Math.sin(phi) * L;
-    const y2 = v.y - Math.cos(phi) * L; // hacia arriba
-
-    line(v.x, v.y, x2, y2, [6,4], 'rgba(255,255,255,.85)', 2);
-  }
-
-  // Lados del ángulo
-  if (v && a) { line(v.x, v.y, a.x, a.y, [], '#fff', 2); }
-  if (v && b) { line(v.x, v.y, b.x, b.y, [], '#fff', 2); }
-
-  // Cálculo y rótulo del ángulo
-  if (v && a && b) {
-    const ang = angleBetween(a, v, b);
-    ctx.save();
-    ctx.fillStyle = ang > 20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
-    ctx.font = 'bold 14px system-ui';
-    ctx.fillText(`${ang.toFixed(1)}°`, v.x + 8, v.y - 8);
-    ctx.restore();
-
-    if (ang > 20) {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(231,76,60,1)';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(v.x, v.y, 24, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+    if(key==='thighs'){
+      const {v,a,b}=d;
+      if(v) dot(v.x,v.y); if(a) dot(a.x,a.y); if(b) dot(b.x,b.y);
+      if(v && a){ line(v.x,v.y,a.x,a.y,[], '#fff',2); }
+      if(v && b){ line(v.x,v.y,b.x,b.y,[], '#fff',2); }
+      if(v){ drawVerticalPlusAngleFromVertical(v.x, v.y, 15, state.invert); }
+      if(v && a && b){
+        const ang=angleBetween(a,v,b);
+        ctx.save(); ctx.fillStyle = ang>20 ? 'rgba(231,76,60,.9)' : 'rgba(25,179,106,.9)';
+        ctx.font='bold 14px system-ui'; ctx.fillText(`${ang.toFixed(1)}°`, v.x+8, v.y-8); ctx.restore();
+        if(ang>20){ ctx.save(); ctx.strokeStyle='rgba(231,76,60,1)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(v.x,v.y,24,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+      }
     }
-  }
-}
-
-
-if (key === 'cdg') {
-  const { a, b } = d;
-
-  // Pintar puntos si existen
-  if (a) dot(a.x, a.y);
-  if (b) dot(b.x, b.y);
-
-  // Intentar usar la vertical de "Guía muslos/tronco" (thighs)
-  const thighs = cm().guides['thighs'];
-  const v = thighs && thighs.data && thighs.data.v ? thighs.data.v : null;
-
-  // 1) Medición automática: desde 'a' a la vertical (si hay vértice en 'thighs')
-  if (a && v) {
-    const y = a.y, x1 = a.x, x2 = v.x;
-    const xMin = Math.min(x1, x2), xMax = Math.max(x1, x2);
-
-    // Línea punteada a la vertical
-    line(xMin, y, xMax, y, [6, 4], 'rgba(255,255,255,.85)', 2);
-
-    // Rótulo Δx a la vertical
-    const dx = Math.abs(Math.round(x2 - x1));
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.font = 'bold 13px system-ui';
-    ctx.fillText(`Δx a vertical: ${dx}px`, xMin + 5, y - 10);
-    ctx.restore();
-
-    // Dibujar la propia vertical de referencia (suave)
-    line(v.x, 0, v.x, cvs.height, [], 'rgba(255,255,255,.25)', 1);
-  }
-
-  // 2) Medición de "largo de pie": entre 'a' y 'b' (misma y)
-  if (a && b) {
-    const y = a.y;
-    const xMin = Math.min(a.x, b.x), xMax = Math.max(a.x, b.x);
-
-    // Línea sólida para "pie"
-    line(xMin, y, xMax, y, [], 'rgba(255,255,255,1)', 2);
-
-    // Rótulo pie
-    const footLen = Math.abs(Math.round(b.x - a.x));
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.font = 'bold 13px system-ui';
-    ctx.fillText(`pie: ${footLen}px`, xMin + 5, y + 16);
-    ctx.restore();
-  }
-}
-
-
-
-   if (key === 'knee' && d.anchor) {
-  // Vertical completa en x del punto + punto visible
-  const x = d.anchor.x, y = d.anchor.y;
-  line(x, 0, x, cvs.height, [], 'rgba(255,255,255,.95)', 3);
-  dot(x, y);
-}
-
-   if (key === 'tibia' && d.anchor) {
-  // Vertical completa en x del punto + punto visible
-  const x = d.anchor.x, y = d.anchor.y;
-  line(x, 0, x, cvs.height, [], 'rgba(255,255,255,.95)', 3);
-  dot(x, y);
-}
-
+    if(key==='cdg'){
+      const {a,b}=d; if(a) dot(a.x,a.y); if(b) dot(b.x,b.y);
+      if(a){
+        const xVert = (state.moments['touchdown']?.guides?.['thighs']?.data?.v?.x) ?? a.x;
+        line(xVert,0,xVert,cvs.height,[], 'rgba(255,255,255,.5)',1.5);
+        const dx = Math.abs(Math.round(a.x - xVert));
+        ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
+        ctx.fillText(`Δx: ${dx}px`, Math.min(a.x,xVert)+5, a.y-8); ctx.restore();
+        line(Math.min(a.x,xVert),a.y,Math.max(a.x,xVert),a.y,[6,4],'rgba(255,255,255,.85)',2);
+      }
+      if(a && b){
+        line(a.x, a.y, b.x, a.y, [6,4], 'rgba(255,255,255,.85)',2);
+        const foot = Math.abs(Math.round(b.x - a.x));
+        ctx.save(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 13px system-ui';
+        ctx.fillText(`pie: ${foot}px`, Math.min(a.x,b.x)+5, a.y+16); ctx.restore();
+      }
+    }
+    if(key==='knee' && d.anchor){
+      const h = cvs.height*0.12; const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1); dot(x,y2);
+    }
+    if(key==='tibia' && d.anchor){
+      const h = cvs.height*0.12; const x=d.anchor.x, y1=d.anchor.y-h/2, y2=d.anchor.y+h/2;
+      line(x,y1,x,y2,[], 'rgba(255,255,255,.95)',3); dot(x,y1); dot(x,y2);
+    }
   }
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px system-ui'; ctx.fillText('Activá guías y tocá para ubicarlas. Arrastrá para ajustar.',10,cvs.height-10); ctx.restore();
 }
-
-/* ===== Controles ===== */
 document.getElementById('play').onclick=async()=>{ try{ if(vid.paused){ await vid.play(); } else { vid.pause(); } }catch(e){} };
 document.getElementById('back1').onclick=()=>stepFrames(-1);
 document.getElementById('fwd1').onclick=()=>stepFrames(1);
 document.getElementById('back10').onclick=()=>stepFrames(-10);
 document.getElementById('fwd10').onclick=()=>stepFrames(10);
+const fsBtn = document.getElementById('fs');
+function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+async function enterFullscreen(el){ try{ if(el.requestFullscreen){ await el.requestFullscreen(); } else if(el.webkitRequestFullscreen){ el.webkitRequestFullscreen(); } }catch(e){} }
+async function exitFullscreen(){ try{ if(document.exitFullscreen){ await document.exitFullscreen(); } else if(document.webkitExitFullscreen){ document.webkitExitFullscreen(); } }catch(e){} }
+fsBtn.onclick = async () => { if(!isFullscreen()){ await enterFullscreen(document.getElementById('viewArea')); } else { await exitFullscreen(); } };
+function refreshFsLabel(){ fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom'; }
+document.addEventListener('fullscreenchange', refreshFsLabel);
+document.addEventListener('webkitfullscreenchange', refreshFsLabel);
+refreshFsLabel();
 invertBtn.onclick=()=>{ state.invert=!state.invert; draw(); };
-/* ===== Helpers de recorte ===== */
-function getCropCenterForMoment(mKey){
-  const g = (state.moments[mKey]?.guides) || {};
-  const centerDefault = { x: cvs.width/2, y: cvs.height/2 };
-
-  if(mKey==='toeoff'   && g.g45   && g.g45.data?.anchor) return g.g45.data.anchor;     // 45° → anchor
-  if(mKey==='mvp'      && g.heel  && g.heel.data?.p)     return g.heel.data.p;         // talón → p
-  if(mKey==='touchdown'&& g.thighs&& g.thighs.data?.v)   return g.thighs.data.v;       // muslos/tronco → vértice v
-  if(mKey==='midstance'&& g.knee  && g.knee.data?.anchor)return g.knee.data.anchor;    // rodilla → anchor
-  if(mKey==='lateswing'&& g.vh    && g.vh.data?.anchor)  return g.vh.data.anchor;      // (fallback)
-  return centerDefault;
-}
-
-function captureCroppedRect(center){
-  // Alto = alto del canvas (frame actual)
-  let H = cvs.height;
-  // Ancho = 3/4 del alto
-  let W = Math.round(H * 0.75);
-
-  // Si el ancho supera el canvas, escalamos ambos para que quepa
-  if (W > cvs.width) {
-    const f = cvs.width / W;
-    W = Math.round(W * f);
-    H = Math.round(H * f);
-  }
-
-  // Top-left clamp para que el rectángulo quede dentro del canvas
-  const x = Math.max(0, Math.min(Math.round(center.x - W/2), cvs.width  - W));
-  const y = Math.max(0, Math.min(Math.round(center.y - H/2), cvs.height - H));
-
-  // Recorte desde el canvas (que ya tiene video + guías dibujadas)
-  const off = document.createElement('canvas');
-  off.width = W; off.height = H;
-  const octx = off.getContext('2d');
-  octx.drawImage(cvs, x, y, W, H, 0, 0, W, H);
-  return off.toDataURL('image/png');
-}
-
-  document.getElementById('snap').onclick=()=>{
-  // Asegurá que el canvas esté con el frame y las guías más recientes
-  draw();
-
-  const mKey = state.curMoment, m = state.moments[mKey];
-
-  // Imagen completa (con guías)
-  const fullURL = cvs.toDataURL('image/png');
-
-  // Centro según el momento + recorte (con guías)
-  const center = getCropCenterForMoment(mKey);
-  const cropURL = captureCroppedRect(center);
-
-  // Guardamos ambos (full y recorte)
-  m.snapshots.push({ dataURL: fullURL, cropURL, when: new Date().toISOString(), frame: m.frame, t: m.t });
-  m.captured = true; 
-  renderTabs();
-
-  // Apagamos guías activas de ese momento (como antes)
+document.getElementById('snap').onclick=()=>{
+  const dataURL=cvs.toDataURL('image/png');
+  const mKey=state.curMoment, m=state.moments[mKey];
+  m.snapshots.push({dataURL,when:new Date().toISOString(),frame:m.frame,t:m.t});
+  m.captured=true; renderTabs();
   const gobj = m.guides; Object.keys(gobj).forEach(k => { if(gobj[k] && gobj[k].on) gobj[k].on = false; });
-
   placingActive=false; dragging=null; dragKey=null; hideMag(); draw();
-
-  // Avance automático al siguiente momento
   const idx = MOMENTS.findIndex(mm=>mm.key===mKey);
   if(idx < MOMENTS.length - 1){ setMoment(MOMENTS[idx+1].key); } else { alert('Ya podés generar el reporte.'); }
 };
-
 notesEl.oninput=()=>{ state.moments[state.curMoment].notes=notesEl.value; };
 fpsInput.onchange=()=>{ state.fps=Number(fpsInput.value)||240; updateTimeUI(); };
+nameInput.oninput=()=>{ state.name = nameInput.value.trim(); };
 
-/* ===== Reporte ===== */
+/* ===== Reporte (portada + bloques + crop strip) ===== */
 function computeNeeds(){
   const answers=[];
   function pushMoment(key){ const arr=state.moments[key].checks; for(let i=0;i<arr.length;i++){ answers.push(arr[i]); } }
   pushMoment('toeoff'); pushMoment('mvp'); pushMoment('lateswing'); pushMoment('touchdown'); pushMoment('midstance');
-  const groups={
-    'Control lumbopélvico':[2,4,7],
-    'Back-side mechanics':[1,3,5,8],
-    'Overstriding':[6,9,10,11,12]
-  };
-  const tally={};
-  for(const [name, idxs] of Object.entries(groups)){
-    tally[name]=idxs.reduce((s,i)=> s + (answers[i-1]?1:0), 0);
-  }
-  const max = Math.max(...Object.values(tally));
-  const winners = Object.keys(tally).filter(k=>tally[k]===max && max>0);
+  const groups={'Control lumbopélvico':[2,4,7],'Back-side mechanics':[1,3,5,8],'Overstriding':[6,9,10,11,12]};
+  const tally={}; for(const [name, idxs] of Object.entries(groups)){ tally[name]=idxs.reduce((s,i)=> s + (answers[i-1]?1:0), 0); }
+  const max = Math.max(...Object.values(tally)); const winners = Object.keys(tally).filter(k=>tally[k]===max && max>0);
   return {tally, winners, max};
 }
-
-// === REEMPLAZA TODO TU printReport.onclick POR ESTO ===
-document.getElementById('printReport').onclick = () => {
-  const container = document.getElementById('reportContent');
-  container.innerHTML = '';
-  const total = Object.values(state.moments).reduce(
-    (acc, mm) => acc + mm.checks.filter(Boolean).length,
-    0
-  );
-  const grade = GRADE(total);
-  const needs = computeNeeds();
-
-  // ====== Tira de recortes (uno por momento) ======
-  const cropImgs = MOMENTS.map((m) => {
-    const mm = state.moments[m.key];
-    const latest = mm.snapshots[mm.snapshots.length - 1];
-    return latest?.cropURL || '';
+function circleHTML({label,range,isActive,color}){
+  return `<div style="flex:1 0 0;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0">
+    <div style="width:40px;height:40px;border-radius:50%;border:2px solid ${color};background:${isActive?color:'transparent'}"></div>
+    <div style="font-size:10px;color:#333;text-align:center;white-space:nowrap">${label}<br><span style="color:#666">${range}</span></div>
+  </div>`;
+}
+function donutSVG(tally){
+  const total = Object.values(tally).reduce((a,b)=>a+b,0)||1;
+  const seg = Object.entries(tally).map(([k,v])=>({k,v,f:v/total}));
+  const colors={'Control lumbopélvico':'#2563eb','Back-side mechanics':'#f59e0b','Overstriding':'#ef4444'};
+  let start=0, R=50, r=32; const cx=60, cy=60;
+  function arc(dk,df){ const a=2*Math.PI*df; const end=start+a; const x0=cx+R*Math.cos(start), y0=cy+R*Math.sin(start); const x1=cx+R*Math.cos(end), y1=cy+R*Math.sin(end); const x2=cx+r*Math.cos(end), y2=cy+r*Math.sin(end); const x3=cx+r*Math.cos(start), y3=cy+r*Math.sin(start); const large=a>Math.PI?1:0; const path=`M ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} L ${x2} ${y2} A ${r} ${r} 0 ${large} 0 ${x3} ${y3} Z`; start=end; return `<path d="${path}" fill="${colors[dk]}" opacity="${df>0?0.95:0.15}"></path>`; }
+  return `<svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">${seg.map(s=>arc(s.k,s.f)).join('')}<circle cx="${cx}" cy="${cy}" r="${r-8}" fill="#fff"></circle></svg>`;
+}
+function buildCropStrip(){
+  const order=['toeoff','mvp','lateswing','touchdown','midstance'];
+  const items=[]; const H=360, W=Math.round(H*0.75);
+  function findCenterFor(mKey){
+    const g=state.moments[mKey].guides||{};
+    if(mKey==='toeoff'){ if(g.g45?.data?.anchor) return g.g45.data.anchor; }
+    if(mKey==='mvp'){ if(g.heel?.data?.p) return g.heel.data.p; }
+    if(mKey==='touchdown'){ if(g.thighs?.data?.v) return g.thighs.data.v; }
+    if(mKey==='midstance'){ if(g.knee?.data?.anchor) return g.knee.data.anchor; }
+    // fallback: centro del canvas
+    return {x: Math.round(cvs.width/2), y: Math.round(cvs.height/2)};
+  }
+  for(const key of order){
+    const snap = state.moments[key].snapshots.at(-1);
+    if(!snap) continue;
+    const img = new Image(); img.src=snap.dataURL;
+    const center = findCenterFor(key);
+    items.push({img,center, mkey:key});
+  }
+  if(!items.length) return '';
+  const pad=8, cols=5; const thumbW=130, thumbH=Math.round(thumbW/0.75);
+  const totalW = cols*thumbW + (cols-1)*pad;
+  const containerStyle = `display:flex;flex-wrap:wrap;gap:${pad}px;justify-content:space-between;align-items:flex-start`;
+  return new Promise(resolve=>{
+    let done=0; items.forEach(it=>{ it.img.onload=()=>{ if(++done===items.length){ 
+      const html = `<div class="cropStrip" style="break-inside:avoid;page-break-inside:avoid;margin:10px 0 0 0;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+        <div style="font-weight:700;color:#0b1b2b;margin:0 0 6px 0">RECORTES</div>
+        <div style="${containerStyle}">
+          ${items.map(({img,center,mkey})=>{
+            return `<div style="width:${thumbW}px;height:${thumbH}px;overflow:hidden;border:1px solid #e5e7eb;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center">
+              <img src="${img.src}" style="width:${img.width}px;height:${img.height}px;object-fit:cover;transform:translate(${-(center.x - W/2)}px, ${-(center.y - H/2)}px)">
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+      resolve(html);
+    } }; });
   });
-
-  // Panel "RECORTES" con las 5 imágenes en una fila
-  const cropStripHTML = cropImgs.some(Boolean)
-    ? `<div class="cropBox">
-         <div class="title">RECORTES</div>
-         <div class="cropStrip">
-           ${cropImgs
-             .map((u) =>
-               u
-                 ? `<img src="${u}" alt="recorte"/>`
-                 : `<div style="flex:0 0 calc((100% - 24px)/5)"></div>`
-             )
-             .join('')}
-         </div>
-       </div>`
-    : '';
-
-  const coverCSS = `
-  <style>
-    /* Bloque DATOS (nuevo) */
-    #report .infoBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
-    #report .infoBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
-    #report .infoBox .row{display:flex;gap:16px;flex-wrap:wrap;}
-    #report .infoBox .pill{background:#f3f4f6;border:1px solid #e5e7eb;color:#111827;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;}
-
-    /* Bloque PUNTAJE */
-    #report .scoreBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin:10px 0 8px 0;}
-    #report .scoreBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 6px 0;}
-    #report .scoreBox .total{font-size:12px;color:#111827;margin:0 0 8px 0;}
-    #report .grade-circles{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:flex-start;gap:8px;width:100%;}
-    #report .grade-circles .gc-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
-    #report .grade-circles .gc-dot{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:.2px;}
-    #report .grade-circles .gc-cap{font-size:10px;color:#374151;text-align:center;line-height:1.1;max-width:80px;}
-
-    /* Bloque ÁREA DE MAYOR NECESIDAD */
-    #report .needBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
-    #report .needBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
-    #report .needBox .row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
-    #report .needBox .col{flex:1 1 240px;min-width:220px;}
-    #report .needBox .groupTitle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0b1b2b;margin:8px 0 4px 0;}
-    #report .needBox .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
-    #report .needBox ul{margin:4px 0 0 16px;font-size:11px;}
-    #report .needBox .empty{color:#6b7280;font-size:11px;}
-
-    /* Tira de recortes (panel) */
-    #report .cropBox{border:1px solid #e5e7eb;background:#fafafa;border-radius:10px;padding:10px 12px;margin-top:8px;}
-    #report .cropBox .title{font-weight:800;letter-spacing:.8px;color:#0b1b2b;font-size:14px;margin:0 0 8px 0;}
-    #report .cropStrip{display:flex;gap:6px;}
-    #report .cropStrip img{
-      flex:0 0 calc((100% - 24px)/5);
-      width:calc((100% - 24px)/5);
-      height:auto;
-      border:1px solid #e5e7eb;
-      border-radius:6px;
-      background:#fff;
-    }
-  </style>
-  `;
-
-  const coverHTML = `
-    ${coverCSS}
-    <!-- Bloque PUNTAJE -->
-    <div class="scoreBox">
-      <div class="title">PUNTAJE</div>
-      <div class="total">Puntaje total: <strong>${total}</strong></div>
-      <div class="grade-circles">
-        ${buckets.map(circleHTML).join('')}
+}
+document.getElementById('printReport').onclick=async()=>{
+  const container=document.getElementById('reportContent'); container.innerHTML='';
+  const total=Object.values(state.moments).reduce((acc,mm)=> acc + mm.checks.filter(Boolean).length, 0);
+  const grade=GRADE(total);
+  const needs=computeNeeds();
+  const page1=document.createElement('div'); page1.className='page';
+  const who = (state.name||'—'); const when = new Date().toLocaleString();
+  const buckets=[
+    {label:'Excelente',range:'0–1',isActive: total<=1, color:'#22c55e'},
+    {label:'Bueno',range:'2',isActive: total===2, color:'#84cc16'},
+    {label:'Promedio',range:'3–5',isActive: total>=3 && total<=5, color:'#f59e0b'},
+    {label:'Pobre',range:'6',isActive: total===6, color:'#f97316'},
+    {label:'Muy pobre',range:'7–11',isActive: total>=7 && total<=11, color:'#ef4444'},
+    {label:'Ext. pobre',range:'12',isActive: total===12, color:'#991b1b'}
+  ];
+  const coverHTML=`
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f2a44"/><stop offset="1" stop-color="#2b5178"/></linearGradient></defs>
+        <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+        <path d="M16 38 L28 26 L36 34 L48 22" stroke="#ff7a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1 style="margin:0;font-size:20px">S-MAS • Sprint Mechanics Assessment</h1>
+        <div style="font-size:11px;color:#666"><em>Reporte automatizado desarrollado por Santiago Grosso</em></div>
       </div>
     </div>
-
-    <!-- Bloque ÁREA DE MAYOR NECESIDAD -->
-    <div class="needBox">
-      <div class="title">ÁREA DE MAYOR NECESIDAD</div>
-      <div class="row">
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <div style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:8px">
+        <div style="font-weight:700;color:#0b1b2b">DATOS</div>
+        <div class="meta">Nombre: <strong>${who}</strong></div>
+        <div class="meta">Fecha: <strong>${when}</strong></div>
+      </div>
+      <div class="scoreBox" style="flex:2;border:1px solid #e5e7eb;border-radius:8px;padding:8px">
+        <div class="title" style="font-weight:700;color:#0b1b2b">PUNTAJE</div>
+        <div class="total" style="margin:4px 0 6px 0">Puntaje total: <strong>${total}</strong></div>
+        <div class="grade-circles" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+          ${buckets.map(circleHTML).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="needBox" style="margin-top:8px">
+      <div class="title" style="font-weight:700;color:#0b1b2b;margin-bottom:6px">ÁREA DE MAYOR NECESIDAD</div>
+      <div class="row" style="display:flex;gap:10px;align-items:flex-start">
         <div class="col" style="flex:0 0 160px;display:flex;align-items:center;justify-content:center;">
           ${donutSVG(needs.tally)}
         </div>
-        <div class="col">
+        <div class="col" style="flex:1">
           <div>
-            <div class="groupTitle"><span class="dot" style="background:#2563eb"></span>Control lumbopélvico</div>
-            ${(() => {
-              const act = activeCriteriaFor('Control lumbopélvico');
-              return act.length
-                ? `<ul>${act.map((t) => `<li>${t}</li>`).join('')}</ul>`
-                : `<div class="empty">Sin ítems activados</div>`;
-            })()}
+            <div class="groupTitle" style="font-weight:600"><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:6px"></span>Control lumbopélvico</div>
+            <div style="font-size:11px;color:#333">
+              ${(function(){const Q=QUESTIONS, M=['mvp','lateswing','touchdown']; const idx=[[0,1],[0],[1]]; const texts=[]; M.forEach((mk,i)=>idx[i].forEach(j=>texts.push(Q[mk][j]))); return texts.length?('<ul>'+texts.map(t=>'<li>'+t+'</li>').join('')+'</ul>'):'<div class="empty">Sin ítems activados</div>';})()}
+            </div>
           </div>
-
-          <div>
-            <div class="groupTitle"><span class="dot" style="background:#f59e0b"></span>Back-side mechanics</div>
-            ${(() => {
-              const act = activeCriteriaFor('Back-side mechanics');
-              return act.length
-                ? `<ul>${act.map((t) => `<li>${t}</li>`).join('')}</ul>`
-                : `<div class="empty">Sin ítems activados</div>`;
-            })()}
+          <div style="margin-top:6px">
+            <div class="groupTitle" style="font-weight:600"><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:6px"></span>Back-side mechanics</div>
+            <div style="font-size:11px;color:#333">
+              ${(function(){const map={toeoff:[0],mvp:[1],lateswing:[1],touchdown:[2]}; const texts=[]; Object.entries(map).forEach(([k,arr])=>arr.forEach(i=>texts.push(QUESTIONS[k][i]))); return texts.length?('<ul>'+texts.map(t=>'<li>'+t+'</li>').join('')+'</ul>'):'<div class="empty">Sin ítems activados</div>';})()}
+            </div>
           </div>
-
-          <div>
-            <div class="groupTitle"><span class="dot" style="background:#ef4444"></span>Overstriding</div>
-            ${(() => {
-              const act = activeCriteriaFor('Overstriding');
-              return act.length
-                ? `<ul>${act.map((t) => `<li>${t}</li>`).join('')}</ul>`
-                : `<div class="empty">Sin ítems activados</div>`;
-            })()}
+          <div style="margin-top:6px">
+            <div class="groupTitle" style="font-weight:600"><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:6px"></span>Overstriding</div>
+            <div style="font-size:11px;color:#333">
+              ${(function(){const map={touchdown:[3,4,5], midstance:[0]}; const texts=[]; Object.entries(map).forEach(([k,arr])=>arr.forEach(i=>texts.push(QUESTIONS[k][i]))); return texts.length?('<ul>'+texts.map(t=>'<li>'+t+'</li>').join('')+'</ul>'):'<div class="empty">Sin ítems activados</div>';})()}
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    ${cropStripHTML}
   `;
-
-  const page1 = document.createElement('div');
-  page1.className = 'page';
-  const page1Inner = document.createElement('div');
-  page1Inner.innerHTML = coverHTML;
-  page1.appendChild(page1Inner);
+  const cropHTML = await buildCropStrip();
+  const page1Inner = document.createElement('div'); page1Inner.innerHTML = coverHTML + (cropHTML||''); page1.appendChild(page1Inner);
   container.appendChild(page1);
-
-  const blocks = [];
-  MOMENTS.forEach((m) => {
-    const mm = state.moments[m.key];
-    const latest = mm.snapshots[mm.snapshots.length - 1];
-    const checks = (QUESTIONS[m.key] || [])
-      .map(
-        (q, i) => `<li>${mm.checks[i] ? '✅' : '⬜️'} ${q}</li>`
-      )
-      .join('');
-    const notes = mm.notes
-      ? `<div class="notes"><strong>Notas:</strong> ${mm.notes.replace(
-          /</g,
-          '&lt;'
-        )}</div>`
-      : '';
-    const img = latest
-      ? `<img src="${latest.dataURL}" alt="${m.label}" />`
-      : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
-    const block = document.createElement('div');
-    block.className = 'momentBlock';
-    block.innerHTML = `
+  const blocks=[];
+  MOMENTS.forEach(m=>{
+    const mm=state.moments[m.key]; const latest=mm.snapshots[mm.snapshots.length-1];
+    const checks=(QUESTIONS[m.key]||[]).map((q,i)=>`<li>${mm.checks[i]?'✅':'⬜️'} ${q}</li>`).join('');
+    const notes = mm.notes ? `<div class="notes"><strong>Notas:</strong> ${mm.notes.replace(/</g,'&lt;')}</div>` : '';
+    const img = latest ? `<img src="${latest.dataURL}" alt="${m.label}" />` : `<div style="color:#666;padding:12px;border:1px dashed #ccc;border-radius:6px;background:#fafafa">Sin captura</div>`;
+    const block=document.createElement('div'); block.className='momentBlock';
+    block.innerHTML=`
       <h2 style="margin:3mm 0 1mm 0;">${m.label}</h2>
       <div class="row">
         ${img}
@@ -963,70 +576,18 @@ document.getElementById('printReport').onclick = () => {
           <ul>${checks}</ul>
           ${notes}
         </div>
-      </div>
-    `;
+      </div>`;
     blocks.push(block);
   });
-
-  const page2 = document.createElement('div');
-  page2.className = 'page';
-  if (blocks[0]) page2.appendChild(blocks[0]);
-  if (blocks[1]) page2.appendChild(blocks[1]);
-  container.appendChild(page2);
-
-  const page3 = document.createElement('div');
-  page3.className = 'page';
-  if (blocks[2]) page3.appendChild(blocks[2]);
-  if (blocks[3]) page3.appendChild(blocks[3]);
-  if (blocks[4]) page3.appendChild(blocks[4]);
-  container.appendChild(page3);
-
+  const page2=document.createElement('div'); page2.className='page'; if(blocks[0]) page2.appendChild(blocks[0]); if(blocks[1]) page2.appendChild(blocks[1]); if(blocks[2]) page2.appendChild(blocks[2]); container.appendChild(page2);
+  const page3=document.createElement('div'); page3.className='page'; if(blocks[3]) page3.appendChild(blocks[3]); if(blocks[4]) page3.appendChild(blocks[4]); container.appendChild(page3);
   window.print();
 };
-
-
-// === FIN REEMPLAZO ===
-
-
-
-
-/* ===== Pantalla completa (Zoom) — único bloque ===== */
-const fsBtn = document.getElementById('fs');
-const viewArea = document.getElementById('viewArea');
-
-function isFullscreen(){
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
-}
-async function enterFullscreen(el){
-  try{
-    if(el && el.requestFullscreen){ await el.requestFullscreen(); }
-    else if(el && el.webkitRequestFullscreen){ el.webkitRequestFullscreen(); }
-  }catch(e){}
-}
-async function exitFullscreen(){
-  try{
-    if(document.exitFullscreen){ await document.exitFullscreen(); }
-    else if(document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
-  }catch(e){}
-}
-if (fsBtn){
-  fsBtn.onclick = async () => {
-    if(!isFullscreen()){ await enterFullscreen(viewArea || wrap); }
-    else { await exitFullscreen(); }
-  };
-  function refreshFsLabel(){ fsBtn.textContent = isFullscreen() ? 'Salir zoom' : 'Zoom'; }
-  document.addEventListener('fullscreenchange', refreshFsLabel);
-  document.addEventListener('webkitfullscreenchange', refreshFsLabel);
-  refreshFsLabel();
-}
-
-/* ===== Init ===== */
+function updateReportAvailability(){ const ok=Object.values(state.moments).every(mm=>mm.captured); printBtn.disabled=!ok; reportHint.style.display=ok?'none':'inline'; }
 document.getElementById('clearState').onclick=()=>{
   if(confirm('¿Borrar progreso de esta sesión?')){
-    state={fps:240,invert:false,curMoment:'toeoff', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{
-      t:0,frame:0,notes:'',checks:(QUESTIONS[m.key]||[]).map(()=>false), snapshots:[], captured:false, guides:{}
-    }]))};
-    renderTabs(); setMoment('toeoff'); fpsInput.value=state.fps;
+    state={fps:240,invert:false,curMoment:'toeoff', name:'', moments:Object.fromEntries(MOMENTS.map(m=>[m.key,{t:0,frame:0,notes:'',checks:(QUESTIONS[m.key]||[]).map(()=>false), snapshots:[], captured:false, guides:{}}]))};
+    renderTabs(); setMoment('toeoff'); fpsInput.value=state.fps; nameInput.value='';
   }
 };
 file.onchange=()=>{
